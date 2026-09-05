@@ -1,0 +1,9 @@
+build/
+dist/
+tmp/
+*.tar.gz
+assets/maps/*.zip
+assets/maps/*.svg
+assets/images/*
+!assets/images/japan-map-play.png
+assets/characters/contact-sheet.png

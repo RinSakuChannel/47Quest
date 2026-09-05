@@ -1,0 +1,62 @@
+/* A consistent play surface: readable instructions, unobstructed play, clear actions. */
+.clear-friend { display:flex; align-items:center; justify-content:center; gap:18px; margin:12px 0; }
+.clear-friend-art { flex:none; width:clamp(110px,18vw,180px); animation:clear-cheer .6s ease-in-out 3 alternate; }
+.clear-friend.is-mystery img { filter:brightness(0); }
+.clear-friend-art::after { content:'♪'; position:absolute; right:4%; top:8%; color:#ed9455; font-size:32px; }
+.clear-friend strong { display:block; font-size:clamp(20px,2.5vw,30px); }.clear-friend p,.clear-friend span { font-size:17px; line-height:1.5; }
+@keyframes clear-cheer { to { transform:translateY(-12px) rotate(5deg); } }
+.result-card { width:min(680px,94%); }.result-card .result-learning { font-size:clamp(17px,1.8vw,22px); line-height:1.6; }
+.prefecture-facts dd,.profile-copy,.collection-feature { font-size:clamp(16px,1.5vw,21px); line-height:1.6; }.prefecture-facts dt { font-size:15px; }.reveal-prefecture-feature,.reveal-profile-chips span { font-size:clamp(15px,1.5vw,20px); line-height:1.5; }
+.trace-word { white-space:nowrap; letter-spacing:0; padding-bottom:40px; color:rgba(18,59,83,.22); }
+:root { --navy:#173e51; --navy-2:#36596b; --sun:#ffd34f; --soft-shadow:0 4px 0 #173e5120; }
+.app-screen:not(.is-title-screen) { background:#f5f4ea; }
+.app-screen:not(.is-title-screen)::before,.app-screen:not(.is-title-screen)::after { display:none; }
+.topbar { background:#fffdf5; backdrop-filter:none; border-bottom:2px solid #dfe9e5; gap:.6rem; }
+.top-title { font-size:clamp(.9rem,1.7vw,1.3rem); letter-spacing:.02em; }
+.viewport { padding:clamp(10px,1.5vw,22px); }
+.primary-button,.secondary-button,.tool-button,.zoom-button { min-height:48px; border-radius:16px; font-weight:900; }
+.primary-button.sun { background:#ffd34f; box-shadow:0 5px 0 #c79324; }
+.secondary-button,.tool-button { box-shadow:0 4px 0 #d5e1df; }
+.map-scene { display:grid; grid-template-columns:minmax(230px,28%) minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:16px; }
+.discovery-brief { grid-column:1; grid-row:1; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; padding:clamp(20px,3vw,48px); min-height:0; border-radius:24px; background:#fffdf7; border:2px solid #e1e8df; }
+.discovery-step { margin:0 0 clamp(20px,5vh,64px); padding:8px 14px; border-radius:100px; background:#173e51; color:#fff; font-size:clamp(15px,1.7vw,22px); font-weight:900; }
+.discovery-step span { color:#bcd5dd; }
+.discovery-brief h1 { margin:22px 0 12px; font-size:clamp(36px,4.6vw,76px); line-height:1.5; white-space:nowrap; letter-spacing:-.04em; }
+.discovery-brief rt { color:#36596b; font-size:clamp(15px,1.4vw,23px); letter-spacing:.12em; }
+.discovery-region { font-weight:900; color:#347963; padding:6px 12px; border-radius:8px; background:#e7f3e7; }
+.discovery-instruction { display:flex; align-items:center; gap:12px; margin:28px 0; line-height:1.55; font-weight:900; font-size:clamp(18px,2vw,28px); }
+.discovery-instruction i { flex:none; width:15px; height:15px; border-radius:50%; background:#ef6a50; box-shadow:0 0 0 7px #ffe5d9; }
+.discovery-route { display:flex; flex-wrap:wrap; gap:8px; margin-top:auto; padding-top:16px; font-size:14px; font-weight:900; color:#607780; }
+.discovery-route>* { padding:8px; border-radius:8px; background:#edf1ef; }.discovery-route b { color:#173e51; background:#ffe795; }
+.map-scene>.map-stage { grid-column:2; grid-row:1; height:100%; min-height:0; border:2px solid #fff; border-radius:24px; box-shadow:0 4px 0 #d5e1df; }
+.map-scene .map-learning-tray { position:static; grid-column:1/-1; width:auto; max-width:none; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 18px; border-radius:20px; background:#fffdf7; box-shadow:0 4px 0 #d5e1df; }
+.map-learning-tray>p { margin:0; color:#36596b; font-size:clamp(14px,1.5vw,20px); font-weight:900; }
+.map-scene .map-learning-tray>.primary-button { min-width:240px; min-height:56px; font-size:20px; padding:12px 24px; }
+.zoom-button { font-size:16px; padding:10px 16px; }
+.map-source-link { font-size:11px; }
+.writing-scene { grid-template-columns:minmax(240px,28%) minmax(0,1fr); gap:16px; }
+.lesson-panel { border-radius:24px; border:2px solid #e1e8df; box-shadow:none; }
+.lesson-panel .title { font-size:clamp(24px,2.5vw,36px); line-height:1.3; }
+.writing-tools { justify-content:flex-start; gap:10px; }.writing-tools .tool-button { font-size:16px; }
+.ink-status { font-size:14px; max-width:45%; line-height:1.4; }.canvas-next-button { min-height:54px; font-size:18px; }
+.review-location-picker { border-radius:24px; background:#fffdf7; box-shadow:0 4px 0 #d5e1df; }
+.review-picker-heading>strong { font-size:clamp(22px,2.5vw,32px); }.review-prefecture-choice { min-height:40px; font-size:clamp(14px,1.3vw,18px); border-radius:10px; }
+.review-map-guide { max-width:60%; font-size:14px; line-height:1.5; }
+.collection-card { border-radius:22px; border:2px solid #e0e9e3; box-shadow:0 4px 0 #d5e1df; }
+.collection-card h3 { font-size:clamp(20px,2vw,30px); }.collection-card p { font-size:16px; }
+.game-info { border-radius:18px; background:#fffdf7; backdrop-filter:none; }.micro-command { font-size:clamp(20px,2.6vw,34px); }
+.result-card { border:3px solid #fff; }.result-learning { font-size:15px; }.result-actions button { font-size:17px; }
+@media(max-width:760px) {
+ .topbar { grid-template-columns:auto minmax(0,1fr) auto; }.brand-name { display:none; }.top-title { white-space:normal; line-height:1.2; }
+ .map-scene { grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr) auto; gap:10px; }
+ .discovery-brief { grid-column:1; grid-row:1; display:grid; grid-template-columns:auto 1fr; align-items:center; gap:4px 18px; padding:12px 18px; border-radius:18px; }
+ .discovery-step { margin:0; font-size:14px; }.discovery-brief>.eyebrow,.discovery-route,.discovery-region { display:none; }
+ .discovery-brief h1 { grid-column:2; grid-row:1/span 2; justify-self:end; font-size:36px; margin:12px 0 0; }.discovery-brief rt { font-size:14px; }
+ .discovery-instruction { margin:6px 0; font-size:15px; gap:8px; }.discovery-instruction br { display:none; }.discovery-instruction i { width:10px; height:10px; box-shadow:0 0 0 4px #ffe5d9; }
+ .map-scene>.map-stage { grid-column:1; grid-row:2; }.map-scene .map-learning-tray { grid-column:1; grid-row:3; padding:10px; }.map-learning-tray>p { display:none; }.map-scene .map-learning-tray>.primary-button { width:100%; min-width:0; min-height:52px; }
+ .writing-scene { grid-template-columns:1fr; }.lesson-panel .title { font-size:22px; }.ink-status { font-size:12px; }.canvas-next-button { font-size:15px; }
+ .review-prefecture-choice { min-height:40px; }.review-prefecture-grid { overflow-y:auto; }
+}
+@media(max-height:560px) and (min-width:761px) {
+ .discovery-brief { padding:16px; }.discovery-step { margin:0 0 16px; }.discovery-brief h1 { margin:12px 0 4px; font-size:38px; }.discovery-instruction { margin:14px 0; font-size:18px; }.discovery-route { font-size:12px; }
+}

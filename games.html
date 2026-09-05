@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>47Quest ミニゲーム広場</title>
+  <link rel="stylesheet" href="./src/featured-games.css">
+  <link rel="stylesheet" href="./src/game-gallery.css">
+  <script src="./src/prefectures.js" defer></script>
+  <script src="./src/regional-games.js" defer></script>
+  <script src="./src/featured-games.js" defer></script>
+  <script src="./src/game-gallery.js" defer></script>
+</head>
+<body>
+  <header><a href="/">← 47Quest ホーム</a><h1>ミニゲーム広場</h1><p id="status"></p></header>
+  <main id="gallery"></main>
+  <section id="player" hidden>
+    <nav><button id="back">← 一覧へ</button><h2 id="game-title"></h2><span id="hud"></span></nav>
+    <div id="field"></div>
+    <div id="result" hidden><h2>できた！</h2><p id="record"></p><button id="again">もう一回！</button><button id="return">一覧へ</button></div>
+  </section>
+</body>
+</html>
