@@ -262,7 +262,7 @@ function startBgm(scene = state.screen, variant = state.current?.code || '') {
   stopBgm();
   if (!state.sound || !audioContext) return;
   const musicScene = scene.startsWith('review') ? 'review' : scene.startsWith('location') ? 'location' : scene.startsWith('reward') ? 'reward' : scene;
-  const profile = MUSIC_SCENES[musicScene] || MUSIC_SCENES.home;
+  const profile = window.QUEST_AUDIO?.scenes[musicScene] || MUSIC_SCENES[musicScene] || MUSIC_SCENES.home;
   const mode = window.QUEST_MICROGAMES?.catalog?.[variant]?.mode || '';
   const variantShift = scene === 'game' ? (Number.parseInt(variant, 10) % 5) - 2 : 0;
   const modeShift = ['rhythm', 'sequence', 'reaction'].includes(mode) ? 12 : 0;
@@ -272,6 +272,12 @@ function startBgm(scene = state.screen, variant = state.current?.code || '') {
   const schedule = () => {
     if (!state.sound || !audioContext) return;
     while (musicNextAt < audioContext.currentTime + .28) {
+      if (window.QUEST_AUDIO) {
+        window.QUEST_AUDIO.music(audioContext, audioChannels.bgm, musicScene, musicStep, musicNextAt);
+        musicStep += 1;
+        musicNextAt += stepLength;
+        continue;
+      }
       const note = profile.root + profile.notes[musicStep % profile.notes.length] + variantShift + modeShift;
       const strong = musicStep % 4 === 0;
       tone(midi(note), stepLength * .72, profile.wave, profile.gain * (strong ? 1.25 : 1), musicNextAt, 'bgm');
@@ -289,6 +295,7 @@ function sound(kind = 'tap') {
   try {
     const context = ensureAudio();
     const now = context.currentTime;
+    if (state.screen === 'game' && state.current && window.QUEST_AUDIO?.effect(context, audioChannels.se, state.current.code, kind)) return;
     const patterns = {
       tap:   [[520, .045, 'sine', .028, 0]],
       draw:  [[760, .025, 'sine', .018, 0]],
@@ -310,7 +317,8 @@ function button(label, action, className = 'primary-button', extra = '') {
 }
 
 function mascot(pref, className = 'pref-mascot') {
-  return `<div class="${className} pref-mascot-art" role="img" aria-label="${pref.character}"><img src="./assets/characters/${pref.code}.png" alt="" draggable="false" /></div>`;
+  const image = window.CHARACTER_ART?.[pref.code] || `./assets/characters/${pref.code}.png`;
+  return `<div class="${className} pref-mascot-art" role="img" aria-label="${pref.character}"><img src="${image}" alt="" draggable="false" decoding="async" /></div>`;
 }
 
 function characterCry(pref) {

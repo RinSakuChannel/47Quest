@@ -8,15 +8,18 @@
   <script src="./src/prefectures.js" defer></script>
   <script src="./src/regional-games.js" defer></script>
   <script src="./src/featured-games.js" defer></script>
+  <script src="./src/game-audio.js" defer></script>
+  <script src="./src/character-art.js" defer></script>
+  <script src="./src/character-cries.js" defer></script>
   <script src="./src/game-gallery.js" defer></script>
 </head>
 <body>
   <header><a href="/">← 47Quest ホーム</a><h1>ミニゲーム広場</h1><p id="status"></p></header>
   <main id="gallery"></main>
   <section id="player" hidden>
-    <nav><button id="back">← 一覧へ</button><h2 id="game-title"></h2><span id="hud"></span></nav>
+    <nav><button id="back">← 一覧へ</button><h2 id="game-title"></h2><label>音量 <input id="volume" type="range" min="0" max="100" value="45" aria-label="ゲームの音量"></label><span id="hud"></span></nav>
     <div id="field"></div>
-    <div id="result" hidden><h2>できた！</h2><p id="record"></p><button id="again">もう一回！</button><button id="return">一覧へ</button></div>
+    <div id="result" hidden><h2>できた！</h2><img id="friend" alt="喜んでいる仲間のシルエット"><p id="record"></p><button id="again">もう一回！</button><button id="return">一覧へ</button></div>
   </section>
 </body>
 </html>

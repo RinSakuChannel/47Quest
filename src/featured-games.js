@@ -34,6 +34,9 @@
       const end=node('button','fg-bank','ここで おわる →');end.hidden=true;
       end.addEventListener('click',()=>{if(model.score>=def.goal)complete();});
       field.append(world,banner,status,feedback,end);
+      world.addEventListener('pointerdown',()=>sound('action'));
+      world.addEventListener('pointermove',event=>{if(event.buttons)sound('motion');});
+      world.addEventListener('pointerup',()=>sound('release'));
       let feedbackTime=0, lastPhase=-1;
       const tell=(text)=>{feedback.textContent=text;feedbackTime=1.2;};
       const ctx={world,model,cleanups,sound,tell,
