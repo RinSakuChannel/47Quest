@@ -330,6 +330,17 @@ async function drawEnoughInk(page) {
           await page.screenshot({path:path.resolve(`.verification/minigames/${name}-${code}.png`)});
         }
       }
+      await page.evaluate(()=>{state.gachaRewards=PREFECTURE_DATA.slice(0,3);state.reviewResults={'01':{kanji:true},'02':{kanji:false}};renderReward();});
+      await page.waitForTimeout(400);
+      await assertPageNoScroll(page, `${name} memory rewards`);
+      await assertInsideViewport(page, '.memory-friend,.memory-progress,.memory-reward-scene .button-row', `${name} memory rewards`);
+      for(const card of await page.locator('.memory-friend').all()){
+        await card.click();
+        assert.equal(await card.getAttribute('aria-expanded'),'true');
+        await assertReadableText(page, `${name} memory answer`);
+      }
+      await assertNoHiddenOverflow(page,'.memory-friend',`${name} memory cards`);
+      if(name==='phone')await page.screenshot({path:path.resolve('.verification/minigames/phone-memory.png')});
       await context.close();
     }
     const motionContext = await browser.newContext({ viewport:{width:390,height:844}, hasTouch:true, isMobile:true, reducedMotion:'no-preference' });

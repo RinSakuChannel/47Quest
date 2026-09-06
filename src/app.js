@@ -514,7 +514,7 @@ function renderHome() {
           ${button('▶ ぼうけん スタート', 'start', 'primary-button sun title-start-button')}
           <div>${button('⚡ いきなりクイズ', 'quick-quiz', 'primary-button quick-quiz-button')}${button(`図鑑 ${count} / 47`, 'collection', 'secondary-button')}${button('🔊 おと', 'audio-panel', 'secondary-button')}</div>
         </div>
-        <span class="title-progress">仲間 ${count} / 47</span>
+        <span class="title-progress">仲間 ${count} / 47　・　${state.journeyLap}周目 あと${47-state.cleared.size}県</span>
       </header>
     </section>`, { home: true, progress: Math.round(count / 47 * 100), label: '47の仲間をさがそう' });
   pixelateOpeningFriends();
@@ -1588,6 +1588,11 @@ function advanceReview(correct) {
   state.reviewResults[pref.code] ||= { kanji: false };
   state.reviewResults[pref.code].kanji = correct;
   state.reviewResults[pref.code].completed = true;
+  const learning=storage.get('47quest-learning',{});
+  const record=learning[pref.code] || {recalled:0,practiced:0};
+  if(correct)record.recalled+=1;else record.practiced+=1;
+  record.lastReviewed=Date.now();learning[pref.code]=record;
+  storage.set('47quest-learning',learning);
   state.cleared.add(pref.code);
   storage.set('47quest-cleared', [...state.cleared]);
   state.coins += 1;
@@ -1679,13 +1684,19 @@ function renderReward() {
   const earned = earnedThisRound();
   const confetti = Array.from({ length: 28 }, (_, index) => `<i style="--x:${(index * 37) % 100}%;--color:${['#ff6b56','#ffcf54','#71d3ad','#80ccef','#c9ace5'][index % 5]};--speed:${3.4 + (index % 6) * .35}s;--delay:${-(index % 9) * .45}s"></i>`).join('');
   app.innerHTML = shell(`
-    <section class="scene reward-scene">
+    <section class="scene reward-scene memory-reward-scene">
       <div class="confetti">${confetti}</div>
-      <p class="eyebrow">${earned.length ? '場所を選んで、漢字も思い出せた' : '今回は練習できたね'}</p>
+      <p class="eyebrow">${earned.length ? 'キャラを見て、県の名前を言ってみよう' : '今回は練習できたね'}</p>
       <h1 class="title">${earned.length ? `${earned.length}県の仲間を発見。` : 'つぎは見本なしで書こう。'}</h1>
       <div class="reward-characters">
-        ${earned.length ? earned.map((pref, index) => mascot(pref, 'reward-character')).join('') : '<div class="empty-reward">書き直しは何回でもできるよ。失敗ではなく、覚える途中。</div>'}
+        ${earned.length ? earned.map((pref, index) => `<button class="memory-friend" data-action="memory-answer" data-code="${pref.code}" aria-expanded="false" style="--card-delay:${index*80}ms">
+          ${mascot(pref,'memory-friend-art')}
+          <span class="memory-question">どこの県の なかま？<small>タップで答えを見る</small></span>
+          <span class="memory-answer" hidden><ruby>${pref.name}<rt>${pref.reading}</rt></ruby><small>${pref.region}・${pref.specialty}</small></span>
+          <span class="memory-learning">${state.reviewResults[pref.code]?.kanji?'見本なしで書けた（自己確認）':'見本といっしょに練習'}</span>
+        </button>`).join('') : '<div class="empty-reward">書き直しは何回でもできるよ。失敗ではなく、覚える途中。</div>'}
       </div>
+      <p class="memory-progress">${state.journeyLap}周目　${state.cleared.size} / 47県 <span>あと${47-state.cleared.size}県の発見！</span></p>
       <div class="button-row">
         ${button('もう1セット遊ぶ', 'start', 'primary-button sun')}
         ${button('図鑑を見る', 'collection', 'secondary-button')}
@@ -1803,6 +1814,14 @@ app.addEventListener('click', (event) => {
   const control = event.target.closest('[data-action]');
   if (!control || control.disabled) return;
   const action = control.dataset.action;
+  if(action==='memory-answer'){
+    const expanded=control.getAttribute('aria-expanded')==='true';
+    control.setAttribute('aria-expanded',String(!expanded));
+    control.querySelector('.memory-question').hidden=!expanded;
+    control.querySelector('.memory-answer').hidden=expanded;
+    if(!characterTarget)characterCry(PREFECTURES.find(p=>p.code===control.dataset.code));
+    sound('ui-open');return;
+  }
   if (!['hero-cheer','character-cry','sound','sound-toggle'].includes(action) && !characterTarget) {
     sound(/home|back|cancel|prev/.test(action) ? 'ui-back' : /collection|open-pref|settings|zoom/.test(action) ? 'ui-open' : 'ui-confirm');
   }

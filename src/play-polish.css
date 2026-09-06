@@ -1,5 +1,26 @@
 /* Interaction hierarchy without changing the tested screen geometry. */
 :root { --play-ease:cubic-bezier(.16,1,.3,1); }
+.memory-reward-scene {display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto;gap:8px;align-items:center;justify-items:center;overflow:hidden;padding:12px;}
+.memory-reward-scene>.eyebrow,.memory-reward-scene>.title,.memory-progress {margin:0;text-align:center;}
+.memory-reward-scene .reward-characters {display:flex;gap:12px;width:100%;height:100%;min-height:0;justify-content:center;align-items:stretch;}
+.memory-friend {display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:8px;min-width:0;min-height:0;width:min(30%,300px);padding:12px;border:2px solid #fff;border-radius:22px;background:#fffdf5;color:#173e51;box-shadow:0 5px #b9d4cc;animation:play-result-enter 350ms var(--card-delay) both;}
+.memory-friend-art {width:100%;height:100%;min-height:0;}
+.memory-friend-art img {width:100%;height:100%;object-fit:contain;}
+.memory-question,.memory-answer {font-size:clamp(16px,2vw,24px);font-weight:900;text-align:center;}
+.memory-friend small {display:block;font-size:13px;line-height:1.5;margin-top:5px;}
+.memory-learning {font-size:12px;line-height:1.4;border-radius:10px;background:#e4f1e9;padding:6px;}
+.memory-answer ruby {line-height:1.8;}.memory-answer rt{font-size:12px;}
+.memory-progress {font-size:15px;font-weight:800;}.memory-progress span{display:inline-block;}
+@media(max-width:600px){
+ .memory-reward-scene .reward-characters {flex-direction:column;gap:8px;}
+ .memory-friend {width:100%;flex:1;grid-template-columns:35% minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;padding:7px;gap:4px 8px;border-radius:16px;}
+ .memory-friend-art {grid-column:1;grid-row:1/3;}
+ .memory-question,.memory-answer {grid-column:2;grid-row:1;align-self:center;font-size:18px;}
+ .memory-learning {grid-column:2;grid-row:2;font-size:11px;padding:3px;}
+ .memory-friend small {font-size:12px;line-height:1.3;}
+ .memory-reward-scene .title {font-size:24px;}.memory-reward-scene .eyebrow {font-size:13px;}
+}
+@media(prefers-reduced-motion:reduce){.memory-friend{animation:none;}}
 .prefecture-pin {width:24px;height:33px;aspect-ratio:32/44;border:0;border-radius:0;background:none;box-shadow:none;filter:none;transform:translate(-50%,-100%);animation:none;}
 .prefecture-pin::before,.prefecture-pin::after {display:none;}
 .prefecture-pin svg {display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 2px #fff);animation:map-pin-land 650ms both;transform-origin:50% 100%;}
