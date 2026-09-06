@@ -14,13 +14,15 @@ const state = {
   screen: 'home', round: [], roundIndex: 0, current: null, replay: false,
   quickQuiz: false,
   newlyUnlocked: new Set(), rewardRevealIndex: 0,
-  coins: Math.max(0, Math.floor(Number(storage.get('47quest-coins', 0)) || 0)), gachaRewards: [], gachaBusy: false,
+  coins: Math.max(0, Math.floor(Number(storage.get('47quest-coins', 0)) || 0)), gachaRewards: [], gachaBusy: false, gachaFromReview: false,
   writeMode: 'hiragana', strokes: [], trace: true, mapZoomed: false,
   reviewIndex: 0, reviewPhase: 'location', reviewHints: {}, reviewResults: {}, inkPreview: '',
   reviewLocationAttempts: {}, reviewLocationWrong: {}, reviewLocationResolved: false,
   collectionPage: 0, collectionResetPending: false,
   locationWrong: new Set(), locationResolved: false, locationHitTest: null,
   unlocked: new Set(storage.get('47quest-unlocked', [])),
+  cleared: new Set(storage.get('47quest-cleared', [])),
+  journeyLap: Math.max(1, Math.floor(Number(storage.get('47quest-journey-lap', 1)) || 1)),
   sound: storage.get('47quest-sound', true),
   bgmVolume: Math.max(0, Math.min(100, Number(storage.get('47quest-bgm-volume', 34)) || 0)),
   seVolume: Math.max(0, Math.min(100, Number(storage.get('47quest-se-volume', 42)) || 0)),
@@ -46,11 +48,19 @@ const shuffle = (values) => values
   .map(({ value }) => value);
 
 function drawPrefectureRound(deckKey) {
+  const available = PREFECTURES.filter((pref) => !state.cleared.has(pref.code));
+  if (!available.length) return [];
   const result = window.QUEST_PREFECTURE_DECK.draw(
-    PREFECTURES.map((pref) => pref.code),
+    available.map((pref) => pref.code),
     storage.get(deckKey, []),
-    3,
+    Math.min(3, available.length),
   );
+  const recentFirst = storage.get('47quest-last-first', '');
+  if (result.selected.length > 1 && result.selected[0] === recentFirst) {
+    const swap = 1 + Math.floor(Math.random() * (result.selected.length - 1));
+    [result.selected[0], result.selected[swap]] = [result.selected[swap], result.selected[0]];
+  }
+  storage.set('47quest-last-first', result.selected[0]);
   storage.set(deckKey, result.deck);
   return result.selected.map((code) => PREFECTURES.find((pref) => pref.code === code));
 }
@@ -479,28 +489,54 @@ function renderHome() {
         <span class="title-progress">仲間 ${count} / 47</span>
       </header>
     </section>`, { home: true, progress: Math.round(count / 47 * 100), label: '47の仲間をさがそう' });
+  pixelateOpeningFriends();
+}
+
+function pixelateOpeningFriends() {
+  document.querySelectorAll('.home-roamer-art > img').forEach((image) => {
+    const paint = () => {
+      if (!image.naturalWidth || image.parentElement?.querySelector('canvas')) return;
+      const canvas = document.createElement('canvas');
+      canvas.className = 'home-roamer-pixels';
+      // A genuinely tiny bitmap is enlarged with nearest-neighbour scaling.
+      // This hides the creature instead of merely blurring a full-resolution image.
+      canvas.width = 12;
+      canvas.height = 12;
+      const context = canvas.getContext('2d', { alpha: true });
+      context.imageSmoothingEnabled = false;
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      image.insertAdjacentElement('afterend', canvas);
+    };
+    if (image.complete) paint(); else image.addEventListener('load', paint, { once: true });
+  });
 }
 
 function startRound() {
   sound('good');
   state.round = drawPrefectureRound('47quest-adventure-deck');
+  if (!state.round.length) return renderNationComplete();
   storage.set('47quest-recent', state.round.map((pref) => pref.code));
   state.roundIndex = 0;
   state.current = state.round[0];
   state.replay = false;
   state.quickQuiz = false;
   state.newlyUnlocked = new Set();
+  state.gachaRewards = [];
+  state.gachaFromReview = false;
   renderMap();
 }
 
 function startQuickQuiz() {
   sound('good');
   state.round = drawPrefectureRound('47quest-quick-quiz-deck');
+  if (!state.round.length) return renderNationComplete();
   state.roundIndex = 0;
   state.current = state.round[0];
   state.replay = false;
   state.quickQuiz = true;
   state.newlyUnlocked = new Set();
+  state.gachaRewards = [];
+  state.gachaFromReview = false;
   state.reviewIndex = 0;
   state.reviewPhase = 'location';
   state.reviewHints = {};
@@ -523,7 +559,7 @@ function renderMap() {
   app.innerHTML = shell(`
     <section class="scene map-scene">
       <aside class="discovery-brief">
-        <p class="discovery-step">ぼうけん ${state.roundIndex + 1} <span>/ 3</span></p>
+        <p class="discovery-step">ぼうけん ${state.roundIndex + 1} <span>/ ${state.round.length}</span></p>
         <p class="eyebrow">こんどの場所は</p>
         <h1><ruby>${pref.name}<rt>${pref.reading}</rt></ruby></h1>
         <span class="discovery-region">${pref.region}</span>
@@ -538,7 +574,7 @@ function renderMap() {
         <p>場所をおぼえたら、つぎは文字を書こう</p>
         ${button('場所を おぼえた →', 'start-writing', 'primary-button sun')}
       </div>
-    </section>`, { label: `${state.roundIndex + 1} / 3　${pref.name}の場所を おぼえよう` });
+    </section>`, { label: `${state.roundIndex + 1} / ${state.round.length}　${pref.name}の場所を おぼえよう` });
   initMapZoom(document.querySelector('.map-stage'), document.querySelector('.map-stage .map-layers'), { focus: point });
 }
 
@@ -575,7 +611,7 @@ function renderWriting(mode = state.writeMode) {
           ${button(isHiragana ? '書けた → 漢字へ' : '書けた → ゲームへ', 'writing-next', 'primary-button sun canvas-next-button', 'disabled')}
         </div>
       </div>
-    </section>`, { progress: progressFor(isHiragana ? 2 : 3), label: `${state.roundIndex + 1} / 3　${isHiragana ? 'ひらがな' : '漢字'}` });
+    </section>`, { progress: progressFor(isHiragana ? 2 : 3), label: `${state.roundIndex + 1} / ${state.round.length}　${isHiragana ? 'ひらがな' : '漢字'}` });
   initCanvas();
 }
 
@@ -697,7 +733,7 @@ function renderGame() {
         <div class="game-hud"><span id="game-score" class="hud-chip">0 / ${setup.goal}</span><span id="game-time" class="hud-chip">${setup.time.toFixed(1)}</span></div>
         <div id="game-field" class="game-field rapid-field rapid-${setup.mode}"></div>
       </div>
-    </section>`, { progress: progressFor(4), label: `${state.roundIndex + 1} / 3　ご当地ゲーム` });
+    </section>`, { progress: progressFor(4), label: `${state.roundIndex + 1} / ${state.round.length}　ご当地ゲーム` });
   window.QUEST_MICROGAMES?.start({
     field: document.querySelector('#game-field'), pref, updateHud, finish: finishGame, sound,
     runMeta: state.currentRun,
@@ -1254,7 +1290,7 @@ function renderLocationQuiz() {
           </div>
         </div>
       </div>
-    </section>`, { progress: progressFor(5), label: `${state.roundIndex + 1} / 3　${pref.name}はどこかな？` });
+    </section>`, { progress: progressFor(5), label: `${state.roundIndex + 1} / ${state.round.length}　${pref.name}はどこかな？` });
   prepareLocationHitTest();
   initMapZoom(document.querySelector('.quiz-map-frame'), document.querySelector('.quiz-map-frame .map-zoom-content'));
 }
@@ -1303,7 +1339,7 @@ function renderReviewLegacy() {
   app.innerHTML = shell(`
     <section class="scene review-scene">
       <aside class="lesson-panel">
-        <p class="eyebrow">おさらいタイム　${state.reviewIndex + 1} / 3</p>
+        <p class="eyebrow">おさらいタイム　${state.reviewIndex + 1} / ${state.round.length}</p>
         <h1 class="title">さっきの場所を<br>思い出そう</h1>
         <div class="review-list">
           ${state.round.map((item, index) => `<div class="review-place ${index === state.reviewIndex ? 'is-current' : ''} ${index < state.reviewIndex ? 'is-done' : ''}"><span class="review-number">${index < state.reviewIndex ? '✓' : index + 1}</span><span>${index === state.reviewIndex ? item.region : index < state.reviewIndex ? item.name : '？？？'}</span><span>${index === state.reviewIndex ? 'いまここ' : ''}</span></div>`).join('')}
@@ -1336,7 +1372,7 @@ function completeReviewLegacy() {
   saveProgress();
   sound('win');
   state.reviewIndex += 1;
-  if (state.reviewIndex < 3) renderReview(); else renderReward();
+  if (state.reviewIndex < state.round.length) renderReview(); else renderReward();
 }
 
 function renderReviewLocation() {
@@ -1370,7 +1406,7 @@ function renderReviewLocation() {
         </div>
         ${button('漢字を書く →', 'review-location-next', 'primary-button sun review-location-next', 'hidden')}
       </aside>
-    </section>`, { label: `${state.quickQuiz ? 'いきなりクイズ' : 'おさらい'} ${state.reviewIndex + 1} / 3　赤い場所の県を選ぼう` });
+    </section>`, { label: `${state.quickQuiz ? 'いきなりクイズ' : 'おさらい'} ${state.reviewIndex + 1} / ${state.round.length}　赤い場所の県を選ぼう` });
   initMapZoom(document.querySelector('.map-stage'), document.querySelector('.map-stage .map-layers'), { focus: point });
 }
 
@@ -1451,7 +1487,7 @@ function renderReview() {
           ${button('答えと見くらべる', 'review-check', 'primary-button sun canvas-next-button', 'disabled')}
         </div>
       </div>
-    </section>`, { progress: 86 + state.reviewIndex * 5, label: `おさらい ${state.reviewIndex + 1} / 3　漢字で書こう` });
+    </section>`, { progress: 86 + state.reviewIndex * 5, label: `おさらい ${state.reviewIndex + 1} / ${state.round.length}　漢字で書こう` });
   initCanvas();
 }
 
@@ -1486,13 +1522,16 @@ function advanceReview(correct) {
   state.reviewResults[pref.code] ||= { kanji: false };
   state.reviewResults[pref.code].kanji = correct;
   state.reviewResults[pref.code].completed = true;
+  state.cleared.add(pref.code);
+  storage.set('47quest-cleared', [...state.cleared]);
   state.coins += 1;
+  state.gachaFromReview = true;
   storage.set('47quest-coins', state.coins);
   sound('bonus');
   state.reviewIndex += 1;
   state.reviewPhase = 'location';
   cleanups(); state.screen = 'review-coin';
-  app.innerHTML = shell(`<section class="scene gacha-scene"><p class="eyebrow">${pref.name}のおさらい できた！</p><div class="coin-prize" aria-hidden="true">🪙</div><h1>コイン 1まい ゲット！</h1><p>このセット ${state.reviewIndex} / 3まい　・　もっているコイン ${state.coins}まい</p>${button(state.reviewIndex < 3 ? 'つぎのおさらい →' : 'ガチャへ →','review-coin-next','primary-button sun')}</section>`,{label:'おさらいのごほうび'});
+  app.innerHTML = shell(`<section class="scene gacha-scene"><p class="eyebrow">${pref.name}のおさらい できた！</p><div class="coin-prize" aria-hidden="true">🪙</div><h1>コイン 1まい ゲット！</h1><p>${state.reviewIndex}県目クリア　・　この1枚ですぐ仲間を呼ぼう！</p>${button('いまのコインで ガチャ！ →','review-coin-next','primary-button sun')}</section>`,{label:`おさらい ${state.reviewIndex} / ${state.round.length}　コインをもらってガチャ`});
 }
 
 function earnedThisRound() {
@@ -1501,17 +1540,19 @@ function earnedThisRound() {
 
 function renderGacha() {
   cleanups(); state.screen='gacha'; state.gachaBusy=false;
-  app.innerHTML=shell(`<section class="scene gacha-scene"><p class="eyebrow">にほん全国 なかまガチャ</p><h1>つぎは だれに あえるかな？</h1><div class="gacha-machine" aria-hidden="true"><span>？</span><i>★</i></div><h2>🪙 コイン ${state.coins}まい</h2><p>1まいで1回。47県のどの仲間も同じ確率！<br>同じ仲間が出ることもあるよ。</p>${button('コイン1まいで まわす！','gacha-pull','primary-button sun',state.coins ? '' : 'disabled')}<div class="button-row">${button('冒険へ','start','secondary-button')}${button('図鑑へ','collection','secondary-button')}</div></section>`,{label:'おさらい1県 → コイン1まい → ガチャ1回'});
+  const reviewing = state.gachaFromReview;
+  app.innerHTML=shell(`<section class="scene gacha-scene"><p class="eyebrow">にほん全国 なかまガチャ</p><h1>つぎは だれに あえるかな？</h1><div class="gacha-machine" aria-hidden="true"><span>？</span><i>★</i></div><h2>🪙 コイン ${state.coins}まい</h2><p>1まいで1回。47県のどの仲間も同じ確率！<br>同じ仲間が出ることもあるよ。</p>${button('コイン1まいで まわす！','gacha-pull','primary-button sun',state.coins ? '' : 'disabled')}${reviewing ? '' : `<div class="button-row">${button('冒険へ','start','secondary-button')}${button('図鑑へ','collection','secondary-button')}</div>`}</section>`,{label:reviewing ? `おさらい ${state.reviewIndex} / ${state.round.length}　ガチャを回そう` : 'なかまガチャ'});
 }
 
 function pullGacha() {
   if(state.screen!=='gacha'||state.gachaBusy||state.coins<1)return;
   state.gachaBusy=true;
+  state.gachaFromReview=false;
   const pref=PREFECTURES[Math.floor(Math.random()*PREFECTURES.length)];
   state.coins-=1; storage.set('47quest-coins',state.coins);
   state.newlyUnlocked=new Set(state.unlocked.has(pref.code)?[]:[pref.code]);
   state.unlocked.add(pref.code); saveProgress();
-  state.gachaRewards=[pref];state.rewardRevealIndex=0;state.current=pref;
+  state.gachaRewards.push(pref);state.rewardRevealIndex=state.gachaRewards.length-1;state.current=pref;
   renderRewardReveal();
 }
 
@@ -1527,7 +1568,7 @@ function renderRewardReveal() {
   const earned = earnedThisRound();
   const pref = earned[state.rewardRevealIndex];
   const isNew = state.newlyUnlocked.has(pref.code);
-  const isLast = state.rewardRevealIndex >= earned.length - 1;
+  const reviewContinues = state.reviewIndex < state.round.length;
   app.innerHTML = shell(`
     <section class="scene reward-reveal-scene" style="--reveal-color:${pref.color}">
       <div class="reveal-curtain" aria-hidden="true"><i></i><i></i></div>
@@ -1550,8 +1591,8 @@ function renderRewardReveal() {
         ${characterStats(pref, 'reveal-stats')}
         <div class="gacha-prefecture-map"><strong>${pref.name}は赤いところ</strong>${mapLayers(pref,`${pref.name}の場所を示す日本地図`)}</div>
       </div>
-      ${button('場所をおぼえた！ ガチャへ →', 'reward-reveal-next', 'primary-button sun reveal-next-button')}
-    </section>`, { progress: 100, label: `仲間ゲット！ ${state.rewardRevealIndex + 1} / ${earned.length}` });
+      ${button(reviewContinues ? 'つぎのおさらいへ →' : `${state.round.length}県のおさらい完了！ →`, 'reward-reveal-next', 'primary-button sun reveal-next-button')}
+    </section>`, { progress: 92 + state.reviewIndex * 2, label: `仲間ゲット！ ${state.reviewIndex} / ${state.round.length}` });
   sound('win');
   sound('reveal');
   const revealSounds = [
@@ -1580,6 +1621,33 @@ function renderReward() {
         ${button('図鑑を見る', 'collection', 'secondary-button')}
       </div>
     </section>`, { progress: 100, label: state.quickQuiz ? 'いきなりクイズ クリア' : '冒険クリア' });
+}
+
+function renderNationComplete() {
+  cleanups();
+  state.screen = 'nation-complete';
+  const confetti = Array.from({ length: 47 }, (_, index) => `<i style="--x:${(index * 43) % 100}%;--color:${['#ff6b56','#ffcf54','#71d3ad','#80ccef','#c9ace5'][index % 5]};--speed:${3 + (index % 7) * .25}s;--delay:${-(index % 11) * .3}s"></i>`).join('');
+  app.innerHTML = shell(`
+    <section class="scene reward-scene nation-complete-scene">
+      <div class="confetti">${confetti}</div>
+      <p class="eyebrow">${state.journeyLap}周目 全国制覇</p>
+      <h1 class="title">47都道府県<br>ぜんぶクリア！</h1>
+      <div class="nation-complete-medal" aria-hidden="true">🗾<span>47</span></div>
+      <p>同じ県を重ねず、全国を一周しました。<br>次は並びが変わる新しい一周です。</p>
+      ${button(`${state.journeyLap + 1}周目へ 出発！`, 'journey-next-lap', 'primary-button sun')}
+    </section>`, { progress: 100, label: `${state.journeyLap}周目 47都道府県クリア` });
+  sound('win'); sound('bonus');
+}
+
+function startNextJourneyLap() {
+  state.journeyLap += 1;
+  state.cleared = new Set();
+  storage.set('47quest-journey-lap', state.journeyLap);
+  storage.set('47quest-cleared', []);
+  storage.set('47quest-adventure-deck', []);
+  storage.set('47quest-quick-quiz-deck', []);
+  storage.set('47quest-last-first', '');
+  startRound();
 }
 
 function renderCollection() {
@@ -1732,11 +1800,13 @@ app.addEventListener('click', (event) => {
   if (action === 'game-next') return state.replay ? renderDetail(state.current) : renderLocationQuiz();
   if (action === 'game-skip') return renderLocationQuiz();
   if (action === 'reward-reveal-next') {
-    return renderGacha();
+    if (state.reviewIndex < state.round.length) return renderReviewLocation();
+    return state.cleared.size >= PREFECTURES.length ? renderNationComplete() : renderReward();
   }
+  if (action === 'journey-next-lap') return startNextJourneyLap();
   if (action === 'gacha') return renderGacha();
   if (action === 'gacha-pull') return pullGacha();
-  if (action === 'review-coin-next' && state.screen === 'review-coin') return state.reviewIndex < 3 ? renderReviewLocation() : renderGacha();
+  if (action === 'review-coin-next' && state.screen === 'review-coin') return renderGacha();
   if (action === 'location-map') {
     if (state.locationResolved || event.clientX == null) return;
     if (control._mapZoom?.consumeDrag()) return;

@@ -1,0 +1,23 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const appSrc=fs.readFileSync('src/app.js','utf8');
+const deckSrc=fs.readFileSync('src/prefecture-deck.js','utf8');
+function fn(name){const start=appSrc.indexOf(`function ${name}(`);const end=appSrc.indexOf('\nfunction ',start+1);return appSrc.slice(start,end<0?undefined:end);}
+const PREFECTURES=Array.from({length:47},(_,i)=>({code:String(i+1).padStart(2,'0')}));
+const saved={};
+const state={cleared:new Set(PREFECTURES.slice(0,44).map(p=>p.code))};
+const storage={get:(key,fallback)=>saved[key]??fallback,set:(key,value)=>{saved[key]=value;}};
+const window={};
+vm.runInNewContext(deckSrc,{window,Math});
+const ctx={state,storage,window,PREFECTURES,Math};
+vm.createContext(ctx);vm.runInContext(fn('drawPrefectureRound'),ctx);
+let round=ctx.drawPrefectureRound('deck');
+assert.equal([...round].map(p=>p.code).sort().join(','),'45,46,47');
+state.cleared.add('45');state.cleared.add('46');
+round=ctx.drawPrefectureRound('deck');
+assert.equal([...round].map(p=>p.code).join(','),'47');
+state.cleared.add('47');
+assert.equal(ctx.drawPrefectureRound('deck').length,0);
+assert.match(appSrc,/renderNationComplete\(\)/);
+assert.match(appSrc,/47都道府県<br>ぜんぶクリア/);
+assert.match(appSrc,/state\.cleared = new Set\(\)/);
+console.log('PASS: cleared prefectures are excluded, the final short round works, and a new lap starts only after the completion screen');

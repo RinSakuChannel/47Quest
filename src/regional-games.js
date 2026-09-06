@@ -80,9 +80,10 @@
     const p=[{x:200,y:340},{x:330,y:340}],goals=[{x:680,y:240},{x:810,y:300}];let held=-1;
     return {input(k,q){if(k==='down')held=p.findIndex(v=>dist(v,q)<65);if(k==='move'&&held>=0){p[held]={x:q.x,y:q.y};const other=p[1-held],d=dist(other,p[held]);if(d>150){other.x+=(p[held].x-other.x)*(d-150)/d;other.y+=(p[held].y-other.y)*(d-150)/d;}}if(k==='up'){held=-1;if(p.every((v,i)=>dist(v,goals[i])<65))a.win();}if(k==='cancel')held=-1;},draw(){goals.forEach(g=>a.target(g.x,g.y,65));a.line(p,'#6c9148',10);p.forEach((v,i)=>{a.circle(v.x,v.y,45,i?'#ef795b':'#d74755');a.text(i+1,v.x,v.y,30,'#fff');});goals.forEach((g,i)=>a.text(i+1,g.x,g.y,26));a.text('片方をつかむと もう片方もついてくる',500,540,26);}};
   });
-  register('07','あかべこ 鈴ならし','左右で くびを ささえよう','頭が真ん中になるよう左右を押そう。真ん中で鈴がたまるよ。','🔔',a=>{
-    let tilt=random(-.5,.5),steady=0;
-    return {step(dt,p){tilt+=Math.sin(a.time*2)*dt*.35;if(p.down)tilt+=(p.x<500?-1:1)*dt*.8;tilt*=Math.exp(-dt*.12);tilt=clamp(tilt,-1,1);if(Math.abs(tilt)<.2)steady+=dt;if(steady>4)a.win();},draw(){a.box(280,270,440,170,'#d9584a');a.line([{x:500,y:310},{x:500+tilt*180,y:170}],'#ae4639',35);a.circle(500+tilt*180,170,70,'#e47759');a.icon('🔔',500+tilt*180,180,65);a.box(200,480,600,22,'#ddd');a.box(200,480,Math.max(1,steady/4*600),22,'#f5c94e');a.text('← 左をおす　　　　右をおす →',500,550);}};
+  register('07','あかべこ 鈴キャッチ','鈴の下へ すばやく動こう！','左右から落ちる鈴を、あかべこの頭で受け止めよう。風で落ち方が変わるよ。','🔔',a=>{
+    let head=500,caught=0,bell={x:random(150,850),y:70,vx:random(-45,45),vy:120};
+    const next=()=>{bell={x:random(120,880),y:55,vx:random(-65,65),vy:random(115,155)};};
+    return {input(k,p){if(k==='down'||(k==='move'&&p.down))head=clamp(p.x,120,880);},step(dt){bell.x+=bell.vx*dt;bell.y+=bell.vy*dt;bell.vy+=80*dt;if(bell.x<70||bell.x>930)bell.vx*=-1;if(bell.y>410&&bell.y<500&&Math.abs(bell.x-head)<105){caught++;a.tell('リン！');if(caught>=5)a.win(head,420);else next();}else if(bell.y>550){a.miss();next();}},draw(){a.box(0,0,1000,600,'#f3e6cf');a.icon('🔔',bell.x,bell.y,58);a.box(head-120,420,240,80,'#d9584a');a.circle(head,400,72,'#e47759');a.text(`鈴 ${caught} / 5`,500,70,34);a.text('鈴の下を タップして受ける！',500,550,27);}};
   });
   register('08','メロン 網目スタンプ','空いているところで タップ！','回るメロンに網目をつけよう。まだ線がない面でタップしてね。','🍈',a=>{
     let angle=0;const marked=new Set();
@@ -112,10 +113,10 @@
     const grains=Array.from({length:12},()=>({x:random(130,870),y:random(140,400)}));let nori={x:160,y:490},drag=false;
     return {input(k,p){if(k==='down'&&dist(p,nori)<80)drag=true;if(k==='move'&&p.down){if(drag)nori={x:p.x,y:p.y};else for(const g of grains)if(dist(g,p)<85){g.x+=(500-g.x)*.35;g.y+=(280-g.y)*.35;}}if(k==='up'){drag=false;if(grains.every(g=>dist(g,{x:500,y:280})<125)&&dist(nori,{x:500,y:280})<110)a.win();}if(k==='cancel')drag=false;},draw(){a.target(500,280,125);grains.forEach(g=>a.circle(g.x,g.y,26,'#fff'));a.box(nori.x-50,nori.y-35,100,70,'#315d45');a.text('お米を真ん中へ → 海苔を重ねよう',500,555,26);}};
   });
-  register('16','ほたるいか 光の追跡','光をおいかけて あみを運ぼう','光る群れを指の網で追いかけよう。消えても進んだ方向を覚えてね。','✨',a=>{
-    let caught=0;const offset=random(0,6);
-    const target=()=>({x:500+Math.sin(a.time*.55+offset)*270,y:290+Math.sin(a.time*.9)*120});
-    return {step(dt,p){if(p.down&&dist(p,target())<100)caught+=dt;if(caught>4)a.win();},draw(){a.box(0,0,1000,600,'#203e61');const t=target();if(Math.sin(a.time*2)>-.3)a.icon('🦑',t.x,t.y,85);a.text(`${caught.toFixed(1)} / 4`,500,75,32,'#fff');a.text('光の進む方向へ 指をうごかそう',500,540,27,'#fff');}};
+  register('16','ほたるいか 消える光','光った場所を おぼえてタップ！','一瞬だけ光るほたるいかを見つけよう。暗くなっても、いた場所を覚えてタップ！','✨',a=>{
+    const spots=Array.from({length:6},(_,i)=>({x:220+(i%3)*280,y:190+Math.floor(i/3)*210}));let target=Math.floor(random(0,6)),age=0,caught=0;
+    const next=()=>{let n;do n=Math.floor(random(0,6));while(n===target);target=n;age=0;};
+    return {input(k,p){if(k!=='down'||age<.35)return;const picked=spots.findIndex(s=>dist(s,p)<85);if(picked===target){caught++;a.tell('みつけた！');if(caught>=4)a.win(spots[target].x,spots[target].y);else next();}else if(picked>=0){a.miss();a.tell('光った場所は どこかな？');}},step(dt){age+=dt;if(age>2.1)next();},draw(){a.box(0,0,1000,600,'#173754');spots.forEach((s,i)=>{a.circle(s.x,s.y,72,'#244d68');a.text('？',s.x,s.y,42,'#6e91a4');if(i===target&&age<.8){a.circle(s.x,s.y,78,'#d8f5c1');a.icon('🦑',s.x,s.y,82);}});a.text(`発見 ${caught} / 4`,500,65,34,'#fff');a.text(age<.8?'光った！ よく見て！':'消えた場所を タップ！',500,550,29,'#fff');}};
   });
   register('17','金ぱく そっと着地','そっと 器へ おろそう','金箔をゆっくり運ぼう。速く動かすとしわになるよ。右の器へ置いてね。','✨',a=>{
     let foil={x:180,y:220},held=false,crease=0;
@@ -189,17 +190,19 @@
     const gates=[false,false,false];let x=100;
     return {input(k,p){if(k==='down'){const i=[300,550,800].findIndex(x=>Math.abs(p.x-x)<70);if(i>=0)gates[i]=!gates[i];}},step(dt){const next=[300,550,800].findIndex(g=>g>x);if(next<0||gates[next]||[300,550,800][next]-x>35)x+=dt*85;if(x>920)a.win();},draw(){a.box(50,180,900,200,'#b0dce0');[300,550,800].forEach((g,i)=>{a.box(g-15,gates[i]?80:180,30,200,gates[i]?'#77b49b':'#d78664');a.text(gates[i]?'ひらいた':'おす',g,440,24);});a.icon('🍁',x,285,60);a.text('舟の前の 水門をひらこう',500,545);}};
   });
-  register('35','ふぐ ぷくぷく水路','輪にあわせて 大きさを変えよう','押すとふくらむ、離すと縮むよ。輪の中で同じ大きさを保とう。','🐡',a=>{
-    const target=random(45,90);let r=30,match=0;
-    return {step(dt,p){r=clamp(r+(p.down?45:-32)*dt,25,110);if(Math.abs(r-target)<12)match+=dt;else match=Math.max(0,match-dt*.2);if(match>2.5)a.win();},draw(){a.box(0,0,1000,600,'#d6edf0');a.target(500,300,target);a.icon('🐡',500,300,r*2);a.text(`${match.toFixed(1)} / 2.5`,500,100,32);a.text('おすと ぷくっ　離すと しゅー',500,545);}};
+  register('35','ふぐ ぷくぷく水路','門にあわせて 大・小をきりかえ！','タップでふぐが大きくなるよ。大きい門と小さい門を見て、通る前に姿を切り替えよう。','🐡',a=>{
+    let big=false,x=150,passed=0;let gate={x:760,big:Math.random()<.5};
+    const next=()=>{x=150;gate={x:random(680,830),big:Math.random()<.5};};
+    return {input(k){if(k==='down')big=!big;},step(dt){x+=dt*(125+passed*18);if(x>gate.x-15){if(big===gate.big){passed++;a.tell(gate.big?'大きく通過！':'小さく通過！');if(passed>=4)a.win(gate.x,300);else next();}else{x=150;a.miss();a.tell(gate.big?'大きくなって！':'小さくなって！');}}},draw(){a.box(0,0,1000,600,'#d6edf0');const gap=gate.big?180:90;a.box(gate.x-18,80,36,220-gap/2,'#557f88');a.box(gate.x-18,300+gap/2,36,220-gap/2,'#557f88');a.text(gate.big?'大':'小',gate.x,55,34);a.icon('🐡',x,300,big?150:76);a.text(`門 ${passed} / 4　タップで ${big?'小さく':'大きく'}`,500,550,27);}};
   });
   register('36','阿波おどり 大行列','左右の足で リズムをきざもう','下の輪に足あとが入ったら、同じ側をタップ。踊りの仲間を増やそう！','👣',a=>{
     let notes=[],spawn=0,count=0,next=0;
     return {input(k,p){if(k!=='down')return;const side=p.x<500?0:1;const n=notes.find(n=>n.side===side&&Math.abs(n.y-430)<80);if(n){notes.splice(notes.indexOf(n),1);count++;if(count>=6)a.win();}else a.tell('輪にきたら タップ！');},step(dt){spawn-=dt;if(spawn<=0){notes.push({side:next++%2,y:70});spawn=1.1;}notes.forEach(n=>n.y+=dt*170);notes=notes.filter(n=>n.y<550);},draw(){[300,700].forEach(x=>a.target(x,430,75));notes.forEach(n=>a.icon('👣',n.side?700:300,n.y,65));a.text(`踊る仲間 ${count} / 6`,500,40);a.text('左の足　　　　　　右の足',500,570);}};
   });
-  register('38','みかん船 波のおとどけ','逆の波で 船をささえよう','船が傾いたら反対側を押そう。みかんを落とさず港まで運ぼう。','⛵',a=>{
-    let tilt=0,travel=0;const cargo=[-60,0,60];
-    return {step(dt,p){tilt+=Math.sin(a.time*1.7)*dt*.5;if(p.down)tilt+=(p.x<500?-.7:.7)*dt;tilt=clamp(tilt,-1,1);if(p.down&&Math.abs(tilt)<.5)travel+=dt;if(travel>6)a.win();if(Math.abs(tilt)>.95){tilt*=.5;a.tell('傾いたら 反対をおそう');}},draw(){a.box(0,330,1000,270,'#9bd4e1');a.line([{x:280,y:350-tilt*130},{x:720,y:350+tilt*130}],'#ad784c',35);cargo.forEach(x=>a.icon('🍊',500+x,310+tilt*x*.6,55));a.text(`港まで ${Math.max(0,6-travel).toFixed(1)}`,500,100,32);a.text('← 左の波　　　　　　右の波 →',500,540,26);}};
+  register('38','みかん船 くぐれ波門','上下タップで 波門をくぐろう！','上か下をタップして船を動かそう。波のすき間を3つくぐって、みかんを港へ！','⛵',a=>{
+    let boat={x:150,y:300},gateX=760,gapY=random(170,430),passed=0;
+    const next=()=>{boat.x=150;gateX=random(700,850);gapY=random(160,440);};
+    return {input(k,p){if(k==='down')boat.y=clamp(boat.y+(p.y<300?-95:95),105,495);},step(dt){boat.x+=dt*(135+passed*20);if(boat.x>gateX-15){if(Math.abs(boat.y-gapY)<90){passed++;a.tell('ざぶん！');if(passed>=3)a.win(gateX,gapY);else next();}else{a.miss();a.tell('波のすき間へ！');next();}}},draw(){a.box(0,0,1000,600,'#ccecf1');a.box(0,500,1000,100,'#83cad7');a.box(gateX-24,70,48,Math.max(10,gapY-90-70),'#67b5ce');a.box(gateX-24,gapY+90,48,510-(gapY+90),'#67b5ce');a.target(gateX,gapY,88);a.icon('⛵',boat.x,boat.y,105);a.text(`波門 ${passed} / 3`,500,55,34);a.text('画面の 上・下をタップ！',500,555,27);}};
   });
   register('39','かつお 糸のかけひき','引く・ゆるめるで つり上げよう','押すと引く、離すと糸がゆるむよ。赤くなったら離して切れないように！','🎣',a=>{
     let tension=.3,progress=0;
@@ -209,9 +212,10 @@
     let y=410,vy=0,jumps=0,obstacle=950,passed=0;
     return {input(k){if(k==='down'&&jumps<2){vy=-290;jumps++;}},step(dt){vy+=dt*650;y+=vy*dt;if(y>=410){y=410;vy=0;jumps=0;}obstacle-=dt*190;if(obstacle<280&&obstacle>180&&y>335){obstacle=950;a.tell('波の前で ジャンプ！');}if(obstacle<80){passed++;obstacle=950;if(passed===3)a.win();}},draw(){a.box(0,450,1000,150,'#a8dadd');a.icon('🌊',obstacle,415,95);a.box(180,y-35,100,60,'#e68175');a.circle(248,y-15,6,'#36414d');a.text(`波 ${passed} / 3`,500,90);a.text('タップ！ 空中でもう一回 タップ！',500,550,25);}};
   });
-  register('41','器の くるくる絵付け','回る器へ 筆をあてよう','押している間、器に線がつくよ。青い帯を一周描き、次の帯へ移ろう。','🖌',a=>{
-    let angle=0;const painted=[new Set(),new Set()];
-    return {step(dt,p){angle+=dt*1.2;if(p.down){const row=Math.abs(p.y-230)<65?0:Math.abs(p.y-370)<65?1:-1;if(row>=0)painted[row].add(Math.floor(angle%(Math.PI*2)/(Math.PI*2)*24));}if(painted.every(s=>s.size===24))a.win();},draw(){a.box(230,130,540,330,'#fff');[230,370].forEach((y,row)=>{a.line([{x:245,y},{x:755,y}],'#c7e0e8',40);painted[row].forEach(i=>a.box(245+i*21,y-20,20,40,'#48859f'));});a.icon('🖌',500+Math.sin(angle)*230,300,70);a.text('上の帯と下の帯を おして塗ろう',500,540);}};
+  register('41','器の くるくる絵付け','光る模様が筆に来たら 上か下！','模様が右の筆に来た瞬間、同じ高さをタップ。回転がだんだん速くなるよ。','🖌',a=>{
+    let angle=0,hits=0;const marks=Array.from({length:7},(_,i)=>({row:Math.random()<.5?0:1,offset:i/7*Math.PI*2,done:false}));
+    const nearest=row=>marks.filter(m=>!m.done&&m.row===row).sort((m,n)=>Math.abs(Math.cos(angle+m.offset)-1)-Math.abs(Math.cos(angle+n.offset)-1))[0];
+    return {input(k,p){if(k!=='down')return;const row=p.y<300?0:1,m=nearest(row);if(m&&Math.cos(angle+m.offset)>.82){m.done=true;hits++;a.tell('シュッ！');if(hits===marks.length)a.win(760,row?370:230);}else{a.miss();a.tell('光が筆に来たら！');}},step(dt){angle+=dt*(1.35+hits*.1);},draw(){a.box(220,120,560,350,'#fff');[230,370].forEach(y=>a.line([{x:245,y},{x:755,y}],'#d3e6ea',48));marks.forEach(m=>{if(m.done)return;const x=500+Math.cos(angle+m.offset)*245,y=(m.row?370:230)+Math.sin(angle+m.offset)*22;a.circle(x,y,22,Math.cos(angle+m.offset)>.82?'#ffd34f':'#4f8ba3');});a.icon('🖌',790,230,66);a.icon('🖌',790,370,66);a.text(`模様 ${hits} / ${marks.length}`,500,70,34);a.text('右で光ったら 上か下をタップ！',500,540,27);}};
   });
   register('42','カステラ おすそわけ','人数にあわせて 切り分けよう','縦にスワイプして切ろう。３人なら２本の切れ目で３つに分けるよ。','🍰',a=>{
     const people=Math.random()<.5?3:4;let cuts=[],start=null;
@@ -221,9 +225,9 @@
     const slots=[{x:320,y:180},{x:520,y:290},{x:750,y:390}];let i=0,stone={x:100,y:460},held=false;
     return {input(k,p){if(k==='down'&&dist(p,stone)<75)held=true;if(k==='move'&&held)stone={x:p.x,y:p.y};if(k==='up'&&held){held=false;if(slots[i]&&dist(stone,slots[i])<70){i++;if(i===3)a.win();}stone={x:100,y:460};}if(k==='cancel')held=false;},draw(){a.line([{x:150,y:70},...slots.slice(0,i)],'#71bdd5',28);slots.forEach((s,n)=>{a.circle(s.x,s.y,60,n<i?'#82bdaf':'#dc8854');if(n===i)a.target(s.x,s.y,70);});a.circle(stone.x,stone.y,45,'#89968b');a.text('石で水の向きをかえて 岩を冷やす',500,550,26);}};
   });
-  register('44','温泉たまご 湯かげん係','お湯をまぜて ちょうどよく！','左は熱いお湯、右は冷たい水。黄色い温度に合わせて卵を温めよう。','🥚',a=>{
-    let temp=.25,cooked=0;
-    return {step(dt,p){if(p.down)temp+=dt*(p.x<500?.28:-.28);temp=clamp(temp-dt*.025,0,1);if(temp>.4&&temp<.7)cooked+=dt;if(cooked>5)a.win();},draw(){a.box(180,210,640,230,'#badeda');a.icon('🥚',500,310,120);a.box(200,100,600,30,'#d6dcce');a.box(440,90,180,50,'#ffe491');a.circle(200+temp*600,115,18,'#d8654a');a.text(`温まり ${cooked.toFixed(1)} / 5`,500,475);a.text('熱いお湯　　　　　　冷たい水',500,550,28);}};
+  register('44','温泉たまご 三色湯めぐり','光ったお湯へ 卵をはこぼう！','光る温泉を順番に見て、卵をドラッグ。熱・ぬる・冷のコースが毎回変わるよ。','🥚',a=>{
+    const baths=[{x:230,color:'#ef8a65',name:'あつい'},{x:500,color:'#f2ce68',name:'ぬるい'},{x:770,color:'#7fc9dd',name:'つめたい'}];const route=Array.from({length:5},()=>Math.floor(random(0,3)));let egg={x:500,y:470},held=false,stage=0;
+    return {input(k,p){if(k==='down'&&dist(p,egg)<90)held=true;if(k==='move'&&held)egg={x:p.x,y:p.y};if(k==='up'&&held){held=false;const hit=baths.findIndex(b=>dist(p,{x:b.x,y:270})<105);if(hit===route[stage]){stage++;a.tell('いい湯！');if(stage===route.length)a.win(p.x,p.y);}else if(hit>=0){a.miss();a.tell('光っているお湯へ！');}egg={x:500,y:470};}if(k==='cancel'){held=false;egg={x:500,y:470};}},draw(){a.box(0,0,1000,600,'#f4ecd8');baths.forEach((b,i)=>{a.circle(b.x,270,115,b.color);if(i===route[stage])a.target(b.x,270,125);a.text(b.name,b.x,270,25,'#173e51');});a.icon('🥚',egg.x,egg.y,90);a.text(`湯めぐり ${stage} / ${route.length}　光るお湯へ！`,500,550,27);}};
   });
   register('45','マンゴー 網の収穫','包んで くるっと ひねろう','下の網をマンゴーへ重ねよう。包んだら果実のまわりをくるっとなぞろう。','🥭',a=>{
     let net={x:250,y:450},wrapped=false,last=null,turn=0,held=false;

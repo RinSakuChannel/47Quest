@@ -744,7 +744,7 @@ button:focus-visible, [role="button"]:focus-visible, canvas:focus-visible { outl
 .reveal-kicker { z-index:3; margin:0; padding:.35rem .75rem; border:.15rem solid rgba(255,255,255,.7); border-radius:1rem; background:var(--coral); box-shadow:0 .3rem 0 rgba(0,0,0,.2); font-weight:1000; letter-spacing:.08em; animation:new-stamp .58s .92s cubic-bezier(.18,1.5,.35,1) both; }
 @keyframes new-stamp { from { opacity:0; transform:scale(2.2) rotate(-12deg); } }
 .reveal-name-card { z-index:3; width:min(34rem,88%); padding:clamp(.55rem,1.4vw,.9rem) 1rem; border:1px solid rgba(255,255,255,.5); border-radius:1.2rem; background:rgba(255,255,255,.88); backdrop-filter:blur(.7rem); color:var(--navy); box-shadow:0 .7rem 2rem rgba(0,0,0,.22); animation:name-card-rise .65s .85s cubic-bezier(.16,1,.3,1) both; }
-.reveal-name-card small { color:#39728b; font-weight:1000; }.reveal-name-card h1 { margin:.1rem 0; font-size:clamp(1.8rem,5vw,3.6rem); line-height:1; letter-spacing:-.055em; }.reveal-name-card p { margin:.3rem 0 0; font-weight:850; }
+.reveal-name-card small { color:#39728b; font-weight:1000; }.reveal-name-card h1 { margin:.1rem 0; font-size:clamp(1.8rem,5vw,3.6rem); line-height:1; letter-spacing:-.055em; }.reveal-name-card p { margin:.3rem 0 0; font-weight:850; text-wrap:balance; }
 .reveal-profile-chips { display:flex; justify-content:center; gap:.35rem; flex-wrap:wrap; margin-top:.45rem; }.reveal-profile-chips span { padding:.26rem .5rem; border-radius:.65rem; background:#edf7f3; color:#31677d; font-size:clamp(.58rem,1vw,.72rem); font-weight:1000; }
 .reveal-prefecture-feature { display:grid; grid-template-columns:auto 1fr; gap:.4rem; align-items:center; margin:.35rem 0 0!important; padding:.32rem .5rem; border-radius:.65rem; background:#fff7d8; color:#315f75; font-size:clamp(.6rem,.9vw,.74rem); line-height:1.3; text-align:left; }
 .reveal-prefecture-feature b { color:#a45c17; white-space:nowrap; }
@@ -870,10 +870,15 @@ canvas.micro-scrub-cover { display:block; inset:auto; left:20%; top:14%; width:6
 .roamer-1{left:4%;top:7%;--enter-x:-12rem;--enter-y:-6rem;--enter-r:-35deg;--float-r:4deg;--roamer-delay:.1s;--roamer-speed:1.7s}.roamer-2{right:5%;top:8%;--enter-x:12rem;--enter-y:-7rem;--enter-r:28deg;--float-r:-5deg;--roamer-delay:.25s;--roamer-speed:2.1s}.roamer-3{left:7%;top:42%;--enter-x:-14rem;--enter-y:0;--enter-r:-45deg;--float-r:-4deg;--roamer-delay:.42s;--roamer-speed:1.5s}.roamer-4{right:7%;top:43%;--enter-x:14rem;--enter-y:0;--enter-r:45deg;--float-r:4deg;--roamer-delay:.55s;--roamer-speed:1.85s}.roamer-5{left:17%;bottom:3%;--enter-x:-8rem;--enter-y:10rem;--enter-r:-25deg;--float-r:5deg;--roamer-delay:.65s;--roamer-speed:2.15s}.roamer-6{right:17%;bottom:2%;--enter-x:8rem;--enter-y:10rem;--enter-r:25deg;--float-r:-5deg;--roamer-delay:.75s;--roamer-speed:1.65s}
 @media(max-width:720px){.title-stage{width:min(92vw,34rem)}.game-logo>strong{font-size:clamp(3.2rem,17vw,5.4rem)}.game-logo>span{width:clamp(4.2rem,21vw,6.8rem)}.home-roamer{width:clamp(4.6rem,20vw,7.5rem)}.roamer-1,.roamer-2{top:5%}.roamer-3,.roamer-4{top:52%}.roamer-5{left:5%;bottom:2%}.roamer-6{right:5%;bottom:2%}.title-copy{display:none}.title-stage>.daily-quest{margin-top:1.7rem}.title-start-button{min-width:min(20rem,76vw)}}
 
-/* Opening reveal: a deliberately rough retro mosaic keeps the creature a mystery. */
-.home-roamer-art { position:relative; }
-.home-roamer-art > img { image-rendering:pixelated; filter:blur(2.5px) saturate(.65) contrast(.9); transform:scale(1.04); }
-.home-roamer-art::after { content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(0deg,rgba(18,59,83,.18) 0 2px,transparent 2px 5px),repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 2px,transparent 2px 6px); mix-blend-mode:multiply; opacity:.72; }
+/* Opening reveal: a real 12×12 bitmap is enlarged into coarse, opaque squares. */
+.home-roamer-art { position:relative; overflow:hidden; }
+.home-roamer-art > img { opacity:0; }
+.home-roamer-pixels { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; image-rendering:pixelated; image-rendering:crisp-edges; filter:saturate(.72) contrast(1.35) brightness(.72); transform:scale(1.08); }
+.home-roamer-art::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(135deg,rgba(8,36,52,.18),rgba(255,214,95,.08)); }
+.nation-complete-scene { place-content:center; text-align:center; }
+.nation-complete-medal { position:relative; display:grid; place-items:center; width:clamp(9rem,25vmin,15rem); aspect-ratio:1; margin:.35rem auto; border:.45rem solid #fff; border-radius:50%; background:radial-gradient(circle,#fff6b8 0 38%,#ffd052 39% 66%,#d88b24 67%); box-shadow:0 .7rem 0 #a86420,0 1rem 2rem rgba(18,59,83,.24); font-size:clamp(4rem,12vmin,7rem); animation:medal-arrive .75s cubic-bezier(.18,1.45,.35,1) both; }
+.nation-complete-medal span { position:absolute; right:8%; bottom:8%; display:grid; place-items:center; width:3.2rem; aspect-ratio:1; border-radius:50%; background:var(--navy); color:var(--sun); font-size:1.2rem; font-weight:1000; }
+@keyframes medal-arrive { from { opacity:0; transform:scale(.2) rotate(-24deg); } }
 
 /* Extra game feel: clues, drifting targets, and interruptible movement */
 .micro-cover.is-peeking { animation:cover-peek .42s cubic-bezier(.18,1.45,.35,1); box-shadow:0 0 0 .3rem var(--sun),0 .5rem 1.1rem rgba(18,59,83,.2); }

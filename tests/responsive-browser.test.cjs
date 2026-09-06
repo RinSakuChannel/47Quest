@@ -150,6 +150,8 @@ async function drawEnoughInk(page) {
       await assertPageNoScroll(page, `${name} title`);
       await assertReadableText(page, `${name} title`);
       assert.equal(await page.locator('.home-roamer [data-character-code]').count(), 6, `${name}: title characters are not voice-enabled`);
+      assert.equal(await page.locator('.home-roamer-pixels').count(), 6, `${name}: coarse title mosaics were not rendered`);
+      assert.ok(await page.locator('.home-roamer-pixels').first().evaluate(canvas => canvas.width === 12 && canvas.height === 12), `${name}: title mosaic is not coarse enough`);
       if (name === 'desktop') {
         await page.locator('.sound-menu-button').click();
         assert.equal(await page.locator('[data-volume="bgm"]').inputValue(), '34', 'default BGM must be twenty percent quieter');
@@ -283,6 +285,15 @@ async function drawEnoughInk(page) {
       await assertNoHiddenOverflow(page, '.detail-scene,.character-profile-card', `${name} detail`);
       await assertPageNoScroll(page, `${name} detail`);
       await assertReadableText(page, `${name} detail`);
+      if (name === 'desktop' || name === 'phone') {
+        await page.evaluate(() => localStorage.setItem('47quest-cleared', JSON.stringify(Array.from({length:47},(_,i)=>String(i+1).padStart(2,'0')))));
+        await page.goto(baseUrl, { waitUntil:'networkidle' });
+        await page.locator('[data-action="start"]').click();
+        await page.waitForSelector('.nation-complete-scene');
+        await assertInsideViewport(page, '.nation-complete-scene,.nation-complete-medal,.nation-complete-scene button', `${name} nationwide completion`);
+        await assertPageNoScroll(page, `${name} nationwide completion`);
+        await assertReadableText(page, `${name} nationwide completion`);
+      }
       await context.close();
     }
     const motionContext = await browser.newContext({ viewport:{width:390,height:844}, hasTouch:true, isMobile:true, reducedMotion:'no-preference' });
