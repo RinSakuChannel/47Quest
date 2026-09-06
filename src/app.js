@@ -199,6 +199,7 @@ function initMapZoom(surface, content, options = {}) {
   surface.dataset.mapPannable = 'true';
   const controller = {
     reset,
+    centerOn,
     toggle: () => {
       if (scale > 1.01) return reset();
       if (options.focus) return centerOn(options.focus, options.buttonScale || 2);
@@ -416,7 +417,7 @@ function compactCharacterStats(pref) {
 
 function mapLayers(pref, alt) {
   const point = mapPoint(pref);
-  return `<div class="map-layers" data-map-code="${pref.code}" style="--pin-x:${point.x}%;--pin-y:${point.y}%"><img class="map-image map-base" src="${mapBaseAsset()}" alt="${alt}" /><img class="map-image map-overlay" src="${mapOverlayAsset(pref)}" alt="" aria-hidden="true" /><i class="prefecture-pin" aria-hidden="true"></i><a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a></div>`;
+  return `<div class="map-layers" data-map-code="${pref.code}" style="--pin-x:${point.x}%;--pin-y:${point.y}%"><img class="map-image map-base" src="${mapBaseAsset()}" alt="${alt}" /><img class="map-image map-overlay" src="${mapOverlayAsset(pref)}" alt="" aria-hidden="true" /><i class="prefecture-pin" aria-hidden="true"><svg viewBox="0 0 32 44"><path d="M16 44C14 33 2 23 2 15a14 14 0 0 1 28 0c0 8-12 18-14 29Z" fill="#e84430"/><circle cx="16" cy="15" r="8" fill="#fff"/><circle cx="16" cy="15" r="3" fill="#e84430"/></svg></i><a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a></div>`;
 }
 
 function alignMapPins() {
@@ -424,8 +425,11 @@ function alignMapPins() {
     const pref = PREFECTURES.find((item) => item.code === layers.dataset.mapCode);
     const pin = layers.querySelector('.prefecture-pin');
     if (!pref || !pin) return;
-    const rect = layers.getBoundingClientRect();
-    const box = mapDisplayBox(rect.width, rect.height);
+    // CSS local coordinates must not include entrance or zoom transforms.
+    const box = mapDisplayBox(layers.clientWidth, layers.clientHeight);
+    const base = layers.querySelector('.map-base'), overlay = layers.querySelector('.map-overlay');
+    if(base && base.getAttribute('src')!==mapBaseAsset())base.src=mapBaseAsset();
+    if(overlay && overlay.getAttribute('src')!==mapOverlayAsset(pref))overlay.src=mapOverlayAsset(pref);
     const point = mapPoint(pref);
     pin.style.left = `${box.left + box.width * point.x / 100}px`;
     pin.style.top = `${box.top + box.height * point.y / 100}px`;
@@ -602,6 +606,37 @@ function renderMap() {
       </div>
     </section>`, { label: `${state.roundIndex + 1} / ${state.round.length}　${pref.name}の場所を おぼえよう` });
   initMapZoom(document.querySelector('.map-stage'), document.querySelector('.map-stage .map-layers'), { focus: point });
+  playMapDiscovery(pref);
+}
+
+function playMapDiscovery(pref) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const surface=document.querySelector('.map-discovery-stage');
+  const content=surface?.querySelector('.map-layers');
+  if (!content) return;
+  const controller=surface._mapZoom;
+  let frame=0, timer=0, camera=null, stopped=false;
+  const stop=()=>{
+    if(stopped)return;stopped=true;cancelAnimationFrame(frame);clearTimeout(timer);
+    camera?.cancel();controller.reset();content.classList.remove('is-discovery-playing');
+    surface.removeEventListener('pointerdown',stop);surface.removeEventListener('wheel',stop);window.removeEventListener('resize',stop);
+  };
+  state.cleanup.push(stop);
+  surface.addEventListener('pointerdown',stop);surface.addEventListener('wheel',stop);window.addEventListener('resize',stop);
+  frame=requestAnimationFrame(()=>{
+    if(stopped)return;
+    alignMapPins();controller.centerOn(mapPoint(pref),3);
+    content.classList.add('is-discovery-playing');
+    const svg=content.querySelector('.prefecture-pin svg');
+    svg?.getAnimations().forEach(a=>{a.cancel();});
+    svg?.animate([{opacity:0,translate:'0 -90px'},{opacity:1,translate:'0 0',offset:.75},{opacity:1,translate:'0 -5px',offset:.87},{opacity:1,translate:'0 0'}],{duration:650,delay:250,easing:'ease-out',fill:'backwards'});
+    timer=setTimeout(()=>{
+      const zoomed=content.style.transform;
+      controller.reset();
+      camera=content.animate([{transform:zoomed},{transform:content.style.transform}],{duration:1100,easing:'cubic-bezier(.45,0,.2,1)'});
+      camera.onfinish=()=>{content.classList.remove('is-discovery-playing');const copy=document.querySelector('.discovery-instruction');if(copy)copy.textContent=`${pref.name}の場所と名前を おぼえよう`;};
+    },1300);
+  });
 }
 
 function renderWriting(mode = state.writeMode) {

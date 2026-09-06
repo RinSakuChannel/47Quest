@@ -343,7 +343,7 @@ async function drawEnoughInk(page) {
     assert.ok(await motionPage.locator('.map-learning-tray button').evaluate(button => button.getAnimations().length > 0), 'primary action spring entrance did not start');
     await motionPage.evaluate(() => { state.round=[PREFECTURE_DATA.find(pref => pref.code === '47')];state.reviewIndex=0;state.reviewPhase='location';renderReviewLocation(); });
     await motionPage.waitForSelector('.prefecture-pin');
-    assert.ok(await motionPage.locator('.prefecture-pin').evaluate(pin => pin.getAnimations().length >= 2), 'map pin drop and glow animations did not start');
+    assert.ok(await motionPage.locator('.prefecture-pin svg').evaluate(pin => pin.getAnimations().length === 1), 'map pin landing animation did not start');
     await assertPageNoScroll(motionPage, 'phone motion');
     await motionContext.close();
   } finally {
