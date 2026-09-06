@@ -411,8 +411,27 @@ function compactCharacterStats(pref) {
 
 function mapLayers(pref, alt) {
   const point = mapPoint(pref);
-  return `<div class="map-layers" style="--beacon-x:${point.x}%;--beacon-y:${point.y}%"><img class="map-image map-base" src="${mapBaseAsset()}" alt="${alt}" /><img class="map-image map-overlay" src="${mapOverlayAsset(pref)}" alt="" aria-hidden="true" /><i class="prefecture-beacon" aria-hidden="true"></i><a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a></div>`;
+  return `<div class="map-layers" data-map-code="${pref.code}" style="--pin-x:${point.x}%;--pin-y:${point.y}%"><img class="map-image map-base" src="${mapBaseAsset()}" alt="${alt}" /><img class="map-image map-overlay" src="${mapOverlayAsset(pref)}" alt="" aria-hidden="true" /><i class="prefecture-pin" aria-hidden="true"></i><a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a></div>`;
 }
+
+function alignMapPins() {
+  document.querySelectorAll('.map-layers[data-map-code]').forEach((layers) => {
+    const pref = PREFECTURES.find((item) => item.code === layers.dataset.mapCode);
+    const pin = layers.querySelector('.prefecture-pin');
+    if (!pref || !pin) return;
+    const rect = layers.getBoundingClientRect();
+    const box = mapDisplayBox(rect.width, rect.height);
+    const point = mapPoint(pref);
+    pin.style.left = `${box.left + box.width * point.x / 100}px`;
+    pin.style.top = `${box.top + box.height * point.y / 100}px`;
+  });
+}
+
+let mapPinResizeFrame = 0;
+window.addEventListener('resize', () => {
+  cancelAnimationFrame(mapPinResizeFrame);
+  mapPinResizeFrame = requestAnimationFrame(alignMapPins);
+});
 
 function animateMountedScene() {
   if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
@@ -432,7 +451,7 @@ function animateMountedScene() {
 function shell(content, { progress = 0, label = 'にほん発見アドベンチャー', home = false } = {}) {
   queueMicrotask(() => {
     startBgm(state.screen, state.current?.code || '');
-    requestAnimationFrame(animateMountedScene);
+    requestAnimationFrame(() => { animateMountedScene(); alignMapPins(); });
   });
   return `
     <section class="app-screen ${home ? 'is-title-screen' : ''}">

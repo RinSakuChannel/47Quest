@@ -269,6 +269,18 @@ async function drawEnoughInk(page) {
       await assertInsideViewport(page, '.review-scene,.review-location-picker,.review-prefecture-choice,.review-location-map', `${name} quick quiz`);
       await assertPageNoScroll(page, `${name} quick quiz`);
       await assertReadableText(page, `${name} quick quiz`);
+      if (name === 'phone') {
+        const pinAlignment = await page.evaluate(() => {
+          state.round=[PREFECTURE_DATA.find(pref => pref.code === '47')];state.reviewIndex=0;state.reviewPhase='location';renderReviewLocation();alignMapPins();
+          const layers=document.querySelector('.review-location-map .map-layers');
+          const pin=layers.querySelector('.prefecture-pin');
+          const rect=layers.getBoundingClientRect();const box=mapDisplayBox(rect.width,rect.height);const point=mapPoint(state.round[0]);
+          return {left:Number.parseFloat(pin.style.left),top:Number.parseFloat(pin.style.top),expectedLeft:box.left+box.width*point.x/100,expectedTop:box.top+box.height*point.y/100,width:pin.getBoundingClientRect().width,oldBeacon:!!layers.querySelector('.prefecture-beacon')};
+        });
+        assert.ok(Math.abs(pinAlignment.left-pinAlignment.expectedLeft)<1 && Math.abs(pinAlignment.top-pinAlignment.expectedTop)<1, `${name}: Okinawa pin tip is not aligned to the portrait map`);
+        assert.ok(pinAlignment.width <= 28, `${name}: prefecture pin covers too much of the map`);
+        assert.equal(pinAlignment.oldBeacon,false, `${name}: obsolete circular beacon is still rendered`);
+      }
 
       await page.goto(baseUrl, { waitUntil:'networkidle' });
       await page.locator('[data-action="collection"]').click();
@@ -314,6 +326,9 @@ async function drawEnoughInk(page) {
     await motionPage.waitForSelector('.map-learning-tray.action-dock');
     await motionPage.waitForTimeout(80);
     assert.ok(await motionPage.locator('.map-learning-tray button').evaluate(button => button.getAnimations().length > 0), 'primary action spring entrance did not start');
+    await motionPage.evaluate(() => { state.round=[PREFECTURE_DATA.find(pref => pref.code === '47')];state.reviewIndex=0;state.reviewPhase='location';renderReviewLocation(); });
+    await motionPage.waitForSelector('.prefecture-pin');
+    assert.ok(await motionPage.locator('.prefecture-pin').evaluate(pin => pin.getAnimations().length >= 2), 'map pin drop and glow animations did not start');
     await assertPageNoScroll(motionPage, 'phone motion');
     await motionContext.close();
   } finally {
