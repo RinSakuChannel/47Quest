@@ -243,10 +243,17 @@ let audioChannels;
 function updateAudioVolume() {
   window.QUEST_CHARACTER_CRIES?.stop();
   if (!audioChannels) return;
+  const mobile = window.matchMedia?.('(pointer: coarse)').matches || window.innerWidth <= 760;
   for (const [name, value] of [['bgm', state.bgmVolume], ['se', state.seVolume]]) {
     const gain = audioChannels[name].gain;
+    const normalized = value / 100;
+    // Phone speakers lose much of the short, low-energy procedural audio.
+    // Keep zero silent but use a clearer mobile curve, with effects above BGM.
+    const output = mobile
+      ? (name === 'bgm' ? normalized ** 1.65 * 1.12 : normalized ** 1.3 * 1.75)
+      : normalized ** 2;
     gain.cancelScheduledValues(audioContext.currentTime);
-    gain.setTargetAtTime(state.sound ? (value / 100) ** 2 : 0, audioContext.currentTime, .015);
+    gain.setTargetAtTime(state.sound ? output : 0, audioContext.currentTime, .015);
   }
 }
 function ensureAudio() {
@@ -355,7 +362,8 @@ function characterCry(pref) {
   if (!pref || !state.sound || state.seVolume <= 0) return;
   // Voice belongs to the SE channel, but prerecorded speech needs a linear,
   // stronger level than short synthesized effects to stay intelligible.
-  const voiceVolume = Math.min(1, (state.seVolume / 100) * 1.8);
+  const mobile = window.matchMedia?.('(pointer: coarse)').matches || window.innerWidth <= 760;
+  const voiceVolume = Math.min(1, (state.seVolume / 100) * (mobile ? 2.35 : 1.8));
   try { window.QUEST_CHARACTER_CRIES.play(ensureAudio(), pref.code, voiceVolume, audioChannels.se); } catch { /* Audio may be unavailable. */ }
 }
 
@@ -392,7 +400,8 @@ function compactCharacterStats(pref) {
 }
 
 function mapLayers(pref, alt) {
-  return `<div class="map-layers"><img class="map-image map-base" src="${mapBaseAsset()}" alt="${alt}" /><img class="map-image map-overlay" src="${mapOverlayAsset(pref)}" alt="" aria-hidden="true" /><a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a></div>`;
+  const point = mapPoint(pref);
+  return `<div class="map-layers" style="--beacon-x:${point.x}%;--beacon-y:${point.y}%"><img class="map-image map-base" src="${mapBaseAsset()}" alt="${alt}" /><img class="map-image map-overlay" src="${mapOverlayAsset(pref)}" alt="" aria-hidden="true" /><i class="prefecture-beacon" aria-hidden="true"></i><a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a></div>`;
 }
 
 function animateMountedScene() {
@@ -1539,7 +1548,7 @@ function renderRewardReveal() {
         <div class="reveal-profile-chips"><span>名産 ${pref.specialty}</span><span>とくいわざ ${pref.specialMove}</span></div>
         <p class="reveal-prefecture-feature"><b>${pref.name}って？</b>${pref.feature}</p>
         ${characterStats(pref, 'reveal-stats')}
-        <div class="gacha-prefecture-map"><strong>${pref.region}：${pref.name}は 赤いところ！</strong>${mapLayers(pref,`${pref.name}の場所を示す日本地図`)}</div>
+        <div class="gacha-prefecture-map"><strong>${pref.name}は赤いところ</strong>${mapLayers(pref,`${pref.name}の場所を示す日本地図`)}</div>
       </div>
       ${button('場所をおぼえた！ ガチャへ →', 'reward-reveal-next', 'primary-button sun reveal-next-button')}
     </section>`, { progress: 100, label: `仲間ゲット！ ${state.rewardRevealIndex + 1} / ${earned.length}` });
@@ -1629,7 +1638,7 @@ function renderDetail(pref) {
           <div><dt>とくいわざ</dt><dd>${pref.specialMove}</dd></div>
         </dl>
         ${characterStats(pref)}
-        <div class="profile-actions action-dock">${button('♪ しゃべり声', 'character-cry', 'secondary-button')}${button(`${game?.title || pref.gameTitle}を遊ぶ`, 'replay-game', 'primary-button sun profile-play-button')}</div>
+        <div class="profile-actions action-dock">${button('♪ 声をきく', 'character-cry', 'secondary-button')}${button('ミニゲームで遊ぶ', 'replay-game', 'primary-button sun profile-play-button', `aria-label="${game?.title || pref.gameTitle}を遊ぶ"`)}</div>
       </aside>
     </section>`, { progress: Math.round(state.unlocked.size / 47 * 100), label: `${pref.name}のページ` });
   initMapZoom(document.querySelector('.map-stage'), document.querySelector('.map-stage .map-layers'), { focus: mapPoint(pref) });

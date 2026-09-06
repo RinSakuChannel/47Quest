@@ -68,6 +68,43 @@ async function assertTouchTargets(page, selector, label) {
   }
 }
 
+async function assertReadableText(page, label) {
+  const issues = await page.locator('button,h1,h2,h3,p,small,strong,.top-title,.sample-word-text,.micro-command').evaluateAll(nodes => {
+    const selected = nodes.filter(node => {
+      const style = getComputedStyle(node); const rect = node.getBoundingClientRect();
+      return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0 && (node.textContent || '').trim();
+    });
+    return selected.flatMap(node => {
+      if (node.matches('.home-roamer') || node.closest('.brand,.game-logo')) return [];
+      const problems = []; const style = getComputedStyle(node); const text = (node.textContent || '').trim().replace(/\s+/g, ' ');
+      if ((style.overflowX !== 'visible' && node.scrollWidth > node.clientWidth + 2)
+        || (style.overflowY !== 'visible' && node.scrollHeight > node.clientHeight + 2)) problems.push('clipped');
+      if (text.length >= 5 && !node.querySelector('ruby') && style.transform === 'none') {
+        const lines = [];
+        const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) {
+          if (walker.currentNode.parentElement?.closest('rt')) continue;
+          for (let index = 0; index < walker.currentNode.data.length; index += 1) {
+            const char = walker.currentNode.data[index]; if (/\s/.test(char)) continue;
+            const range = document.createRange(); range.setStart(walker.currentNode, index); range.setEnd(walker.currentNode, index + 1);
+            const rect = range.getBoundingClientRect(); if (!rect.width || !rect.height) continue;
+            let line = lines.find(item => Math.abs(item.top - rect.top) < 2);
+            if (!line) { line = { top:rect.top, text:'' }; lines.push(line); }
+            line.text += char;
+          }
+        }
+        lines.sort((a,b) => a.top - b.top);
+        if (lines.length > 1) {
+          const meaningful = value => value.replace(/[\s。、！？「」『』（）()→←▶⚡☆★0-9/・!]/g, '');
+          if (meaningful(lines.at(-1).text).length <= 1) problems.push(`orphan-last-line:${lines.at(-1).text}`);
+        }
+      }
+      return problems.length ? [{ tag:node.tagName, className:String(node.className), text:text.slice(0,60), problems, size:[node.clientWidth,node.scrollWidth,node.clientHeight,node.scrollHeight] }] : [];
+    });
+  });
+  assert.deepEqual(issues, [], `${label}: unreadable text ${JSON.stringify(issues)}`);
+}
+
 async function drawEnoughInk(page) {
   const box = await page.locator('#write-canvas').boundingBox();
   for (let row=1; row<=3; row++) {
@@ -111,6 +148,7 @@ async function drawEnoughInk(page) {
       assert.equal(errors.length, 0, `${name}: startup JavaScript error`);
       await assertInsideViewport(page, '.topbar button,.title-stage button,.home-roamer', `${name} title`);
       await assertPageNoScroll(page, `${name} title`);
+      await assertReadableText(page, `${name} title`);
       assert.equal(await page.locator('.home-roamer [data-character-code]').count(), 6, `${name}: title characters are not voice-enabled`);
       if (name === 'desktop') {
         await page.locator('.sound-menu-button').click();
@@ -130,6 +168,7 @@ async function drawEnoughInk(page) {
       await page.locator('[data-action="gacha"]').click();
       await assertInsideViewport(page, '.gacha-scene,.gacha-machine,.gacha-scene button', `${name} gacha`);
       await assertPageNoScroll(page, `${name} gacha`);
+      await assertReadableText(page, `${name} gacha`);
       const gacha = await page.locator('.gacha-scene').boundingBox();
       const machine = await page.locator('.gacha-machine').boundingBox();
       assert.ok(machine.y >= gacha.y && machine.y + machine.height <= gacha.y + gacha.height + 1, `${name}: gacha machine clipped`);
@@ -138,18 +177,34 @@ async function drawEnoughInk(page) {
       await page.waitForSelector('.reward-reveal-scene');
       await assertInsideViewport(page, '.reward-reveal-scene,.reveal-character-wrap,.reveal-name-card,.reveal-next-button', `${name} reveal`);
       await assertPageNoScroll(page, `${name} reveal`);
+      await assertReadableText(page, `${name} reveal`);
       assert.ok(await page.locator('.reveal-character img').evaluate(img => img.complete && img.naturalWidth > 0), `${name}: reveal character did not load`);
+      if (isPhone) {
+        const character = await page.locator('.reveal-character-wrap').boundingBox();
+        assert.ok(character.width >= Math.min(145, width * .38), `${name}: reward character is too small (${character.width}px)`);
+        assert.equal(await page.locator('.reveal-get-banner').isVisible(), false, `${name}: duplicate reward headings overlap`);
+        const introWraps = await page.locator('.reveal-name-card > small').evaluate(element => element.getClientRects().length);
+        assert.equal(introWraps, 1, `${name}: reward intro has an orphaned line`);
+      }
 
       await page.goto(baseUrl, { waitUntil:'networkidle' });
       await page.locator('[data-action="start"]').click();
       await page.waitForSelector('.map-scene');
       await assertInsideViewport(page, '.map-scene,.map-stage,.map-learning-tray button,.zoom-button', `${name} map`);
       await assertPageNoScroll(page, `${name} map`);
+      await assertReadableText(page, `${name} map`);
       await page.locator('[data-action="start-writing"]').click();
       await page.waitForSelector('.writing-scene');
       await assertInsideViewport(page, '.writing-scene,.lesson-panel,.writing-board,.canvas-shell,.writing-tools button,.canvas-next-button', `${name} writing`);
+      const sampleFits = await page.locator('.sample-word-text').evaluate(element => {
+        const text = element.getBoundingClientRect();
+        const frame = element.parentElement.getBoundingClientRect();
+        return text.top >= frame.top - 1 && text.bottom <= frame.bottom + 1 && text.left >= frame.left - 1 && text.right <= frame.right + 1;
+      });
+      assert.ok(sampleFits, `${name}: handwriting sample text is clipped`);
       if (isPhone) await assertTouchTargets(page, '.writing-tools.action-dock button', `${name} writing controls`);
       await assertPageNoScroll(page, `${name} writing`);
+      await assertReadableText(page, `${name} writing`);
       const canvas = await page.locator('.canvas-shell').boundingBox();
       const minimumCanvasHeight = height <= 500 ? 230 : width <= 420 ? 300 : width <= 1100 ? 360 : 420;
       assert.ok(canvas.height >= minimumCanvasHeight, `${name}: writing canvas too short (${canvas.height}px)`);
@@ -164,6 +219,7 @@ async function drawEnoughInk(page) {
       await page.waitForSelector('.game-scene');
       await assertInsideViewport(page, '.game-scene,.game-info,.game-board,.game-info button', `${name} game`);
       await assertPageNoScroll(page, `${name} game`);
+      await assertReadableText(page, `${name} game`);
       const info = await page.locator('.game-info').boundingBox();
       const board = await page.locator('.game-board').boundingBox();
       assert.ok(info.y + info.height <= board.y + 1, `${name}: game instructions overlap play surface`);
@@ -174,6 +230,7 @@ async function drawEnoughInk(page) {
       assert.equal(await page.locator('.result-card [data-character-code]').count(), 1, `${name}: result character is not voice-enabled`);
       await assertNoHiddenOverflow(page, '.result-card,.result-details', `${name} result`);
       await assertPageNoScroll(page, `${name} result`);
+      await assertReadableText(page, `${name} result`);
 
       // Canvas-based regional games draw all copy in a fixed 1000x600 world.
       // The displayed box must keep that 5:3 ratio or every Japanese glyph is
@@ -181,6 +238,7 @@ async function drawEnoughInk(page) {
       await page.goto(`${baseUrl}games.html`, { waitUntil:'networkidle' });
       await assertInsideViewport(page, '.gallery-head,#gallery,.gallery-footer,.gallery-footer button', `${name} game gallery`);
       await assertPageNoScroll(page, `${name} game gallery`);
+      await assertReadableText(page, `${name} game gallery`);
       for (let pageNumber=0; pageNumber<8 && !await page.locator('#gallery button').filter({ hasText:'奈良県' }).count(); pageNumber++) {
         await page.locator('#gallery-next').click();
       }
@@ -208,6 +266,7 @@ async function drawEnoughInk(page) {
       await page.waitForSelector('.review-location-picker');
       await assertInsideViewport(page, '.review-scene,.review-location-picker,.review-prefecture-choice,.review-location-map', `${name} quick quiz`);
       await assertPageNoScroll(page, `${name} quick quiz`);
+      await assertReadableText(page, `${name} quick quiz`);
 
       await page.goto(baseUrl, { waitUntil:'networkidle' });
       await page.locator('[data-action="collection"]').click();
@@ -215,6 +274,7 @@ async function drawEnoughInk(page) {
       await assertInsideViewport(page, '.collection-scene,.section-head,.collection-grid,.collection-card', `${name} collection`);
       await assertNoHiddenOverflow(page, '.collection-scene,.collection-grid,.collection-card', `${name} collection`);
       await assertPageNoScroll(page, `${name} collection`);
+      await assertReadableText(page, `${name} collection`);
       assert.ok(await page.locator('.collection-card:not(.is-locked)').count(), `${name}: no collected card available for detail test`);
       await page.locator('.collection-card:not(.is-locked)').first().click();
       await page.waitForSelector('.detail-scene');
@@ -222,6 +282,7 @@ async function drawEnoughInk(page) {
       await assertInsideViewport(page, '.detail-scene,.character-profile-card,.character-profile-card button,.map-stage', `${name} detail`);
       await assertNoHiddenOverflow(page, '.detail-scene,.character-profile-card', `${name} detail`);
       await assertPageNoScroll(page, `${name} detail`);
+      await assertReadableText(page, `${name} detail`);
       await context.close();
     }
     const motionContext = await browser.newContext({ viewport:{width:390,height:844}, hasTouch:true, isMobile:true, reducedMotion:'no-preference' });
