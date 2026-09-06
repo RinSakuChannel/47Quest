@@ -315,6 +315,21 @@ async function drawEnoughInk(page) {
         await assertPageNoScroll(page, `${name} nationwide completion`);
         await assertReadableText(page, `${name} nationwide completion`);
       }
+      for (const code of ['03','23','26']) {
+        await page.evaluate(code => {state.current=PREFECTURE_DATA.find(p=>p.code===code);state.round=[state.current];state.roundIndex=0;renderGame();}, code);
+        await assertReadableText(page, `${name} ${code} instructions`);
+        await page.locator('.fg-intro button').click();
+        await page.waitForSelector('.rg-canvas');
+        await assertPageNoScroll(page, `${name} ${code} game`);
+        await assertInsideViewport(page, '.rg-canvas,.fg-banner,.fg-status', `${name} ${code} game`);
+        const ratio=await page.locator('.rg-canvas').evaluate(c=>{const r=c.getBoundingClientRect();return r.width/r.height;});
+        assert.ok(Math.abs(ratio-5/3)<.02,`${name} ${code}: canvas text is stretched`);
+        if(name==='phone'||name==='desktop'){
+          await page.waitForTimeout(250);
+          fs.mkdirSync(path.resolve('.verification/minigames'),{recursive:true});
+          await page.screenshot({path:path.resolve(`.verification/minigames/${name}-${code}.png`)});
+        }
+      }
       await context.close();
     }
     const motionContext = await browser.newContext({ viewport:{width:390,height:844}, hasTouch:true, isMobile:true, reducedMotion:'no-preference' });
