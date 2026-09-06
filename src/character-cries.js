@@ -21,9 +21,27 @@
     ['イモグル',130,.72,4,'square'],['コロルリ',740,.65,4,'sine'],
   ];
   let active = [];
-  function stop() { active.forEach(node => { try { node.stop(); } catch {} }); active = []; }
+  let spokenAudio;
+  function stop() { if(spokenAudio){spokenAudio.pause();spokenAudio.removeAttribute('src');spokenAudio=null;} window.speechSynthesis?.cancel(); active.forEach(node => { try { node.stop(); } catch {} }); active = []; }
   function play(context, code, volume, destination = context.destination) {
     stop();
+    const personality = window.QUEST_PERSONALITIES?.[String(code).padStart(2,'0')];
+    if (personality && window.Audio && volume > 0) {
+      spokenAudio = new window.Audio(`./assets/sounds/voices/${String(code).padStart(2,'0')}.wav`);
+      spokenAudio.volume=Math.max(0,Math.min(1,volume));
+      spokenAudio.play().catch(()=>{});
+      return;
+    }
+    if (personality && window.speechSynthesis && window.SpeechSynthesisUtterance) {
+      if (volume <= 0) return;
+      const speech = new window.SpeechSynthesisUtterance(personality.line);
+      speech.lang='ja-JP'; speech.rate=personality.rate; speech.pitch=personality.pitch;
+      speech.volume=Math.max(0,Math.min(1,volume));
+      const japanese=window.speechSynthesis.getVoices().filter(v=>/^ja(-|_)/i.test(v.lang));
+      if(japanese.length) speech.voice=japanese[(Number(code)-1)%japanese.length];
+      window.speechSynthesis.speak(speech);
+      return;
+    }
     const voice = voices[Number(code)-1];
     if (!voice || volume <= 0) return;
     const [, base, slide, syllables, wave] = voice;

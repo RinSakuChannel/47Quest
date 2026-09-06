@@ -4,6 +4,14 @@ tmp/
 *.tar.gz
 assets/maps/*.zip
 assets/maps/*.svg
+assets/maps/KS-META-*.xml
+assets/maps/overlays/*.svg
+assets/maps/play-overlays/*.svg
+assets/maps/play-overlays-portrait/*.svg
+assets/maps/region-zips/
+assets/maps/regions/
+assets/maps/selected/
 assets/images/*
 !assets/images/japan-map-play.png
+!assets/images/japan-map-play-portrait.png
 assets/characters/contact-sheet.png

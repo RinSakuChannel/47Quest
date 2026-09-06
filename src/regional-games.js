@@ -8,12 +8,14 @@
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const random=(a,b)=>a+Math.random()*(b-a);
   function register(code,title,command,lesson,icon,factory){
-    definitions[code]={title,command,lesson,demo:icon,goal:3,time:45,acts:['まずは やってみよう！','こつを つかんできた？','あと少し！ 記録にちょうせん']};games[code]=factory;
+    definitions[code]={title,command,lesson,demo:icon,goal:3,time:25,acts:['まずは やってみよう！','こつを つかんできた？','あと少し！ 記録にちょうせん']};games[code]=factory;
   }
   function create(code,ctx){
-    const canvas=document.createElement('canvas');canvas.className='rg-canvas';canvas.width=1000;canvas.height=600;canvas.tabIndex=0;
+    const canvas=document.createElement('canvas');canvas.className='rg-canvas';
+    // Render the logical 1000×600 board at device-pixel density so copy stays sharp.
+    const pixelRatio=Math.min(2,window.devicePixelRatio||1); canvas.width=1000*pixelRatio; canvas.height=600*pixelRatio; canvas.style.aspectRatio='5 / 3'; canvas.tabIndex=0;
     canvas.setAttribute('aria-label',definitions[code].lesson);ctx.world.append(canvas);
-    const c=canvas.getContext('2d');
+    const c=canvas.getContext('2d'); c.setTransform(pixelRatio,0,0,pixelRatio,0,0);
     let pointer={x:500,y:300,down:false},previous={...pointer};let done=false,celebrate=0,interacted=false;
     const effects=[];
     const api={get phase(){return ctx.model.phase;},get time(){return ctx.model.elapsed;},
@@ -62,9 +64,17 @@
     let p={x:180,y:420},v={x:0,y:0};const goal={x:780,y:random(150,350)};
     return {input(k,q,prev){if(k==='move'&&q.down&&dist(q,p)<160){v.x=(q.x-prev.x)*10;v.y=(q.y-prev.y)*10;}},step(dt){p.x=clamp(p.x+v.x*dt,40,960);p.y=clamp(p.y+v.y*dt,60,490);v.x*=Math.exp(-dt*1.5);v.y*=Math.exp(-dt*1.5);if(dist(p,goal)<60)a.win();},draw(){a.line([{x:820,y:500},{x:820,y:80}],'#599357',16);a.line([{x:650,y:goal.y},{x:870,y:goal.y}],'#599357');a.target(goal.x,goal.y);a.icon('🎐',p.x,p.y,90);a.text('かざりを 払って 枝へ！',500,550);}};
   });
-  register('05','かまくら 建築隊','雪をつんで 屋根をつくろう','雪ブロックを光る場所へ置こう。入口をあけて灯りをともそう。','🛖',a=>{
-    const slots=[{x:330,y:380},{x:670,y:380},{x:370,y:260},{x:630,y:260},{x:500,y:190}];let i=0,block={x:120,y:420},drag=false;
-    return {input(k,p){if(k==='down'&&dist(p,block)<90)drag=true;if(k==='move'&&drag)block={x:p.x,y:p.y};if(k==='up'&&drag){drag=false;if(dist(block,slots[i])<85){i++;if(i===slots.length)a.win();block={x:120,y:420};}else block={x:120,y:420};}if(k==='cancel')drag=false;},draw(){a.box(0,0,1000,600,'#deebef');slots.slice(0,i).forEach(s=>a.box(s.x-70,s.y-50,140,100,'#fff'));if(slots[i])a.target(slots[i].x,slots[i].y,65);a.box(block.x-65,block.y-45,130,90,'#fff');a.icon('🕯',500,420,70);a.text('入口をのこして 雪のおうち',500,550);}};
+  register('05','かまくら 建築隊','青い雪ブロックを 光る場所へ！','左の青い雪ブロックをつかもう。光る丸まで運ぶと、かまくらができるよ。','🧊 → 🛖',a=>{
+    const slots=[{x:390,y:390},{x:610,y:390},{x:420,y:285},{x:580,y:285},{x:500,y:195}];let i=0,block={x:150,y:395},drag=false;
+    const reset=()=>{block={x:150,y:395};};
+    return {input(k,p){if(k==='down'&&dist(p,block)<105)drag=true;if(k==='move'&&drag)block={x:p.x,y:p.y};if(k==='up'&&drag){drag=false;if(dist(block,slots[i])<90){i++;a.tell(i===slots.length?'かまくら できた！':`あと ${slots.length-i}こ！`);if(i===slots.length)a.win();reset();}else{a.tell('光る丸へ はこぼう');reset();}}if(k==='cancel'){drag=false;reset();}},draw(){
+      a.box(0,0,1000,600,'#dcebf0');
+      a.box(45,255,210,250,'#b9dce8');a.text('① つかむ',150,285,28,'#173e51');
+      a.target(500,305,205);slots.slice(0,i).forEach((s,n)=>{a.box(s.x-72,s.y-50,144,100,n%2?'#e7f7fb':'#fff');a.line([{x:s.x-65,y:s.y-42},{x:s.x+65,y:s.y-42},{x:s.x+65,y:s.y+42},{x:s.x-65,y:s.y+42},{x:s.x-65,y:s.y-42}],'#84b6ca',5);});
+      if(slots[i]){a.target(slots[i].x,slots[i].y,70);a.text('② ここへ',slots[i].x,slots[i].y-100,25,'#9b741c');}
+      a.box(block.x-68,block.y-47,136,94,drag?'#8ed5ef':'#a8e1f4');a.line([{x:block.x-61,y:block.y-40},{x:block.x+61,y:block.y-40},{x:block.x+61,y:block.y+40},{x:block.x-61,y:block.y+40},{x:block.x-61,y:block.y-40}],'#287da2',7);a.text('雪',block.x,block.y,30,'#173e51');
+      a.icon('🕯',500,445,62);a.text(`できた ${i} / 5　入口は あけておこう`,500,550,28);
+    }};
   });
   register('06','さくらんぼ ふたごの引っ越し','２つを いっしょに 穴へ！','片方を動かすと、もう片方も軸に引かれるよ。２つとも輪に入れよう。','🍒',a=>{
     const p=[{x:200,y:340},{x:330,y:340}],goals=[{x:680,y:240},{x:810,y:300}];let held=-1;

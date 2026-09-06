@@ -1,0 +1,210 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "code": "01",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Hokkaido snow potato beast, lumpy pale potato body wearing thick natural snow, sprout horns, huge snow boots, tiny arms sneezing snow, cheerful round physique.",
+      "output": "assets/characters/v2/01.webp"
+    },
+    {
+      "code": "03",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Iwate wanko soba bowl centipede beast: five red lacquer bowls stacked as towering skinny segmented body, noodle moustache and noodle arms, little feet, greedy open mouth, comically tall.",
+      "output": "assets/characters/v2/03.webp"
+    },
+    {
+      "code": "05",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Akita kamakura snow hut turtle, enormous snow dome shell, arch doorway warm amber mouth, tiny blue paws, sleepy eyes, squat and cozy.",
+      "output": "assets/characters/v2/05.webp"
+    },
+    {
+      "code": "07",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Fukushima akabeko red cow creature, huge bobbling head on absurdly thin springlike neck, traditional black white spots, tiny stocky body, eager earnest eyes.",
+      "output": "assets/characters/v2/07.webp"
+    },
+    {
+      "code": "08",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Ibaraki melon beetle knight, recognizable round green netted melon shell, powerful bulky shoulders and spring vine legs, timid tiny face peeking out.",
+      "output": "assets/characters/v2/08.webp"
+    },
+    {
+      "code": "09",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Tochigi strawberry flying speedster, tapered red seed-studded strawberry body, leaf tail fins, tiny flailing arms, enormous confident grin, no vehicle.",
+      "output": "assets/characters/v2/09.webp"
+    },
+    {
+      "code": "11",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Saitama Soka rice cracker creature, extremely flat round toasted cracker body, nori eyebrows, muscular cracker arms but wafer thin legs, cheeky bite missing edge.",
+      "output": "assets/characters/v2/11.webp"
+    },
+    {
+      "code": "13",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Tokyo monjayaki goo creature, flat golden batter puddle body with cabbage flecks, raised batter-bank arms, huge laughing mouth, sprawling pancake silhouette.",
+      "output": "assets/characters/v2/13.webp"
+    },
+    {
+      "code": "14",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Kanagawa shirasu swarm creature, many tiny white translucent fish forming one curling wave beast, big gentle eyes, fish tail tips, airy ribbon silhouette.",
+      "output": "assets/characters/v2/14.webp"
+    },
+    {
+      "code": "15",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Niigata rice onigiri heavyweight, huge triangular white rice body nori belly, tiny rice feet and huge rice arms, rice stalk tail, proud gentle strongman.",
+      "output": "assets/characters/v2/15.webp"
+    },
+    {
+      "code": "16",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Toyama firefly squid creature, little purple squid mantle huge gleaming eyes and long wiry tentacles, blue luminous dots on body only, mischievous dancing pose, no glow cloud.",
+      "output": "assets/characters/v2/16.webp"
+    },
+    {
+      "code": "17",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Ishikawa gold leaf bird, paper-thin folded gold foil wings, very skinny long legs, squinting smug face, broad fanlike wings, crinkled edges.",
+      "output": "assets/characters/v2/17.webp"
+    },
+    {
+      "code": "18",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Fukui fossil dinosaur hatchling, stocky friendly fossil skeleton beast with earth brown armor patches, huge skull and tiny arms, comically proud wide stance, not scary.",
+      "output": "assets/characters/v2/18.webp"
+    },
+    {
+      "code": "19",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Yamanashi grape bunch creature, uneven purple grape body, enormous leaf ears, tiny tangled vine legs, sneaky grin with one swollen cheek, pear shaped silhouette.",
+      "output": "assets/characters/v2/19.webp"
+    },
+    {
+      "code": "20",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Nagano mountain apple beast, three red apples forming mountain-shaped body, huge hiking feet and leaf goggles, skinny twig arms, adventurous grin.",
+      "output": "assets/characters/v2/20.webp"
+    },
+    {
+      "code": "21",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Gifu cormorant, absurdly long flexible neck, very small black round body, webbed feet, fish held gently in beak, wide surprised eyes, comical S silhouette.",
+      "output": "assets/characters/v2/21.webp"
+    },
+    {
+      "code": "22",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Shizuoka tea sprout creature, two huge vivid green young tea leaf ears and thin leaf body, tiny roots for feet, sleepy happy face, folded leaf blanket belly.",
+      "output": "assets/characters/v2/22.webp"
+    },
+    {
+      "code": "23",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Aichi golden shachihoko fish beast, massive upturned curved golden fish body and arched tail, tiny fins, enormous grinning mouth, proud backwards C shape.",
+      "output": "assets/characters/v2/23.webp"
+    },
+    {
+      "code": "24",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Mie pearl oyster creature, huge open scalloped shell and small round pearl face, broad shell wings, tiny feet, shy singing expression.",
+      "output": "assets/characters/v2/24.webp"
+    },
+    {
+      "code": "25",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Shiga lake boat water beast, long blue boat-shaped belly, sail dorsal fin, paddle flippers, little round head, determined rowing pose, organic living creature.",
+      "output": "assets/characters/v2/25.webp"
+    },
+    {
+      "code": "26",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Kyoto folding fan bird creature, enormous folding fan tail forms body, little bird face, two extremely skinny legs, elegant smug sideways pose, red cream teal.",
+      "output": "assets/characters/v2/26.webp"
+    },
+    {
+      "code": "27",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Osaka takoyaki octopus creature, toasted brown ball body sauce stripes bonito flake tuft, eight short wobbly tentacles, one enormous eyebrow and joking grin.",
+      "output": "assets/characters/v2/27.webp"
+    },
+    {
+      "code": "28",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Hyogo oriental stork creature, super long thin red legs, white plump body black wing tips, giant dark beak, surprised expressive eyes, awkward proud balancing pose.",
+      "output": "assets/characters/v2/28.webp"
+    },
+    {
+      "code": "29",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Nara deer creature, enormous branching antlers and tiny round fawn body, stubby legs, bowing eagerly with eyes focused on cracker, funny top-heavy silhouette.",
+      "output": "assets/characters/v2/29.webp"
+    },
+    {
+      "code": "30",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Wakayama mandarin orange wheel creature, round orange body, peeled rind feet roll outward as spokes, leaf tuft, playful dizzy grin, wide low shape.",
+      "output": "assets/characters/v2/30.webp"
+    },
+    {
+      "code": "31",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Tottori sand dune beast, enormous flat dune back with sand ripples, tiny legs and long flowing sand tail, sleepy small face, warm ochre tan.",
+      "output": "assets/characters/v2/31.webp"
+    },
+    {
+      "code": "32",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Shimane magatama jade creature, large curved comma-shaped jade body, hole near round end as single eye, tapering flexible tail, two tiny legs, curious looping pose.",
+      "output": "assets/characters/v2/32.webp"
+    },
+    {
+      "code": "33",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Okayama peach creature, absurdly soft giant pink peach body with smiling cleft mouth, long leaf tail, minute feet, shy rosy cheeks, squishy round silhouette.",
+      "output": "assets/characters/v2/33.webp"
+    },
+    {
+      "code": "34",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Hiroshima maple leaf creature, five pointed orange red maple lobes form flying star body, leaf veins face markings, skinny stem tail, overexcited laughing face.",
+      "output": "assets/characters/v2/34.webp"
+    },
+    {
+      "code": "35",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Yamaguchi pufferfish, ridiculously inflated round cream blue body, tiny embarrassed eyes and fins, short rounded harmless spines, cheeks bigger than body.",
+      "output": "assets/characters/v2/35.webp"
+    },
+    {
+      "code": "36",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Tokushima Awa dance creature, crescent woven straw hat forms broad head, narrow indigo body and extremely long raised dancing arms and legs, joyous face, nonhuman playful spirit.",
+      "output": "assets/characters/v2/36.webp"
+    },
+    {
+      "code": "38",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Ehime mandarin sailboat creature, orange fruit hull body, peel sail and leaf rudder, tiny eager face at bow, short flipper feet, jolly captain personality.",
+      "output": "assets/characters/v2/38.webp"
+    },
+    {
+      "code": "39",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Kochi bonito fish athlete, recognizable blue spindle fish body and dark belly stripes, gigantic muscular fin arms, tiny tail, boastful grin, no clothes.",
+      "output": "assets/characters/v2/39.webp"
+    },
+    {
+      "code": "40",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Fukuoka spicy pollock roe creature, two coral red roe sacs form asymmetrical bouncy body, recognizable grain texture, little legs, huge cheeky mouth, lovable naughty expression.",
+      "output": "assets/characters/v2/40.webp"
+    },
+    {
+      "code": "41",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Saga Arita porcelain turtle beast, huge glossy white bowl shell with simple blue painted foliage, tiny blue ceramic feet, narrow smug face, heavy squat physique.",
+      "output": "assets/characters/v2/41.webp"
+    },
+    {
+      "code": "42",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Nagasaki castella cake creature, tall yellow rectangular sponge body brown top bottom crust, very short arms and long thin wobbly legs, goofy smiling face.",
+      "output": "assets/characters/v2/42.webp"
+    },
+    {
+      "code": "43",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Kumamoto Aso volcano beast, wide crater mountain back, grass green chunky feet, soft smoke tuft eyebrows attached to head, tiny bashful eyes, very bulky gentle giant.",
+      "output": "assets/characters/v2/43.webp"
+    },
+    {
+      "code": "44",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Oita hot spring egg steam creature, small cream egg core face wrapped in tall curling steam body, very long wispy arms, relaxed sleepy grin, readable solid outlined pale blue silhouette.",
+      "output": "assets/characters/v2/44.webp"
+    },
+    {
+      "code": "45",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Miyazaki mango beast, huge asymmetric red orange mango torso, leaf tail and tiny feet, one muscular arm and one little arm, sunny grinning clumsy strongman.",
+      "output": "assets/characters/v2/45.webp"
+    },
+    {
+      "code": "46",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Kagoshima sweet potato creature, purple long bent potato body with warm yellow split mouth, extremely long root arms, leafy vine tuft, tiny feet, wiry energetic pose.",
+      "output": "assets/characters/v2/46.webp"
+    },
+    {
+      "code": "47",
+      "prompt": "Original children's collectible creature sprite, polished 2D cel shaded illustration, bold clean outlines, playful expressive face, funny distinctive silhouette, readable at small sizes. Entire body centered with 10% padding, one character only, TRUE transparent alpha background, NO checkerboard, NO ground or backdrop, no text, no frame, no adjacent characters. Not a humanoid doll, no existing franchise. Motif IS its anatomy. Subject: Okinawa coral sea beast, turquoise plump aquatic body, branching pink coral fins as anatomy, huge wavy tail and tiny face, cheerful floating sideways pose, cute not ornate.",
+      "output": "assets/characters/v2/47.webp"
+    }
+  ]
+}

@@ -51,10 +51,9 @@
     ['47','freedodge','なみのり リング','岩をよけて 輪をぬけ！','沖縄の海',4,8],
   ];
 
-  // 上手な子は目標達成時点ですぐ終わる。制限時間だけは全ゲーム25秒を確保し、
-  // 操作に慣れていない子どもが途中で打ち切られないようにする。
+  // どのゲームも長引かせず、最大25秒で次の冒険へ進む。
   const catalog = Object.fromEntries(rows.map(([code, mode, title, command, motif, goal, time]) => [code, {
-    code, mode, title, command, motif, goal, time: Math.max(25, time),
+    code, mode, title, command, motif, goal, time: 25,
   }]));
   for (const [code, definition] of Object.entries(window.QUEST_FEATURED_GAMES?.definitions || {})) {
     Object.assign(catalog[code], definition);

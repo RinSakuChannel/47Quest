@@ -14,6 +14,7 @@ const state = {
   screen: 'home', round: [], roundIndex: 0, current: null, replay: false,
   quickQuiz: false,
   newlyUnlocked: new Set(), rewardRevealIndex: 0,
+  coins: Math.max(0, Math.floor(Number(storage.get('47quest-coins', 0)) || 0)), gachaRewards: [], gachaBusy: false,
   writeMode: 'hiragana', strokes: [], trace: true, mapZoomed: false,
   reviewIndex: 0, reviewPhase: 'location', reviewHints: {}, reviewResults: {}, inkPreview: '',
   reviewLocationAttempts: {}, reviewLocationWrong: {}, reviewLocationResolved: false,
@@ -21,10 +22,23 @@ const state = {
   locationWrong: new Set(), locationResolved: false, locationHitTest: null,
   unlocked: new Set(storage.get('47quest-unlocked', [])),
   sound: storage.get('47quest-sound', true),
-  bgmVolume: Math.max(0, Math.min(100, Number(storage.get('47quest-bgm-volume', 85)) || 0)),
-  seVolume: Math.max(0, Math.min(100, Number(storage.get('47quest-se-volume', 85)) || 0)),
+  bgmVolume: Math.max(0, Math.min(100, Number(storage.get('47quest-bgm-volume', 34)) || 0)),
+  seVolume: Math.max(0, Math.min(100, Number(storage.get('47quest-se-volume', 42)) || 0)),
   cleanup: [], gameFinished: false, currentRun: null,
 };
+
+// Previous builds started both channels at 85, which is too abrupt for a
+// child-facing game. Apply a one-time safe calibration while still allowing
+// the player to raise either slider afterwards.
+if (!storage.get('47quest-audio-calibrated-v3', false)) {
+  // The BGM channel uses a squared volume curve, so 38 -> 34 is roughly
+  // twenty percent quieter to the listener while preserving slider range.
+  state.bgmVolume = Math.min(state.bgmVolume, 34);
+  state.seVolume = Math.min(state.seVolume, 42);
+  storage.set('47quest-bgm-volume', state.bgmVolume);
+  storage.set('47quest-se-volume', state.seVolume);
+  storage.set('47quest-audio-calibrated-v3', true);
+}
 
 const shuffle = (values) => values
   .map((value) => ({ value, order: Math.random() }))
@@ -71,17 +85,32 @@ function buildRunMeta(pref) {
 
 const saveProgress = () => storage.set('47quest-unlocked', [...state.unlocked]);
 const cleanups = () => {
+  window.QUEST_CHARACTER_CRIES?.stop();
   state.cleanup.forEach((cleanup) => cleanup());
   state.cleanup = [];
 };
 
 function mapDisplayBox(width, height) {
   const safeHeight = Math.max(1, height);
-  const mapAspect = 8 / 5;
+  // The game display is a 1600 x 1000 composition generated from the official
+  // data. Keep hit testing aligned with the letterboxed image on every device.
+  const mapAspect = usePortraitMap() ? 5 / 7 : 8 / 5;
   const surfaceAspect = width / safeHeight;
   const drawWidth = surfaceAspect > mapAspect ? safeHeight * mapAspect : width;
   const drawHeight = surfaceAspect > mapAspect ? safeHeight : width / mapAspect;
   return { width: drawWidth, height: drawHeight, left: (width - drawWidth) / 2, top: (safeHeight - drawHeight) / 2 };
+}
+
+function usePortraitMap() {
+  return window.matchMedia?.('(max-width: 600px) and (orientation: portrait)').matches || false;
+}
+
+function mapBaseAsset() {
+  return usePortraitMap() ? './assets/images/japan-map-play-portrait.png' : './assets/images/japan-map-play.png';
+}
+
+function mapOverlayAsset(pref) {
+  return usePortraitMap() ? pref.overlayPortrait : pref.overlay;
 }
 
 function initMapZoom(surface, content, options = {}) {
@@ -212,6 +241,7 @@ const MUSIC_SCENES = {
 
 let audioChannels;
 function updateAudioVolume() {
+  window.QUEST_CHARACTER_CRIES?.stop();
   if (!audioChannels) return;
   for (const [name, value] of [['bgm', state.bgmVolume], ['se', state.seVolume]]) {
     const gain = audioChannels[name].gain;
@@ -318,17 +348,20 @@ function button(label, action, className = 'primary-button', extra = '') {
 
 function mascot(pref, className = 'pref-mascot') {
   const image = window.CHARACTER_ART?.[pref.code] || `./assets/characters/${pref.code}.png`;
-  return `<div class="${className} pref-mascot-art" role="img" aria-label="${pref.character}"><img src="${image}" alt="" draggable="false" decoding="async" /></div>`;
+  return `<div class="${className} pref-mascot-art" role="img" aria-label="${pref.character}。タップすると声が聞けます" data-character-code="${pref.code}"><img src="${image}" alt="" draggable="false" decoding="async" /></div>`;
 }
 
 function characterCry(pref) {
-  if (!state.sound || state.seVolume <= 0) return;
-  try { window.QUEST_CHARACTER_CRIES.play(ensureAudio(), pref.code, .55, audioChannels.se); } catch { /* Audio may be unavailable. */ }
+  if (!pref || !state.sound || state.seVolume <= 0) return;
+  // Voice belongs to the SE channel, but prerecorded speech needs a linear,
+  // stronger level than short synthesized effects to stay intelligible.
+  const voiceVolume = Math.min(1, (state.seVolume / 100) * 1.8);
+  try { window.QUEST_CHARACTER_CRIES.play(ensureAudio(), pref.code, voiceVolume, audioChannels.se); } catch { /* Audio may be unavailable. */ }
 }
 
 function characterStats(pref, className = '') {
   return `<div class="character-stats ${className}" aria-label="キャラクターの遊び用ステータス">
-    ${[['げんき',pref.stats.genki],['すばやさ',pref.stats.speed],['ひらめき',pref.stats.idea]].map(([label,value], index) => `<div style="--stat-delay:${index * 150}ms"><span>${label}</span><i><b style="--stat:${value}%"></b></i><strong data-stat-value="${value}">0</strong></div>`).join('')}
+    ${(pref.funStats || [['げんき',pref.stats.genki],['すばやさ',pref.stats.speed],['ひらめき',pref.stats.idea]]).map(([label,value], index) => `<div style="--stat-delay:${index * 150}ms"><span>${label}</span><i><b style="--stat:${value}%"></b></i><strong data-stat-value="${value}">0</strong></div>`).join('')}
     <p class="stat-rarity">レア度 <span aria-label="星${pref.stats.rarity}つ">${'★'.repeat(pref.stats.rarity)}${'☆'.repeat(5-pref.stats.rarity)}</span></p>
     <small>※ キャラクターの遊び用データ</small>
   </div>`;
@@ -353,17 +386,35 @@ function animateCharacterStats(root = document) {
 
 function compactCharacterStats(pref) {
   return `<span class="collection-statline" aria-label="げんき${pref.stats.genki}、すばやさ${pref.stats.speed}、ひらめき${pref.stats.idea}">
-    ${[['げんき',pref.stats.genki],['はやさ',pref.stats.speed],['ひらめき',pref.stats.idea]].map(([label,value], index) => `<span style="--mini-delay:${index * 100}ms"><b>${label}</b>${value}<i><em style="--stat:${value}%"></em></i></span>`).join('')}
+    ${(pref.funStats || [['げんき',pref.stats.genki],['はやさ',pref.stats.speed],['ひらめき',pref.stats.idea]]).map(([label,value], index) => `<span style="--mini-delay:${index * 100}ms"><b>${label}</b>${value}<i><em style="--stat:${value}%"></em></i></span>`).join('')}
     <strong aria-label="レア度 星${pref.stats.rarity}つ">${'★'.repeat(pref.stats.rarity)}</strong>
   </span>`;
 }
 
 function mapLayers(pref, alt) {
-  return `<div class="map-layers"><img class="map-image map-base" src="./assets/images/japan-map-play.png" alt="${alt}" /><img class="map-image map-overlay" src="${pref.overlay}" alt="" aria-hidden="true" /><a class="map-source-link" href="https://frame-illust.com/?p=10006" target="_blank" rel="noopener" aria-label="地図素材の出典を開く">出典</a></div>`;
+  return `<div class="map-layers"><img class="map-image map-base" src="${mapBaseAsset()}" alt="${alt}" /><img class="map-image map-overlay" src="${mapOverlayAsset(pref)}" alt="" aria-hidden="true" /><a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a></div>`;
+}
+
+function animateMountedScene() {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const scene = app.querySelector('.scene');
+  if (!scene) return;
+  const groups = scene.querySelectorAll(':scope > header, :scope > aside, :scope > .map-card, :scope > .writing-board, :scope > .game-board, :scope > .collection-grid, :scope > .button-row');
+  groups.forEach((element, index) => element.animate([
+    { opacity: .25, translate: `0 ${Math.min(22, 10 + index * 3)}px`, scale: '.985' },
+    { opacity: 1, translate: '0 0', scale: '1' },
+  ], { duration: 520 + index * 45, delay: index * 38, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' }));
+  scene.querySelectorAll('.action-dock button, .title-actions button').forEach((control, index) => control.animate([
+    { opacity: 0, translate: '0 14px', scale: '.9' },
+    { opacity: 1, translate: '0 0', scale: '1' },
+  ], { duration: 430, delay: 110 + Math.min(index, 5) * 48, easing: 'cubic-bezier(.18,1.35,.35,1)', fill: 'both' }));
 }
 
 function shell(content, { progress = 0, label = 'にほん発見アドベンチャー', home = false } = {}) {
-  queueMicrotask(() => startBgm(state.screen, state.current?.code || ''));
+  queueMicrotask(() => {
+    startBgm(state.screen, state.current?.code || '');
+    requestAnimationFrame(animateMountedScene);
+  });
   return `
     <section class="app-screen ${home ? 'is-title-screen' : ''}">
       <header class="topbar">
@@ -372,12 +423,13 @@ function shell(content, { progress = 0, label = 'にほん発見アドベンチ�
         </button>
         <div class="top-title">${label}</div>
         <div class="top-actions">
+          <button class="icon-button" data-action="gacha" aria-label="コインでガチャ">🪙 ${state.coins}</button>
           ${!home ? '<button class="icon-button" data-action="collection" aria-label="図鑑を見る">ずかん</button>' : ''}
           <button class="icon-button sound-menu-button" data-action="audio-panel" aria-label="音量を調整する" aria-expanded="false">${state.sound ? '🔊' : '音×'}</button>
           <section class="audio-panel" hidden aria-label="音量設定">
             <header><strong>おとの大きさ</strong><button type="button" data-action="audio-panel" aria-label="音量設定を閉じる">×</button></header>
             <label><span>BGM <output data-volume-output="bgm">${state.bgmVolume}</output></span><input type="range" min="0" max="100" step="1" value="${state.bgmVolume}" data-volume="bgm" aria-label="BGM音量"></label>
-            <label><span>こうか音 <output data-volume-output="se">${state.seVolume}</output></span><input type="range" min="0" max="100" step="1" value="${state.seVolume}" data-volume="se" aria-label="効果音音量"></label>
+            <label><span>こうか音・Voice <output data-volume-output="se">${state.seVolume}</output></span><input type="range" min="0" max="100" step="1" value="${state.seVolume}" data-volume="se" aria-label="効果音とキャラクターVoiceの音量"></label>
             <button type="button" class="audio-master-button" data-action="sound">${state.sound ? 'すべての音を消す' : '音を出す'}</button>
           </section>
         </div>
@@ -395,8 +447,8 @@ function renderHome() {
   app.innerHTML = shell(`
     <section class="scene home-scene">
       <div class="map-card home-map">
-        <img class="map-image" src="./assets/images/japan-map-play.png" alt="47都道府県の日本地図" />
-        <a class="map-source-link" href="https://frame-illust.com/?p=10006" target="_blank" rel="noopener" aria-label="地図素材の出典を開く">出典</a>
+        <img class="map-image" src="${mapBaseAsset()}" alt="47都道府県の日本地図" />
+        <a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a>
         <div class="title-clouds" aria-hidden="true"><i></i><i></i><i></i></div>
         <div class="home-roamers">
           ${openingFriends.map((pref, index) => `<button type="button" class="home-roamer roamer-${index + 1}" data-action="hero-cheer" data-code="${pref.code}" aria-label="${pref.character}を応援する">${mascot(pref, 'home-roamer-art')}<span>${pref.character}</span></button>`).join('')}
@@ -473,7 +525,7 @@ function renderMap() {
         ${mapLayers(pref, `${pref.name}を赤色で示した日本地図`)}
         <button class="zoom-button" data-action="map-zoom">＋ 近くで見る</button>
       </div>
-      <div class="map-learning-tray">
+      <div class="map-learning-tray action-dock">
         <p>場所をおぼえたら、つぎは文字を書こう</p>
         ${button('場所を おぼえた →', 'start-writing', 'primary-button sun')}
       </div>
@@ -505,12 +557,13 @@ function renderWriting(mode = state.writeMode) {
           <canvas id="write-canvas" tabindex="0" aria-label="${word}を書く場所"></canvas>
           <span class="canvas-hint">ここに書いてね</span>
           <span class="ink-status" aria-live="polite">線を書いたら「書けた」が押せるよ</span>
-          ${button(isHiragana ? '書けた → 漢字へ' : '書けた → ゲームへ', 'writing-next', 'primary-button sun canvas-next-button', 'disabled')}
         </div>
-        <div class="writing-tools">
-          ${button('↶ 一画もどす', 'undo', 'tool-button')}
+        <div class="writing-tools action-dock">
+          ${button('↶ もどす', 'undo', 'tool-button')}
           ${button('全部けす', 'clear', 'tool-button')}
           ${button('なぞり OFF', 'trace', 'tool-button')}
+          ${isHiragana ? button('ひらがなをスキップ', 'writing-skip-hiragana', 'secondary-button writing-skip-button') : ''}
+          ${button(isHiragana ? '書けた → 漢字へ' : '書けた → ゲームへ', 'writing-next', 'primary-button sun canvas-next-button', 'disabled')}
         </div>
       </div>
     </section>`, { progress: progressFor(isHiragana ? 2 : 3), label: `${state.roundIndex + 1} / 3　${isHiragana ? 'ひらがな' : '漢字'}` });
@@ -677,12 +730,15 @@ function finishGame(success, performance = {}) {
   board.insertAdjacentHTML('beforeend', `
     <div class="game-overlay">
       <div class="result-card ${success ? 'is-clear' : 'is-retry'}">
-        <div class="result-stars" aria-label="星${stars}つ">${success ? Array.from({ length: 3 }, (_, index) => `<i style="--star-delay:${index * 140}ms" class="${index < stars ? 'is-earned' : ''}">${index < stars ? '★' : '☆'}</i>`).join('') : '↻'}</div>
-        <h3>${success ? 'できた！' : 'もう一歩！'}</h3>
-        ${Number.isFinite(performance.score) ? `<p class="result-learning">今回 ${performance.score}点 ／ 最高 ${records[state.current.code].bestScore}点</p>` : ''}
-        ${success && newBest ? '<strong class="new-record">NEW BEST</strong>' : ''}
-        ${success ? `<div class="clear-friend is-mystery">${mascot(state.current, 'clear-friend-art')}<div><strong>${state.current.character}</strong><p>仲間も おおよろこび！</p><span>おさらいで 仲間にしよう</span></div></div>` : '<p>もう一度やってみよう。</p>'}
-        <p class="result-learning"><b>${state.current.name}メモ</b>${state.current.feature}<br><span>名産・名物：${state.current.specialty}</span></p>
+        <header class="result-summary">
+          <div class="result-stars" aria-label="星${stars}つ">${success ? Array.from({ length: 3 }, (_, index) => `<i style="--star-delay:${index * 140}ms" class="${index < stars ? 'is-earned' : ''}">${index < stars ? '★' : '☆'}</i>`).join('') : '↻'}</div>
+          <div><h3>${success ? 'できた！' : 'もう一歩！'}</h3>${Number.isFinite(performance.score) ? `<p class="result-score">今回 ${performance.score}点 ／ 最高 ${records[state.current.code].bestScore}点</p>` : ''}</div>
+          ${success && newBest ? '<strong class="new-record">NEW BEST</strong>' : ''}
+        </header>
+        <div class="result-details">
+          ${success ? `<div class="clear-friend is-mystery">${mascot(state.current, 'clear-friend-art')}<div><strong>${state.current.character}</strong><p>仲間も おおよろこび！</p><span>おさらいで 仲間にしよう</span></div></div>` : '<p class="result-retry-copy">もう一度やってみよう。</p>'}
+          <p class="result-learning"><b>${state.current.name}メモ</b>${state.current.feature}<br><span>名産・名物：${state.current.specialty}</span></p>
+        </div>
         ${success
           ? `<div class="result-actions">${button('もう一度あそぶ', 'game-retry', 'secondary-button')}${button(state.replay ? '県のページへ' : '場所クイズへ', 'game-next', 'primary-button sun')}</div>`
           : `<div class="result-actions">
@@ -1107,7 +1163,8 @@ function initRhythmGame() {
 }
 
 function mapPoint(pref) {
-  return window.PREFECTURE_MAP_POINTS[pref.code] || { x: 50, y: 50 };
+  const points = usePortraitMap() ? window.PREFECTURE_MAP_POINTS_PORTRAIT : window.PREFECTURE_MAP_POINTS;
+  return points?.[pref.code] || { x: 50, y: 50 };
 }
 
 function nearestPrefecture(x, y) {
@@ -1144,7 +1201,9 @@ function overlayContainsPoint(x, y, displayedMapWidth) {
   if (!hitTest?.pixels) return null;
   const centerX = Math.round(x / 100 * hitTest.width);
   const centerY = Math.round(y / 100 * hitTest.height);
-  const radius = Math.max(2, Math.round(hitTest.width / Math.max(1, displayedMapWidth) * 8));
+  // Give fingers a forgiving 16 CSS-pixel halo around the exact official
+  // boundary. The visible prefecture shape itself is never changed.
+  const radius = Math.max(3, Math.round(hitTest.width / Math.max(1, displayedMapWidth) * 16));
   const startX = Math.max(0, centerX - radius); const startY = Math.max(0, centerY - radius);
   const width = Math.min(hitTest.width - startX, radius * 2 + 1);
   const height = Math.min(hitTest.height - startY, radius * 2 + 1);
@@ -1166,21 +1225,19 @@ function renderLocationQuiz() {
   state.locationWrong = new Set();
   state.locationHitTest = null;
   const pref = state.current;
-  const targetPoint = mapPoint(pref);
   app.innerHTML = shell(`
     <section class="scene location-quiz-scene">
       <div class="location-quiz-map-card">
         <div class="quiz-map-frame" data-action="location-map" role="button" tabindex="0" aria-label="日本地図。${pref.name}だと思う場所を直接タップ">
           <div class="map-zoom-content">
-          <img class="quiz-map-base" src="./assets/images/japan-map-play.png" alt="47都道府県の日本地図" />
-          <img class="quiz-answer-overlay" src="${pref.overlay}" alt="" aria-hidden="true" />
+          <img class="quiz-map-base" src="${mapBaseAsset()}" alt="47都道府県の日本地図" />
+          <img class="quiz-answer-overlay" src="${mapOverlayAsset(pref)}" alt="" aria-hidden="true" />
           <span class="map-tap-guide">👆 ${pref.name}だと思う場所をタップ</span>
-          <i class="location-answer-ring" style="--answer-x:${targetPoint.x}%;--answer-y:${targetPoint.y}%" aria-hidden="true"></i>
           </div>
           <button class="zoom-button" data-action="map-zoom">＋ 近くで見る</button>
         </div>
-        <a class="map-source-link" href="https://frame-illust.com/?p=10006" target="_blank" rel="noopener" aria-label="地図素材の出典を開く">出典</a>
-        <div class="location-quiz-overlay">
+        <a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a>
+        <div class="location-quiz-overlay action-dock">
           <div id="location-feedback" class="location-feedback" aria-live="polite">まちがえても、地図を何回でもタップできるよ</div>
           <div class="location-quiz-actions">
             ${button('答えを見る', 'location-reveal', 'secondary-button')}
@@ -1197,7 +1254,6 @@ function revealLocationAnswer(foundByPlayer = false) {
   if (state.locationResolved) return;
   state.locationResolved = true;
   document.querySelector('.quiz-answer-overlay')?.classList.add('is-revealed');
-  document.querySelector('.location-answer-ring')?.classList.add('is-revealed');
   document.querySelector('.location-guess-marker')?.remove();
   document.querySelector('.map-tap-guide')?.classList.add('is-hidden');
   const feedback = document.querySelector('#location-feedback');
@@ -1255,11 +1311,11 @@ function renderReviewLegacy() {
           <canvas id="write-canvas" tabindex="0" aria-label="思い出した都道府県名を書く場所"></canvas>
           <span class="canvas-hint">ひらがなと漢字を、思い出して書こう</span>
         </div>
-        <div class="writing-tools">
-          ${button('↶ 一画もどす', 'undo', 'tool-button')}
+        <div class="writing-tools action-dock">
+          ${button('↶ もどす', 'undo', 'tool-button')}
           ${button('全部けす', 'clear', 'tool-button')}
           ${button('答えを見る', 'review-hint', 'tool-button')}
-          ${button('書けた！', 'review-done', 'primary-button sun', 'disabled')}
+          ${button('書けた！', 'review-done', 'primary-button sun canvas-next-button', 'disabled')}
         </div>
       </div>
     </section>`, { progress: 84 + state.reviewIndex * 5, label: 'おさらいタイム' });
@@ -1378,12 +1434,12 @@ function renderReview() {
           <canvas id="write-canvas" tabindex="0" aria-label="漢字を書く場所"></canvas>
           <span class="canvas-hint">答えを見ないで、漢字を書こう</span>
           <span class="ink-status" aria-live="polite">線を書いたら答え合わせできるよ</span>
-          ${button('答えと見くらべる', 'review-check', 'primary-button sun canvas-next-button', 'disabled')}
         </div>
-        <div class="writing-tools">
-          ${button('↶ 一画もどす', 'undo', 'tool-button')}
+        <div class="writing-tools action-dock">
+          ${button('↶ もどす', 'undo', 'tool-button')}
           ${button('全部けす', 'clear', 'tool-button')}
           ${button('ヒント', 'review-hint', 'tool-button', hint >= 2 ? 'disabled' : '')}
+          ${button('答えと見くらべる', 'review-check', 'primary-button sun canvas-next-button', 'disabled')}
         </div>
       </div>
     </section>`, { progress: 86 + state.reviewIndex * 5, label: `おさらい ${state.reviewIndex + 1} / 3　漢字で書こう` });
@@ -1407,7 +1463,7 @@ function renderReviewCompare() {
         <section class="compare-card"><span>じぶんの文字</span><img src="${state.inkPreview}" alt="自分が書いた文字" /></section>
         <section class="compare-card answer-card"><span>正しい漢字</span><strong>${answer}</strong></section>
       </div>
-      <div class="compare-actions">
+      <div class="compare-actions action-dock">
         ${hintUsed ? '<p>ヒントを見たので、今回は練習として進めるよ。</p>' : button('見本を見ずに書けた', 'review-correct', 'primary-button sun')}
         ${button('ちがった・もう一度', 'review-retry', 'secondary-button')}
         ${hintUsed ? button('見本を見て練習できた', 'review-learned', 'primary-button') : ''}
@@ -1417,21 +1473,37 @@ function renderReviewCompare() {
 
 function advanceReview(correct) {
   const pref = state.current;
+  if (state.reviewResults[pref.code]?.completed) return;
   state.reviewResults[pref.code] ||= { kanji: false };
   state.reviewResults[pref.code].kanji = correct;
-  if (state.reviewResults[pref.code].kanji) {
-    if (!state.unlocked.has(pref.code)) state.newlyUnlocked.add(pref.code);
-    state.unlocked.add(pref.code);
-    saveProgress();
-    sound('win');
-  }
+  state.reviewResults[pref.code].completed = true;
+  state.coins += 1;
+  storage.set('47quest-coins', state.coins);
+  sound('bonus');
   state.reviewIndex += 1;
   state.reviewPhase = 'location';
-  if (state.reviewIndex < 3) renderReviewLocation(); else startRewardReveal();
+  cleanups(); state.screen = 'review-coin';
+  app.innerHTML = shell(`<section class="scene gacha-scene"><p class="eyebrow">${pref.name}のおさらい できた！</p><div class="coin-prize" aria-hidden="true">🪙</div><h1>コイン 1まい ゲット！</h1><p>このセット ${state.reviewIndex} / 3まい　・　もっているコイン ${state.coins}まい</p>${button(state.reviewIndex < 3 ? 'つぎのおさらい →' : 'ガチャへ →','review-coin-next','primary-button sun')}</section>`,{label:'おさらいのごほうび'});
 }
 
 function earnedThisRound() {
-  return state.round.filter((pref) => state.reviewResults[pref.code]?.kanji);
+  return state.gachaRewards;
+}
+
+function renderGacha() {
+  cleanups(); state.screen='gacha'; state.gachaBusy=false;
+  app.innerHTML=shell(`<section class="scene gacha-scene"><p class="eyebrow">にほん全国 なかまガチャ</p><h1>つぎは だれに あえるかな？</h1><div class="gacha-machine" aria-hidden="true"><span>？</span><i>★</i></div><h2>🪙 コイン ${state.coins}まい</h2><p>1まいで1回。47県のどの仲間も同じ確率！<br>同じ仲間が出ることもあるよ。</p>${button('コイン1まいで まわす！','gacha-pull','primary-button sun',state.coins ? '' : 'disabled')}<div class="button-row">${button('冒険へ','start','secondary-button')}${button('図鑑へ','collection','secondary-button')}</div></section>`,{label:'おさらい1県 → コイン1まい → ガチャ1回'});
+}
+
+function pullGacha() {
+  if(state.screen!=='gacha'||state.gachaBusy||state.coins<1)return;
+  state.gachaBusy=true;
+  const pref=PREFECTURES[Math.floor(Math.random()*PREFECTURES.length)];
+  state.coins-=1; storage.set('47quest-coins',state.coins);
+  state.newlyUnlocked=new Set(state.unlocked.has(pref.code)?[]:[pref.code]);
+  state.unlocked.add(pref.code); saveProgress();
+  state.gachaRewards=[pref];state.rewardRevealIndex=0;state.current=pref;
+  renderRewardReveal();
 }
 
 function startRewardReveal() {
@@ -1460,14 +1532,16 @@ function renderRewardReveal() {
         ${mascot(pref, 'reveal-character')}
       </div>
       <div class="reveal-name-card">
-        <small>${pref.name}から やってきた</small>
+        <small>${pref.name}（${pref.reading}）から やってきた</small>
         <h1>${pref.character}</h1>
         <p>${pref.characterCopy}</p>
+        <p>「${pref.voiceLine || ''}」</p>
         <div class="reveal-profile-chips"><span>名産 ${pref.specialty}</span><span>とくいわざ ${pref.specialMove}</span></div>
         <p class="reveal-prefecture-feature"><b>${pref.name}って？</b>${pref.feature}</p>
         ${characterStats(pref, 'reveal-stats')}
+        <div class="gacha-prefecture-map"><strong>${pref.region}：${pref.name}は 赤いところ！</strong>${mapLayers(pref,`${pref.name}の場所を示す日本地図`)}</div>
       </div>
-      ${button(isLast ? 'みんなを見る →' : 'つぎの仲間 →', 'reward-reveal-next', 'primary-button sun reveal-next-button')}
+      ${button('場所をおぼえた！ ガチャへ →', 'reward-reveal-next', 'primary-button sun reveal-next-button')}
     </section>`, { progress: 100, label: `仲間ゲット！ ${state.rewardRevealIndex + 1} / ${earned.length}` });
   sound('win');
   sound('reveal');
@@ -1510,7 +1584,7 @@ function renderCollection() {
     <section class="scene collection-scene">
       <div class="section-head">
         <div><p class="eyebrow">ご当地なかまずかん</p><h1 class="title">集めた仲間</h1></div>
-        <div class="button-row">${button('‹', 'collection-prev', 'secondary-button', state.collectionPage === 0 ? 'disabled' : '')}<span class="page-count">${state.collectionPage + 1} / ${pageCount}</span>${button('›', 'collection-next', 'secondary-button', state.collectionPage === pageCount - 1 ? 'disabled' : '')}${button('図鑑をリセット', 'collection-reset', 'secondary-button reset-button')}${button('ホームへ', 'home', 'secondary-button')} ${button('冒険へ', 'start', 'primary-button sun')}</div>
+        <div class="button-row action-dock">${button('‹', 'collection-prev', 'secondary-button', state.collectionPage === 0 ? 'disabled' : '')}<span class="page-count">${state.collectionPage + 1} / ${pageCount}</span>${button('›', 'collection-next', 'secondary-button', state.collectionPage === pageCount - 1 ? 'disabled' : '')}${button('図鑑をリセット', 'collection-reset', 'secondary-button reset-button')}${button('ホームへ', 'home', 'secondary-button')} ${button('冒険へ', 'start', 'primary-button sun')}</div>
       </div>
       <div class="collection-grid">
         ${pageItems.map((pref) => {
@@ -1548,15 +1622,14 @@ function renderDetail(pref) {
       </div>
       <aside class="character-profile-card" style="--profile-color:${pref.color}">
         <div class="profile-heading">${mascot(pref, 'detail-mascot')}<div><small>${pref.reading}</small><h1>${pref.character}</h1><strong>${pref.name}</strong></div></div>
-        <p class="profile-copy">${pref.characterCopy}</p>
+        <p class="profile-copy">${pref.characterCopy}</p><p class="profile-copy">「${pref.voiceLine || ''}」</p>
         <dl class="prefecture-facts">
           <div><dt>名産・名物</dt><dd>${pref.specialty}</dd></div>
           <div><dt>こんな場所</dt><dd>${pref.feature}</dd></div>
           <div><dt>とくいわざ</dt><dd>${pref.specialMove}</dd></div>
         </dl>
         ${characterStats(pref)}
-        ${button('♪ なきごえを きく', 'character-cry', 'secondary-button')}
-        ${button(`${game?.title || pref.gameTitle}を遊ぶ`, 'replay-game', 'primary-button sun profile-play-button')}
+        <div class="profile-actions action-dock">${button('♪ しゃべり声', 'character-cry', 'secondary-button')}${button(`${game?.title || pref.gameTitle}を遊ぶ`, 'replay-game', 'primary-button sun profile-play-button')}</div>
       </aside>
     </section>`, { progress: Math.round(state.unlocked.size / 47 * 100), label: `${pref.name}のページ` });
   initMapZoom(document.querySelector('.map-stage'), document.querySelector('.map-stage .map-layers'), { focus: mapPoint(pref) });
@@ -1565,6 +1638,21 @@ function renderDetail(pref) {
 }
 
 app.addEventListener('click', (event) => {
+  // Click and touch both dispatch a click event. Every visible mascot uses this
+  // shared route so voice playback cannot be missed on a particular screen.
+  const characterTarget = event.target.closest('[data-character-code]');
+  if (characterTarget) {
+    const pref = PREFECTURES.find((item) => item.code === characterTarget.dataset.characterCode);
+    characterCry(pref);
+    if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      characterTarget.animate([
+        { scale: '1', rotate: '0deg', translate: '0 0' },
+        { scale: '1.09', rotate: '-2deg', translate: '0 -7px', offset: .42 },
+        { scale: '.985', rotate: '1deg', translate: '0 1px', offset: .72 },
+        { scale: '1', rotate: '0deg', translate: '0 0' },
+      ], { duration: 560, easing: 'cubic-bezier(.16,1,.3,1)' });
+    }
+  }
   const control = event.target.closest('[data-action]');
   if (!control || control.disabled) return;
   const action = control.dataset.action;
@@ -1576,7 +1664,6 @@ app.addEventListener('click', (event) => {
     const art = control.querySelector('.home-roamer-art');
     art?.getAnimations().forEach(animation => animation.cancel());
     art?.animate([{ transform: 'translateY(0) scale(1)' }, { transform: 'translateY(-24px) scale(1.12) rotate(8deg)', offset: .45 }, { transform: 'translateY(0) scale(1)' }], { duration: 650, easing: 'ease-out' });
-    characterCry(PREFECTURES.find(pref => pref.code === control.dataset.code));
     return;
   }
   if (action === 'collection') return renderCollection();
@@ -1631,18 +1718,23 @@ app.addEventListener('click', (event) => {
     state.trace = !state.trace; document.querySelector('.trace-word')?.classList.toggle('is-hidden', !state.trace); control.textContent = state.trace ? 'なぞり OFF' : 'なぞり ON'; return;
   }
   if (action === 'writing-next') return state.writeMode === 'hiragana' ? renderWriting('kanji') : renderGame();
+  if (action === 'writing-skip-hiragana') return renderWriting('kanji');
   if (action === 'game-retry') return renderGame();
   if (action === 'game-next') return state.replay ? renderDetail(state.current) : renderLocationQuiz();
   if (action === 'game-skip') return renderLocationQuiz();
   if (action === 'reward-reveal-next') {
-    state.rewardRevealIndex += 1;
-    return state.rewardRevealIndex < earnedThisRound().length ? renderRewardReveal() : renderReward();
+    return renderGacha();
   }
+  if (action === 'gacha') return renderGacha();
+  if (action === 'gacha-pull') return pullGacha();
+  if (action === 'review-coin-next' && state.screen === 'review-coin') return state.reviewIndex < 3 ? renderReviewLocation() : renderGacha();
   if (action === 'location-map') {
     if (state.locationResolved || event.clientX == null) return;
     if (control._mapZoom?.consumeDrag()) return;
     const rect = control.getBoundingClientRect();
     const { x, y } = mapEventCoordinates(control, event);
+    control.querySelector('.map-tap-ripple')?.remove();
+    (control.querySelector('.map-zoom-content') || control).insertAdjacentHTML('beforeend', `<i class="map-tap-ripple" style="--tap-x:${x}%;--tap-y:${y}%" aria-hidden="true"></i>`);
     const nearest = nearestPrefecture(x, y);
     const zoomScale = control._mapZoom?.getState().scale || 1;
     const overlayHit = overlayContainsPoint(x, y, mapDisplayBox(rect.width, rect.height).width * zoomScale);
@@ -1652,7 +1744,7 @@ app.addEventListener('click', (event) => {
     const targetDistance = Math.hypot(targetPoint.x - x, targetPoint.y - y);
     // 沖縄は島しょ部が小さく、実縮尺のままでは指の標準タップ領域を下回る。
     // 地形画像は変えず、入力レイヤーだけを広げて確実に選べるようにする。
-    const centerHitRadius = (state.current.code === '47' ? 4.8 : 1.8) / zoomScale;
+    const centerHitRadius = (state.current.code === '47' ? 7.5 : 3.2) / zoomScale;
     const isCorrect = overlayHit === true
       || targetDistance <= centerHitRadius
       || (overlayHit === null && nearest.pref.code === state.current.code);
@@ -1710,7 +1802,15 @@ app.addEventListener('pointerdown', (event) => {
   control.classList.add('is-pressing');
   window.setTimeout(() => ripple.remove(), 520);
   const release = () => control.classList.remove('is-pressing');
-  control.addEventListener('pointerup', release, { once: true });
+  const springRelease = () => {
+    release();
+    if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) control.animate([
+      { scale: '.965', translate: '0 2px' },
+      { scale: '1.035', translate: '0 -1px', offset: .55 },
+      { scale: '1', translate: '0 0' },
+    ], { duration: 360, easing: 'cubic-bezier(.16,1,.3,1)' });
+  };
+  control.addEventListener('pointerup', springRelease, { once: true });
   control.addEventListener('pointercancel', release, { once: true });
 });
 

@@ -2,18 +2,18 @@
   'use strict';
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const definitions = {
-    '02': { title:'りんごの ごほうび収穫祭', command:'かごを うごかして キャッチ！', goal:8, time:45, lesson:'かごを 左右にうごかそう。金のりんごは３点！', demo:'🍎　↓　🧺', acts:['りんごが おちてくるよ','そよかぜが ふいてきた！','金のりんごの 収穫祭！'] },
-    '12': { title:'らっかせい工場 おおいそがし', command:'つかんで おなじ絵の箱へ！', goal:8, time:45, lesson:'らっかせいは豆の箱へ。葉っぱは葉の箱へ はこぼう！', demo:'🥜 → 📦 ← 🍃', acts:['つかんで 箱へはこぼう','２つずつ ながれてくるよ','金のらっかせいも 登場！'] },
-    '37': { title:'のびーる！うどん食堂', command:'麺を 上にひっぱって はなそう！', goal:5, time:45, lesson:'もち手を上へひっぱろう。黄色い帯の中ではなすと できあがり！', demo:'↑　〰️　🍜', acts:['うどん食堂 かいてん！','ながーい注文も きたよ','大もりの 注文です！'] },
+    '02': { title:'りんごの ごほうび収穫祭', command:'かごを うごかして キャッチ！', goal:8, time:25, lesson:'かごを 左右にうごかそう。金のりんごは３点！', demo:'🍎　↓　🧺', acts:['りんごが おちてくるよ','そよかぜが ふいてきた！','金のりんごの 収穫祭！'] },
+    '12': { title:'らっかせい工場 おおいそがし', command:'つかんで おなじ絵の箱へ！', goal:8, time:25, lesson:'らっかせいは豆の箱へ。葉っぱは葉の箱へ はこぼう！', demo:'🥜 → 📦 ← 🍃', acts:['つかんで 箱へはこぼう','２つずつ ながれてくるよ','金のらっかせいも 登場！'] },
+    '37': { title:'のびーる！うどん食堂', command:'麺を 上にひっぱって はなそう！', goal:5, time:25, lesson:'もち手を上へひっぱろう。黄色い帯の中ではなすと できあがり！', demo:'↑　〰️　🍜', acts:['うどん食堂 かいてん！','ながーい注文も きたよ','大もりの 注文です！'] },
   };
   // Pure round rules shared by the UI and regression tests.
-  function round(goal, duration = 45) {
+  function round(goal, duration = 25) {
     return { elapsed:0, score:0, streak:0, best:0, misses:0,
-      tick(dt) { this.elapsed += clamp(dt,0,.1); return this.elapsed >= duration && this.score >= goal; },
+      tick(dt) { this.elapsed += clamp(dt,0,.1); return this.elapsed >= duration; },
       hit(points=1) { this.score += points; this.best = Math.max(this.best,++this.streak); },
       miss() { this.misses++; this.streak=0; },
       get stars() { return this.score >= goal*3 ? 3 : this.score >= goal*2 ? 2 : this.score >= goal ? 1 : 0; },
-      get phase() { return Math.min(2,Math.floor(this.elapsed/15)); },
+      get phase() { return Math.min(2,Math.floor(this.elapsed/(duration/3))); },
     };
   }
   const node = (tag, cls, text='') => { const n=document.createElement(tag);n.className=cls;n.textContent=text;return n; };
@@ -22,7 +22,9 @@
     const def=definitions[pref.code]; if(!def)return false;
     field.className=`game-field featured-game featured-${pref.code}`;
     const intro=node('div','fg-intro');
-    intro.innerHTML=`<p>あそびかた</p><strong>${def.lesson}</strong><div class="fg-demo" aria-hidden="true">${def.demo}</div><span>45秒あそべるよ！　★ ${def.goal}点　★★ ${def.goal*2}点　★★★ ${def.goal*3}点</span><button type="button">あそぶ！</button>`;
+    const lessonLines=(def.lesson.match(/[^。！？]+[。！？]?/g)||[def.lesson])
+      .map(line=>`<span class="fg-lesson-line">${line.trim()}</span>`).join('');
+    intro.innerHTML=`<p>あそびかた</p><strong>${lessonLines}</strong><div class="fg-demo" aria-hidden="true">${def.demo}</div><span>最大25秒！　★ ${def.goal}点　★★ ${def.goal*2}点　★★★ ${def.goal*3}点</span><button type="button">あそぶ！</button>`;
     field.append(intro);
     let alive=true, raf=0; const cleanups=[];
     registerCleanup(()=>{alive=false;cancelAnimationFrame(raf);cleanups.forEach(fn=>fn());});
@@ -38,27 +40,35 @@
       world.addEventListener('pointermove',event=>{if(event.buttons)sound('motion');});
       world.addEventListener('pointerup',()=>sound('release'));
       let feedbackTime=0, lastPhase=-1;
-      const tell=(text)=>{feedback.textContent=text;feedbackTime=1.2;};
+      const tell=(text)=>{
+        feedbackTime=1.2;
+        if(field.classList.contains('has-regional-canvas')){
+          feedback.textContent='';
+          banner.textContent=text;
+          banner.classList.add('is-feedback');
+        }else feedback.textContent=text;
+      };
       const ctx={world,model,cleanups,sound,tell,
         point(e){const r=world.getBoundingClientRect();return {x:clamp((e.clientX-r.left)/r.width*100,0,100),y:clamp((e.clientY-r.top)/r.height*100,0,100)};},
         hit(points=1){model.hit(points);sound(model.streak%3===0?'combo':'good');tell(points>1?`＋${points}！ おおあたり！`:model.streak>=3?`${model.streak}れんぞく！`:'やった！ ＋1');},
         miss(){model.miss();sound('wrong');tell('だいじょうぶ！ もういちど');},
       };
       const game=engines[pref.code](ctx);
-      function complete(){
+      if(world.querySelector('.rg-canvas'))field.classList.add('has-regional-canvas');
+      function complete(success=model.score>=def.goal){
         if(!alive)return; alive=false;cancelAnimationFrame(raf);
         const challengeWon=runMeta.challenge?.id==='combo'?model.best>=3:runMeta.challenge?.id==='clean'?model.misses===0:runMeta.challenge?.id==='speed'?model.score>=def.goal*2:false;
-        finish(true,{stars:model.stars,maxStreak:model.best,misses:model.misses,score:model.score,timeLeft:Math.max(0,def.time-model.elapsed),challengeWon});
+        finish(success,{stars:model.stars,maxStreak:model.best,misses:model.misses,score:model.score,timeLeft:Math.max(0,def.time-model.elapsed),challengeWon});
       }
       let last=performance.now();
       function loop(now){
         if(!alive)return;
         const dt=document.hidden?0:Math.min(.05,Math.max(0,(now-last)/1000));last=now;
-        if(model.tick(dt)){complete();return;}
-        if(lastPhase!==model.phase){lastPhase=model.phase;banner.textContent=def.acts[lastPhase];sound('pop');}
+        if(model.tick(dt)){complete(model.score>=def.goal);return;}
+        if(lastPhase!==model.phase){lastPhase=model.phase;if(feedbackTime<=0)banner.textContent=def.acts[lastPhase];sound('pop');}
         game.update(dt);
         if(!alive)return;
-        if(feedbackTime>0){feedbackTime-=dt;if(feedbackTime<=0)feedback.textContent='';}
+        if(feedbackTime>0){feedbackTime-=dt;if(feedbackTime<=0){feedback.textContent='';banner.classList.remove('is-feedback');banner.textContent=def.acts[model.phase];}}
         const remaining=Math.max(0,def.time-model.elapsed);
         const nextGoal=def.goal*(Math.min(2,model.stars)+1);
         status.textContent=`${'★'.repeat(model.stars)}${'☆'.repeat(3-model.stars)}　${model.score}点${model.stars<3?` ／ つぎの星まで ${nextGoal-model.score}点`:'　３つ星！ どこまで のばせる？'}`;

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>47Quest microgame preview</title>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="../src/featured-games.css">
+  <style>
+    body { overflow:hidden; background:#e7f5f3; }
+    #preview { position:fixed; inset:0; overflow:hidden; }
+  </style>
+</head>
+<body>
+  <div id="preview" class="game-field"></div>
+  <script src="../src/featured-games.js"></script>
+  <script src="../src/microgames-v3.js"></script>
+  <script>
+    const code = new URLSearchParams(location.search).get('code') || '01';
+    const config = window.QUEST_MICROGAMES.catalog[code];
+    document.title = `${code} ${config.title}`;
+    window.QUEST_MICROGAMES.start({
+      field: document.querySelector('#preview'),
+      pref: { code, symbol: '●', color: '#80ccef' },
+      updateHud() {}, finish() {}, sound() {}, registerCleanup() {},
+    });
+  </script>
+</body>
+</html>

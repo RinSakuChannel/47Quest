@@ -9,7 +9,21 @@
 .featured-scene .fg-banner { right:85px; left:12px; }
 .featured-scene .micro-command { white-space:normal; font-size:clamp(18px,2vw,28px); }
 .featured-game { isolation:isolate; overflow:hidden; background:#eaf6d8; touch-action:none; }
-.rg-canvas { display:block; width:100%; height:100%; touch-action:none; object-fit:fill; }
+.fg-world:has(> .rg-canvas) { display:flex; align-items:center; justify-content:center; background:#dcebf0; }
+/* The regional games use a fixed 1000 x 600 coordinate system.  Stretching the
+   canvas to an arbitrary board size also stretches every glyph and illustration,
+   making Japanese copy look vertically crushed.  Let the browser contain the
+   intrinsic 5:3 canvas instead and use harmless letterboxing when needed. */
+.rg-canvas {
+  display:block;
+  width:auto;
+  height:auto;
+  max-width:100%;
+  max-height:100%;
+  aspect-ratio:5 / 3;
+  margin:auto;
+  touch-action:none;
+}
 .fg-world { position:absolute; inset:15% 2% 15%; overflow:hidden; border-radius:24px; touch-action:none; background:linear-gradient(#d1efff 0 73%,#bad887 73%); }
 .fg-banner { position:absolute; top:2%; left:5%; right:5%; text-align:center; font-size:clamp(18px,2.4vw,32px); color:#163e51; }
 .fg-status { position:absolute; bottom:3%; left:3%; right:3%; text-align:center; color:#163e51; font-weight:900; font-size:clamp(15px,1.8vw,24px); }
@@ -17,7 +31,16 @@
 .fg-bank { position:absolute; right:3%; bottom:9%; padding:9px 15px; border-radius:18px; background:#fff5c2; border:2px solid #c5a143; color:#193e51; font-weight:800; z-index:10; cursor:pointer; }
 .fg-bank[hidden] { display:none; }
 .fg-intro { position:absolute; inset:4%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:20px; text-align:center; background:#fffdf3; border-radius:28px; box-shadow:0 7px 0 #234d4424; }
-.fg-intro p { margin:0; font-size:20px; }.fg-intro strong { max-width:760px; font-size:clamp(22px,3vw,38px); line-height:1.6; }
+.fg-intro p { margin:0; font-size:20px; }
+.fg-intro strong {
+  display:grid;
+  gap:.12em;
+  width:min(94%,72rem);
+  font-size:clamp(20px,2.25vw,34px);
+  line-height:1.42;
+  letter-spacing:-.025em;
+}
+.fg-lesson-line { display:block; text-wrap:balance; }
 .fg-intro span { font-size:clamp(15px,1.8vw,22px); }.fg-demo { font-size:clamp(32px,6vw,74px); }
 .fg-intro button { min-width:200px; padding:16px 28px; border:0; background:#ffd153; box-shadow:0 6px 0 #c39128; border-radius:24px; color:#193e51; font-size:26px; font-weight:900; cursor:pointer; }
 .fg-intro button:active { transform:translateY(4px);box-shadow:0 2px 0 #c39128; }
@@ -45,5 +68,5 @@
 .fg-grip { position:absolute; left:50%; transform:translate(-50%,-50%); width:clamp(170px,28%,310px); min-height:55px; padding:8px; border:4px solid #926036; background:#ecc897; border-radius:18px; color:#553715; font-size:clamp(16px,1.8vw,23px); font-weight:900; cursor:grab; touch-action:none; }
 .fg-grip.is-ready { background:#ffe569;border-color:#a47c16;box-shadow:0 0 20px #ffc726; }
 canvas.micro-scrub-cover { background:transparent; }.micro-scrub span.is-found { z-index:1; }
-@media (max-width:600px) { .fg-world { inset:17% 1% 19%; }.fg-status { bottom:2%; }.fg-bank { bottom:10%;font-size:13px; }.fg-intro { gap:8px;padding:12px; }.fg-bin { flex-direction:column;gap:0; }.fg-bin b { line-height:1.1; }.fg-bin span { font-size:15px; }.fg-feedback { top:18%; }.fg-order { font-size:15px; } }
+@media (max-width:600px) { .fg-world { inset:17% 1% 19%; }.fg-status { bottom:2%; }.fg-bank { bottom:10%;font-size:13px; }.fg-intro { gap:8px;padding:12px; }.fg-intro strong{width:98%;font-size:clamp(18px,5.2vw,25px);line-height:1.38}.fg-bin { flex-direction:column;gap:0; }.fg-bin b { line-height:1.1; }.fg-bin span { font-size:15px; }.fg-feedback { top:18%; }.fg-order { font-size:15px; } }
 @media (prefers-reduced-motion:reduce) { .fg-noodle.is-served { transition:none; } }

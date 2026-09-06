@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>47Quest microgame smoke test</title>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="../src/featured-games.css">
+  <style>
+    body { overflow:auto; }
+    #fixtures { position:fixed; left:-10000px; top:0; width:800px; }
+    .fixture { position:relative; width:800px; height:400px; overflow:hidden; }
+  </style>
+</head>
+<body>
+  <pre id="result">running</pre>
+  <div id="fixtures"></div>
+  <script src="../src/featured-games.js"></script>
+  <script src="../src/microgames-v3.js"></script>
+  <script>
+    const errors = [];
+    const cleanups = [];
+    window.addEventListener('error', event => errors.push(event.message));
+    for (const config of Object.values(window.QUEST_MICROGAMES.catalog)) {
+      const field = document.createElement('div');
+      field.className = 'fixture';
+      Object.assign(field.style, { width: '800px', height: '400px', overflow: 'hidden', position: 'relative' });
+      field.dataset.code = config.code;
+      document.querySelector('#fixtures').append(field);
+      window.QUEST_MICROGAMES.start({
+        field,
+        pref: { code: config.code, symbol: '●', color: '#80ccef' },
+        updateHud() {}, finish() {}, sound() {},
+        registerCleanup(cleanup) { cleanups.push(cleanup); },
+      });
+      field.querySelector('.micro-start-button, .fg-intro button')?.click();
+    }
+    setTimeout(() => {
+      const fields = [...document.querySelectorAll('#fixtures > [data-code]')];
+      const empty = fields.filter(field => field.childElementCount === 0).map(field => field.dataset.code);
+      const overflow = fields.filter(field => field.scrollHeight > field.clientHeight + 1).map(field => field.dataset.code);
+      const notStarted = fields.filter(field => field.querySelector('.micro-intro')).map(field => field.dataset.code);
+      const shortTimers = Object.values(window.QUEST_MICROGAMES.catalog).filter(game => game.time < 25).map(game => game.code);
+      const metrics = fields.slice(0, 3).map(field => { const style = getComputedStyle(field); return { code: field.dataset.code, client: [field.clientWidth, field.clientHeight], scroll: [field.scrollWidth, field.scrollHeight], box: style.boxSizing, padding: style.padding, inset: style.inset }; });
+      const modes = new Set(Object.values(window.QUEST_MICROGAMES.catalog).map(game => game.mode));
+      document.querySelector('#result').textContent = JSON.stringify({
+        games: fields.length,
+        modes: modes.size,
+        empty,
+        overflow,
+        notStarted,
+        shortTimers,
+        metrics,
+        errors,
+        passed: fields.length === 47 && modes.size === 47 && empty.length === 0 && overflow.length === 0 && notStarted.length === 0 && shortTimers.length === 0 && errors.length === 0,
+      });
+      cleanups.forEach(cleanup => cleanup());
+    }, 1300);
+  </script>
+</body>
+</html>

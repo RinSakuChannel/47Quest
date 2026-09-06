@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="./src/featured-games.css">
   <link rel="stylesheet" href="./src/game-gallery.css">
   <script src="./src/prefectures.js" defer></script>
+  <script src="./src/character-personalities.js" defer></script>
   <script src="./src/regional-games.js" defer></script>
   <script src="./src/featured-games.js" defer></script>
   <script src="./src/game-audio.js" defer></script>
@@ -14,12 +15,13 @@
   <script src="./src/game-gallery.js" defer></script>
 </head>
 <body>
-  <header><a href="/">← 47Quest ホーム</a><h1>ミニゲーム広場</h1><p id="status"></p></header>
+  <header><a href="./">← 47Quest ホーム</a><h1>ミニゲーム広場</h1><p id="status"></p></header>
   <main id="gallery"></main>
+  <footer id="gallery-pages"><button id="gallery-prev">‹ まえ</button><strong id="gallery-page"></strong><button id="gallery-next">つぎ ›</button></footer>
   <section id="player" hidden>
-    <nav><button id="back">← 一覧へ</button><h2 id="game-title"></h2><label>音量 <input id="volume" type="range" min="0" max="100" value="45" aria-label="ゲームの音量"></label><span id="hud"></span></nav>
+    <nav><button id="back">← 一覧へ</button><h2 id="game-title"></h2><div class="gallery-audio"><label>BGM <input id="bgm-volume" type="range" min="0" max="100" value="29" aria-label="BGM音量"></label><label>SE・Voice <input id="se-volume" type="range" min="0" max="100" value="42" aria-label="効果音とキャラクターVoiceの音量"></label></div><span id="hud"></span></nav>
     <div id="field"></div>
-    <div id="result" hidden><h2>できた！</h2><img id="friend" alt="喜んでいる仲間のシルエット"><p id="record"></p><button id="again">もう一回！</button><button id="return">一覧へ</button></div>
+    <div id="result" hidden><h2>できた！</h2><img id="friend" alt="喜んでいる仲間。タップすると声が聞けます"><p id="record"></p><button id="again">もう一回！</button><button id="return">一覧へ</button></div>
   </section>
 </body>
 </html>

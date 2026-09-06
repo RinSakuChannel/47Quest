@@ -1,9 +1,7 @@
-// Only verified individual sprites are switched over; old artwork remains recoverable.
-window.CHARACTER_ART = {
-  '02':'./assets/characters/v2/02.webp',
-  '04':'./assets/characters/v2/04.webp',
-  '06':'./assets/characters/v2/06.webp',
-  '10':'./assets/characters/v2/10.webp',
-  '12':'./assets/characters/v2/12.webp',
-  '37':'./assets/characters/v2/37.webp',
-};
+// Every prefecture has a verified individual high-resolution cutout.
+window.CHARACTER_ART = Object.fromEntries(
+  Array.from({length:47}, (_, index) => {
+    const code=String(index + 1).padStart(2, '0');
+    return [code, `./assets/characters/v3/${code}.webp`];
+  })
+);
