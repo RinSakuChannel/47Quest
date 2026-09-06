@@ -14,7 +14,7 @@ const state = {
   screen: 'home', round: [], roundIndex: 0, current: null, replay: false,
   quickQuiz: false,
   newlyUnlocked: new Set(), rewardRevealIndex: 0,
-  coins: Math.max(0, Math.floor(Number(storage.get('47quest-coins', 0)) || 0)), gachaRewards: [], gachaBusy: false, gachaFromReview: false,
+  coins: Math.max(0, Math.floor(Number(storage.get('47quest-coins', 0)) || 0)), gachaRewards: [], gachaBusy: false, gachaFromReview: false, gachaPrefecture: null,
   writeMode: 'hiragana', strokes: [], trace: true, mapZoomed: false,
   reviewIndex: 0, reviewPhase: 'location', reviewHints: {}, reviewResults: {}, inkPreview: '',
   reviewLocationAttempts: {}, reviewLocationWrong: {}, reviewLocationResolved: false,
@@ -523,6 +523,7 @@ function startRound() {
   state.newlyUnlocked = new Set();
   state.gachaRewards = [];
   state.gachaFromReview = false;
+  state.gachaPrefecture = null;
   renderMap();
 }
 
@@ -537,6 +538,7 @@ function startQuickQuiz() {
   state.newlyUnlocked = new Set();
   state.gachaRewards = [];
   state.gachaFromReview = false;
+  state.gachaPrefecture = null;
   state.reviewIndex = 0;
   state.reviewPhase = 'location';
   state.reviewHints = {};
@@ -1344,7 +1346,7 @@ function renderReviewLegacy() {
         <div class="review-list">
           ${state.round.map((item, index) => `<div class="review-place ${index === state.reviewIndex ? 'is-current' : ''} ${index < state.reviewIndex ? 'is-done' : ''}"><span class="review-number">${index < state.reviewIndex ? '✓' : index + 1}</span><span>${index === state.reviewIndex ? item.region : index < state.reviewIndex ? item.name : '？？？'}</span><span>${index === state.reviewIndex ? 'いまここ' : ''}</span></div>`).join('')}
         </div>
-        <div class="hint-stack">
+        <div class="hint-stack" aria-live="polite">
           ${hint >= 1 ? `<span class="hint-chip">ひらがな: ${pref.reading}</span>` : ''}
           ${hint >= 2 ? `<span class="hint-chip">漢字: ${pref.name}</span>` : ''}
         </div>
@@ -1476,6 +1478,7 @@ function renderReview() {
       <div class="writing-board">
         <div class="canvas-shell">
           <div class="trace-word ${hint >= 2 ? '' : 'is-hidden'}">${word}</div>
+          ${hint === 1 ? `<div class="review-first-letter" aria-label="最初の文字は${characters[0]}"><strong>${characters[0]}</strong><span>${'○'.repeat(Math.max(0, characters.length - 1))}</span></div>` : ''}
           <canvas id="write-canvas" tabindex="0" aria-label="漢字を書く場所"></canvas>
           <span class="canvas-hint">答えを見ないで、漢字を書こう</span>
           <span class="ink-status" aria-live="polite">線を書いたら答え合わせできるよ</span>
@@ -1526,6 +1529,7 @@ function advanceReview(correct) {
   storage.set('47quest-cleared', [...state.cleared]);
   state.coins += 1;
   state.gachaFromReview = true;
+  state.gachaPrefecture = pref;
   storage.set('47quest-coins', state.coins);
   sound('bonus');
   state.reviewIndex += 1;
@@ -1541,14 +1545,18 @@ function earnedThisRound() {
 function renderGacha() {
   cleanups(); state.screen='gacha'; state.gachaBusy=false;
   const reviewing = state.gachaFromReview;
-  app.innerHTML=shell(`<section class="scene gacha-scene"><p class="eyebrow">にほん全国 なかまガチャ</p><h1>つぎは だれに あえるかな？</h1><div class="gacha-machine" aria-hidden="true"><span>？</span><i>★</i></div><h2>🪙 コイン ${state.coins}まい</h2><p>1まいで1回。47県のどの仲間も同じ確率！<br>同じ仲間が出ることもあるよ。</p>${button('コイン1まいで まわす！','gacha-pull','primary-button sun',state.coins ? '' : 'disabled')}${reviewing ? '' : `<div class="button-row">${button('冒険へ','start','secondary-button')}${button('図鑑へ','collection','secondary-button')}</div>`}</section>`,{label:reviewing ? `おさらい ${state.reviewIndex} / ${state.round.length}　ガチャを回そう` : 'なかまガチャ'});
+  const gachaCopy = reviewing ? `${state.gachaPrefecture.name}のおさらいコイン。<br>この県の仲間が必ずやってくるよ！` : '1まいで1回。47県のどの仲間も同じ確率！<br>同じ仲間が出ることもあるよ。';
+  app.innerHTML=shell(`<section class="scene gacha-scene"><p class="eyebrow">にほん全国 なかまガチャ</p><h1>${reviewing ? `${state.gachaPrefecture.name}の仲間を呼ぼう！` : 'つぎは だれに あえるかな？'}</h1><div class="gacha-machine" aria-hidden="true"><span>？</span><i>★</i></div><h2>🪙 コイン ${state.coins}まい</h2><p>${gachaCopy}</p>${button('コイン1まいで まわす！','gacha-pull','primary-button sun',state.coins ? '' : 'disabled')}${reviewing ? '' : `<div class="button-row">${button('冒険へ','start','secondary-button')}${button('図鑑へ','collection','secondary-button')}</div>`}</section>`,{label:reviewing ? `おさらい ${state.reviewIndex} / ${state.round.length}　${state.gachaPrefecture.name}のガチャ` : 'なかまガチャ'});
 }
 
 function pullGacha() {
   if(state.screen!=='gacha'||state.gachaBusy||state.coins<1)return;
   state.gachaBusy=true;
+  const pref=state.gachaFromReview&&state.gachaPrefecture
+    ? state.gachaPrefecture
+    : PREFECTURES[Math.floor(Math.random()*PREFECTURES.length)];
   state.gachaFromReview=false;
-  const pref=PREFECTURES[Math.floor(Math.random()*PREFECTURES.length)];
+  state.gachaPrefecture=null;
   state.coins-=1; storage.set('47quest-coins',state.coins);
   state.newlyUnlocked=new Set(state.unlocked.has(pref.code)?[]:[pref.code]);
   state.unlocked.add(pref.code); saveProgress();

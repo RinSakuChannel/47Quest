@@ -285,6 +285,15 @@ async function drawEnoughInk(page) {
       await assertNoHiddenOverflow(page, '.detail-scene,.character-profile-card', `${name} detail`);
       await assertPageNoScroll(page, `${name} detail`);
       await assertReadableText(page, `${name} detail`);
+      if (name === 'desktop') {
+        await page.evaluate(() => {
+          state.round=[PREFECTURE_DATA[0]];state.reviewIndex=0;state.reviewPhase='kanji';state.current=PREFECTURE_DATA[0];state.reviewHints={};renderReview();
+        });
+        await page.locator('[data-action="review-hint"]').first().click();
+        await page.waitForSelector('.review-first-letter');
+        assert.equal((await page.locator('.review-first-letter strong').innerText()).length, 1, 'first-character hint did not show one kanji');
+        await assertInsideViewport(page, '.review-first-letter', `${name} first-character hint`);
+      }
       if (name === 'desktop' || name === 'phone') {
         await page.evaluate(() => localStorage.setItem('47quest-cleared', JSON.stringify(Array.from({length:47},(_,i)=>String(i+1).padStart(2,'0')))));
         await page.goto(baseUrl, { waitUntil:'networkidle' });
