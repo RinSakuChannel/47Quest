@@ -321,7 +321,7 @@ async function drawEnoughInk(page) {
         await page.locator('.fg-intro button').click();
         await page.waitForSelector('.rg-canvas');
         await assertPageNoScroll(page, `${name} ${code} game`);
-        await assertInsideViewport(page, '.rg-canvas,.fg-banner,.fg-status', `${name} ${code} game`);
+        await assertInsideViewport(page, '.rg-canvas,.fg-banner,.fg-status,.fg-star-track', `${name} ${code} game`);
         const ratio=await page.locator('.rg-canvas').evaluate(c=>{const r=c.getBoundingClientRect();return r.width/r.height;});
         assert.ok(Math.abs(ratio-5/3)<.02,`${name} ${code}: canvas text is stretched`);
         if(name==='phone'||name==='desktop'){

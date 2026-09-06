@@ -24,7 +24,8 @@
     const intro=node('div','fg-intro');
     const lessonLines=(def.lesson.match(/[^。！？]+[。！？]?/g)||[def.lesson])
       .map(line=>`<span class="fg-lesson-line">${line.trim()}</span>`).join('');
-    intro.innerHTML=`<p>あそびかた</p><strong>${lessonLines}</strong><div class="fg-demo" aria-hidden="true">${def.demo}</div><span>最大25秒！　★ ${def.goal}点　★★ ${def.goal*2}点　★★★ ${def.goal*3}点</span><button type="button">あそぶ！</button>`;
+    const art=window.CHARACTER_ART?.[pref.code];
+    intro.innerHTML=`<p>25秒の ご当地チャレンジ</p>${art?`<div class="fg-mystery-stage" aria-hidden="true"><img src="${art}" alt=""/><i>？</i></div>`:''}<strong>${lessonLines}</strong><div class="fg-demo" aria-hidden="true">${def.demo}</div><span>★ ${def.goal}点　★★ ${def.goal*2}点　★★★ ${def.goal*3}点</span><button type="button">チャレンジ！</button>`;
     field.append(intro);
     let alive=true, raf=0; const cleanups=[];
     registerCleanup(()=>{alive=false;cancelAnimationFrame(raf);cleanups.forEach(fn=>fn());});
@@ -33,9 +34,11 @@
       const model=round(def.goal,def.time);
       const world=node('div','fg-world'); const banner=node('strong','fg-banner',def.acts[0]);
       const status=node('div','fg-status'); const feedback=node('div','fg-feedback');feedback.setAttribute('role','status');
+      const progress=node('div','fg-star-track');progress.setAttribute('role','progressbar');progress.setAttribute('aria-label','３つ星までの得点');progress.setAttribute('aria-valuemin','0');progress.setAttribute('aria-valuemax',String(def.goal*3));
+      progress.innerHTML='<i></i><span>★</span><span>★</span><span>★</span>';
       const end=node('button','fg-bank','ここで おわる →');end.hidden=true;
       end.addEventListener('click',()=>{if(model.score>=def.goal)complete();});
-      field.append(world,banner,status,feedback,end);
+      field.append(world,banner,status,feedback,end,progress);
       world.addEventListener('pointerdown',()=>sound('action'));
       world.addEventListener('pointermove',event=>{if(event.buttons)sound('motion');});
       world.addEventListener('pointerup',()=>sound('release'));
@@ -78,6 +81,9 @@
         if(feedbackTime>0){feedbackTime-=dt;if(feedbackTime<=0){feedback.textContent='';banner.classList.remove('is-feedback');banner.textContent=def.acts[model.phase];}}
         const remaining=Math.max(0,def.time-model.elapsed);
         const nextGoal=def.goal*(Math.min(2,model.stars)+1);
+        progress.style.setProperty('--score-progress',`${Math.min(100,model.score/(def.goal*3)*100)}%`);
+        progress.setAttribute('aria-valuenow',String(Math.min(def.goal*3,model.score)));
+        progress.querySelectorAll('span').forEach((star,index)=>star.classList.toggle('is-earned',model.stars>index));
         status.textContent=`${'★'.repeat(model.stars)}${'☆'.repeat(3-model.stars)}　${model.score}点${model.stars<3?` ／ つぎの星まで ${nextGoal-model.score}点`:'　３つ星！ どこまで のばせる？'}`;
         if(remaining===0)banner.textContent='あせらず れんしゅう！ あと'+Math.max(0,def.goal-model.score)+'点';
         end.hidden=model.score<def.goal;
