@@ -50,7 +50,14 @@
       };
       const ctx={world,model,cleanups,sound,tell,
         point(e){const r=world.getBoundingClientRect();return {x:clamp((e.clientX-r.left)/r.width*100,0,100),y:clamp((e.clientY-r.top)/r.height*100,0,100)};},
-        hit(points=1){model.hit(points);sound(model.streak%3===0?'combo':'good');tell(points>1?`＋${points}！ おおあたり！`:model.streak>=3?`${model.streak}れんぞく！`:'やった！ ＋1');},
+        hit(points=1){
+          const oldStars=model.stars;model.hit(points);sound(model.streak%3===0?'combo':'good');
+          tell(model.stars>oldStars?`★ ${model.stars}つ！ ${model.stars===3?'大成功！':'まだ いける！'}`:model.streak>=3?`${model.streak}れんぞく！ ＋${points}`:`やった！ ＋${points}`);
+          if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){
+            status.getAnimations().forEach(animation=>animation.cancel());
+            status.animate([{scale:'1'},{scale:'1.04',offset:.3},{scale:'1'}],{duration:280,easing:'ease-out'});
+          }
+        },
         miss(){model.miss();sound('wrong');tell('だいじょうぶ！ もういちど');},
       };
       const game=engines[pref.code](ctx);

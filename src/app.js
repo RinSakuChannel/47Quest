@@ -342,8 +342,12 @@ function sound(kind = 'tap') {
   try {
     const context = ensureAudio();
     const now = context.currentTime;
-    if (state.screen === 'game' && state.current && window.QUEST_AUDIO?.effect(context, audioChannels.se, state.current.code, kind)) return;
+    if (!kind.startsWith('ui-') && kind !== 'win' && state.screen === 'game' && state.current && window.QUEST_AUDIO?.effect(context, audioChannels.se, state.current.code, kind)) return;
     const patterns = {
+      'ui-press': [[360,.035,'sine',.012,0]],
+      'ui-confirm': [[660,.055,'sine',.024,0],[880,.08,'sine',.018,.035]],
+      'ui-back': [[540,.055,'sine',.020,0],[390,.07,'sine',.016,.035]],
+      'ui-open': [[523,.06,'triangle',.018,0],[784,.10,'sine',.019,.045]],
       tap:   [[520, .045, 'sine', .028, 0]],
       draw:  [[760, .025, 'sine', .018, 0]],
       pop:   [[620, .07, 'sine', .035, 0], [880, .06, 'triangle', .018, .025]],
@@ -388,12 +392,13 @@ function characterStats(pref, className = '') {
 function animateCharacterStats(root = document) {
   const values = root.querySelectorAll?.('[data-stat-value]') || [];
   const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  values.forEach((element) => {
+  values.forEach((element, index) => {
     const target = Number(element.dataset.statValue) || 0;
     if (reduce) { element.textContent = target; return; }
-    const startedAt = performance.now();
+    const startedAt = performance.now() + 120 + index * 150;
     const tick = (now) => {
-      const progress = Math.min(1, (now - startedAt) / 900);
+      if (!element.isConnected) return;
+      const progress = Math.max(0, Math.min(1, (now - startedAt) / 900));
       const eased = 1 - ((1 - progress) ** 3);
       element.textContent = Math.round(target * eased);
       if (progress < 1) requestAnimationFrame(tick);
@@ -441,11 +446,11 @@ function animateMountedScene() {
   groups.forEach((element, index) => element.animate([
     { opacity: .25, translate: `0 ${Math.min(22, 10 + index * 3)}px`, scale: '.985' },
     { opacity: 1, translate: '0 0', scale: '1' },
-  ], { duration: 520 + index * 45, delay: index * 38, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' }));
+  ], { duration: 320, delay: Math.min(index,3) * 25, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards' }));
   scene.querySelectorAll('.action-dock button, .title-actions button').forEach((control, index) => control.animate([
     { opacity: 0, translate: '0 14px', scale: '.9' },
     { opacity: 1, translate: '0 0', scale: '1' },
-  ], { duration: 430, delay: 110 + Math.min(index, 5) * 48, easing: 'cubic-bezier(.18,1.35,.35,1)', fill: 'both' }));
+  ], { duration: 300, delay: 45 + Math.min(index, 5) * 24, easing: 'cubic-bezier(.18,1.15,.35,1)', fill: 'backwards' }));
 }
 
 function shell(content, { progress = 0, label = 'にほん発見アドベンチャー', home = false } = {}) {
@@ -774,11 +779,15 @@ function finishGame(success, performance = {}) {
   state.gameFinished = true;
   cleanups();
   sound(success ? 'win' : 'wrong');
-  if (success) characterCry(state.current);
+  if (success) {
+    const friend = state.current;
+    const voiceTimer = window.setTimeout(() => characterCry(friend), 520);
+    state.cleanup.push(() => clearTimeout(voiceTimer));
+  }
   const records = gameRecords();
   const previous = records[state.current.code] || {};
   const stars = success ? Math.max(1, Math.min(3, performance.stars || 1)) : 0;
-  const newBest = stars > (previous.stars || 0);
+  const newBest = stars > (previous.stars || 0) || (performance.score || 0) > (previous.bestScore || 0);
   records[state.current.code] = {
     plays: (previous.plays || 0) + 1,
     stars: Math.max(previous.stars || 0, stars),
@@ -1620,14 +1629,13 @@ function renderRewardReveal() {
       </div>
       ${button(reviewContinues ? 'つぎのおさらいへ →' : `${state.round.length}県のおさらい完了！ →`, 'reward-reveal-next', 'primary-button sun reveal-next-button')}
     </section>`, { progress: 92 + state.reviewIndex * 2, label: `仲間ゲット！ ${state.reviewIndex} / ${state.round.length}` });
-  sound('win');
   sound('reveal');
   const revealSounds = [
-    window.setTimeout(() => sound('bonus'), 430),
-    window.setTimeout(() => { sound('stamp'); characterCry(pref); }, 920),
+    window.setTimeout(() => sound('win'), 830),
+    window.setTimeout(() => characterCry(pref), 1250),
+    window.setTimeout(() => animateCharacterStats(document.querySelector('.reward-reveal-scene')), 1000),
   ];
   state.cleanup.push(() => revealSounds.forEach(clearTimeout));
-  animateCharacterStats(document.querySelector('.reward-reveal-scene'));
 }
 
 function renderReward() {
@@ -1760,6 +1768,9 @@ app.addEventListener('click', (event) => {
   const control = event.target.closest('[data-action]');
   if (!control || control.disabled) return;
   const action = control.dataset.action;
+  if (!['hero-cheer','character-cry','sound','sound-toggle'].includes(action) && !characterTarget) {
+    sound(/home|back|cancel|prev/.test(action) ? 'ui-back' : /collection|open-pref|settings|zoom/.test(action) ? 'ui-open' : 'ui-confirm');
+  }
   if (action === 'home') return renderHome();
   if (action === 'character-cry') { characterCry(state.current); return; }
   if (action === 'start') return startRound();
@@ -1898,26 +1909,33 @@ app.addEventListener('click', (event) => {
 app.addEventListener('pointerdown', (event) => {
   const control = event.target.closest('button, [role="button"]');
   if (!control || control.disabled || control.getAttribute('aria-disabled') === 'true') return;
-  sound('tap');
+  // Gameplay controls already emit their material sound from the game engine.
+  if (!control.closest('.fg-world')) sound('ui-press');
   const ripple = document.createElement('i');
   ripple.className = 'tap-spark';
   ripple.style.left = `${event.clientX}px`;
   ripple.style.top = `${event.clientY}px`;
   ripple.innerHTML = '<b></b><b></b><b></b><b></b>';
-  document.body.append(ripple);
+  if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) document.body.append(ripple);
   control.classList.add('is-pressing');
   window.setTimeout(() => ripple.remove(), 520);
-  const release = () => control.classList.remove('is-pressing');
+  const release = () => {
+    control.classList.remove('is-pressing');
+    window.removeEventListener('pointerup', springRelease);
+    window.removeEventListener('pointercancel', release);
+    window.removeEventListener('blur', release);
+  };
   const springRelease = () => {
     release();
-    if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) control.animate([
+    if (control.isConnected && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) control.animate([
       { scale: '.965', translate: '0 2px' },
       { scale: '1.035', translate: '0 -1px', offset: .55 },
       { scale: '1', translate: '0 0' },
-    ], { duration: 360, easing: 'cubic-bezier(.16,1,.3,1)' });
+    ], { duration: 240, easing: 'cubic-bezier(.16,1,.3,1)' });
   };
-  control.addEventListener('pointerup', springRelease, { once: true });
-  control.addEventListener('pointercancel', release, { once: true });
+  window.addEventListener('pointerup', springRelease, { once: true });
+  window.addEventListener('pointercancel', release, { once: true });
+  window.addEventListener('blur', release, { once: true });
 });
 
 app.addEventListener('input', (event) => {

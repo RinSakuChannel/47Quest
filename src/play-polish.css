@@ -1,0 +1,42 @@
+/* Interaction hierarchy without changing the tested screen geometry. */
+:root { --play-ease:cubic-bezier(.16,1,.3,1); }
+.primary-button.sun {
+  background-image:linear-gradient(165deg,#fff4a433,transparent 65%);
+  border-top-color:#fff4bc;
+  text-shadow:0 1px #ffffff45;
+}
+:where(.primary-button,.secondary-button,.tool-button,.zoom-button,.collection-card,.review-prefecture-choice) {
+  -webkit-tap-highlight-color:transparent;
+  transition:filter 140ms ease,box-shadow 140ms ease;
+}
+:where(button,[role="button"]):focus-visible {
+  outline:3px solid #2868a0;outline-offset:4px;
+}
+:where(button,[role="button"]).is-pressing {
+  scale:.965;translate:0 2px;filter:brightness(.96);
+}
+@media(hover:hover) and (pointer:fine) {
+  :where(.primary-button,.secondary-button,.tool-button,.zoom-button,.collection-card,.review-prefecture-choice):not(:disabled):hover {filter:brightness(1.055);}
+}
+/* JS owns these entrances; a second CSS entrance would multiply transforms. */
+.scene > :where(header,aside,.map-card,.writing-board,.game-board,.collection-grid,.button-row) {animation:none;}
+.hud-chip,.fg-status,.result-score,[data-stat-value] {font-variant-numeric:tabular-nums;}
+.result-card {animation:play-result-enter 300ms var(--play-ease) both;}
+.result-stars i:not(.is-earned) {animation:none;opacity:.45;}
+.result-stars i.is-earned {animation-duration:420ms;}
+.clear-friend-art {transform-origin:50% 90%;}
+.reward-reveal-scene .reveal-name-card {animation-delay:900ms;animation-duration:360ms;}
+.reward-reveal-scene .reveal-kicker {animation-delay:830ms;animation-duration:360ms;}
+.reward-reveal-scene .character-stats>div {animation-delay:calc(1000ms + var(--stat-delay));}
+.reward-reveal-scene .character-stats i b {animation-delay:calc(1120ms + var(--stat-delay));}
+.reward-reveal-scene .stat-rarity {animation-delay:1500ms;}
+@keyframes play-result-enter {
+  from {opacity:0;translate:0 12px;scale:.97;}
+  to {opacity:1;translate:0 0;scale:1;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .result-card,.reward-reveal-scene .reveal-name-card,.reward-reveal-scene .reveal-kicker,
+  .reward-reveal-scene .character-stats>div,.reward-reveal-scene .character-stats i b,
+  .reward-reveal-scene .stat-rarity {animation-delay:0ms!important;}
+  :where(button,[role="button"]).is-pressing {scale:1;translate:0 0;filter:brightness(.92);}
+}
