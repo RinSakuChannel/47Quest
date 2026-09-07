@@ -145,6 +145,32 @@ async function drawEnoughInk(page) {
       await page.goto(baseUrl, { waitUntil:'networkidle' });
       await page.locator('img').evaluateAll(images => Promise.all(images.map(img => img.complete ? null : new Promise(resolve => img.addEventListener('load', resolve, {once:true})))));
       await page.waitForTimeout(1800);
+      if (process.env.QUEST_TEXT_SWEEP === '1') {
+        const failures = [];
+        for (const code of await page.evaluate(() => PREFECTURES.map(pref => pref.code))) {
+          for (const screen of ['reward', 'hiragana', 'kanji']) {
+            await page.evaluate(({code,screen}) => {
+              state.sound=false;
+              const pref=PREFECTURES.find(pref=>pref.code===code);
+              state.current=pref;state.round=[pref];state.roundIndex=0;
+              if(screen==='reward') {
+                state.gachaRewards=[pref];state.rewardRevealIndex=0;state.reviewIndex=1;
+                renderRewardReveal();
+              } else renderWriting(screen);
+            }, {code,screen});
+            await page.evaluate(() => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+            try {
+              await assertReadableText(page, `${name} ${code} ${screen}`);
+              await assertPageNoScroll(page, `${name} ${code} ${screen}`);
+              await assertInsideViewport(page, '.reveal-name-card,.reveal-next-button,.sample-word-text,.writing-tools button', `${name} ${code} ${screen}`);
+            } catch(error) { failures.push(error.message); }
+          }
+        }
+        console.log(`${name}: 141 prefecture/text screens checked`);
+        assert.deepEqual(failures, [], failures.join('\n'));
+        await context.close();
+        continue;
+      }
       assert.equal(errors.length, 0, `${name}: startup JavaScript error`);
       await assertInsideViewport(page, '.topbar button,.title-stage button,.home-roamer', `${name} title`);
       await assertPageNoScroll(page, `${name} title`);

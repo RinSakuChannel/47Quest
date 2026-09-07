@@ -1679,10 +1679,11 @@ function renderRewardReveal() {
       <div class="reveal-sparks" aria-hidden="true">${Array.from({ length: 30 }, (_, i) => `<i style="--spark-angle:${i * 12}deg;--spark-delay:${(i % 10) * .055}s"></i>`).join('')}</div>
       <div class="reveal-get-banner" aria-hidden="true">仲間ゲット</div>
       <p class="reveal-kicker">${isNew ? 'NEW FRIEND!' : 'WELCOME BACK!'}</p>
-      <div class="reveal-character-wrap">
+      <button class="reveal-character-wrap reveal-voice-button" data-character-code="${pref.code}" aria-label="${pref.character}の声を聞く">
         <div class="reveal-silhouette" aria-hidden="true"></div>
         ${mascot(pref, 'reveal-character')}
-      </div>
+        <span class="reveal-voice-label" aria-hidden="true">♪ 声をきく</span>
+      </button>
       <div class="reveal-name-card">
         <small>${pref.name}（${pref.reading}）から やってきた</small>
         <h1>${pref.character}</h1>

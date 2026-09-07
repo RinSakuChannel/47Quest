@@ -83,6 +83,15 @@
 /* JS owns these entrances; a second CSS entrance would multiply transforms. */
 .scene > :where(header,aside,.map-card,.writing-board,.game-board,.collection-grid,.button-row) {animation:none;}
 .hud-chip,.fg-status,.result-score,[data-stat-value] {font-variant-numeric:tabular-nums;}
+.reveal-voice-button {position:relative;padding:0;border:0;background:transparent;box-shadow:none;color:#173e51;cursor:pointer;}
+.reveal-voice-label {position:absolute;right:0;bottom:0;z-index:4;display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 12px;border:2px solid #fff;border-radius:24px;background:#fffdf5ef;box-shadow:0 3px 12px #102b4030;font-size:13px;font-weight:800;white-space:nowrap;}
+.reveal-voice-button:focus-visible {outline-color:#fff0a5;}
+/* Tall phones have room for readable copy; compact phones keep the tested fit. */
+@media(max-width:600px) and (min-height:701px) {
+ .reward-reveal-scene:has(.gacha-prefecture-map) .reveal-name-card>p {font-size:clamp(12px,1.65dvh,14px);line-height:1.4;}
+ .reward-reveal-scene:has(.gacha-prefecture-map) .reveal-name-card>small {font-size:12px;}
+ .reward-reveal-scene:has(.gacha-prefecture-map) .reveal-profile-chips {font-size:12px;line-height:1.4;}
+}
 .result-card {animation:play-result-enter 300ms var(--play-ease) both;}
 .result-stars i:not(.is-earned) {animation:none;opacity:.45;}
 .result-stars i.is-earned {animation-duration:420ms;}
