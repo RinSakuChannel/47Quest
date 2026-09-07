@@ -368,6 +368,27 @@ function button(label, action, className = 'primary-button', extra = '') {
   return `<button class="${className}" data-action="${action}" ${extra}>${label}</button>`;
 }
 
+function guideButton(){
+  return '<button type="button" class="guide-help" data-action="guide-help" aria-label="案内役にヒントを聞く"><img class="japan-guide" src="./assets/images/japan-guide.webp" alt="日本列島の案内役" /><span aria-hidden="true">？</span></button>';
+}
+
+function openGuideHelp(opener){
+  if(app.querySelector('.guide-help-dialog'))return;
+  const pref=state.current;
+  const writing=state.screen==='writing';
+  const lines=writing
+    ? ['お手本を見ながら、大きく書いてみよう。','まちがえても大丈夫。「もどす」で一画だけ消せるよ。','ひらがなを知っていたら、スキップして漢字へ進めるよ。']
+    : [`赤い場所が${pref.name}。${pref.region}にあるよ。`,'「近くで見る」で形を見て、全体に戻して場所も覚えよう。','地図は指2本で拡大できるよ。PCでは Ctrl を押しながらホイールを回そう。'];
+  const dialog=document.createElement('dialog');dialog.className='guide-help-dialog';dialog.setAttribute('aria-label','案内役のヒント');
+  dialog.innerHTML='<img src="./assets/images/japan-guide.webp" alt="日本列島の案内役" /><div><h2>いっしょに やってみよう</h2><ul></ul><button type="button" data-action="guide-close">わかった！ もどる</button></div>';
+  const list=dialog.querySelector('ul');
+  for(const line of lines){const item=document.createElement('li');item.textContent=line;list.append(item);}
+  app.append(dialog);dialog.showModal();sound('ui-open');
+  dialog.addEventListener('close',()=>{dialog.remove();if(opener.isConnected)opener.focus({preventScroll:true});},{once:true});
+  state.cleanup.push(()=>{dialog.close();dialog.remove();});
+  if(!QUEST_MOTION.reduced())dialog.animate([{opacity:0,transform:'translateY(12px) scale(.97)'},{opacity:1,transform:'none'}],{duration:240,easing:'cubic-bezier(.16,1,.3,1)'});
+}
+
 function mascot(pref, className = 'pref-mascot') {
   const image = window.CHARACTER_ART?.[pref.code] || `./assets/characters/${pref.code}.png`;
   return `<div class="${className} pref-mascot-art" role="img" aria-label="${pref.character}。タップすると声が聞けます" data-character-code="${pref.code}"><img src="${image}" alt="" draggable="false" decoding="async" /></div>`;
@@ -598,7 +619,7 @@ function renderMap() {
         <p class="eyebrow">こんどの場所は</p>
         <h1><ruby>${pref.name}<rt>${pref.reading}</rt></ruby></h1>
         <span class="discovery-region">${pref.region}</span>
-        <p class="discovery-instruction guide-dialogue"><img class="japan-guide" src="./assets/images/japan-guide.webp" alt="日本列島の案内役" /><span>赤いところを<br>おぼえよう</span></p>
+        <div class="discovery-instruction guide-dialogue">${guideButton()}<span>赤いところを<br>おぼえよう</span></div>
         <div class="discovery-route" aria-label="場所、文字、ゲームの順で遊ぶ"><b>1 場所</b><span>2 文字</span><span>3 ゲーム</span></div>
       </aside>
       <div class="map-card map-stage map-discovery-stage" data-code="${pref.code}" style="--origin:${point.x}% ${point.y}%;--shift-x:${50 - point.x}%;--shift-y:${50 - point.y}%;--zoom:2.2">
@@ -658,7 +679,7 @@ function renderWriting(mode = state.writeMode) {
     <section class="scene writing-scene">
       <aside class="lesson-panel">
         <p class="eyebrow">${isHiragana ? 'まずは よみかた' : 'つぎは 漢字'}</p>
-        <h1 class="title guide-dialogue"><img class="japan-guide" src="./assets/images/japan-guide.webp" alt="日本列島の案内役" /><span>お手本を見て<br>書いてみよう</span></h1>
+        <div class="guide-dialogue">${guideButton()}<h1 class="title">お手本を見て<br>書いてみよう</h1></div>
         <div class="sample-word" aria-label="お手本 ${word}"><span class="sample-word-text">${word}</span></div>
         <p class="lesson-tip">大きく、のびのび書こう。</p>
       </aside>
@@ -1819,16 +1840,21 @@ app.addEventListener('click', (event) => {
   const control = event.target.closest('[data-action]');
   if (!control || control.disabled) return;
   const action = control.dataset.action;
+  if(action==='guide-help'){openGuideHelp(control);return;}
+  if(action==='guide-close'){control.closest('dialog').close();sound('ui-back');return;}
   if(action==='reward-map'){
     const pref=PREFECTURES.find(p=>p.code===control.dataset.code);
     const dialog=document.createElement('dialog');dialog.className='reward-map-dialog';
-    dialog.innerHTML=`<header><strong>${pref.name}（${pref.reading}）</strong><button data-action="close-reward-map">閉じる</button></header><div class="reward-map-surface">${mapLayers(pref,`${pref.name}の場所`)}</div><button data-action="reward-map-toggle">全体／拡大</button>`;
+    dialog.setAttribute('aria-label',`${pref.name}の場所を確認`);
+    dialog.innerHTML=`<header><strong>${pref.name}（${pref.reading}）</strong><button data-action="close-reward-map">閉じる</button></header><div class="reward-map-surface">${mapLayers(pref,`${pref.name}の場所`)}</div><button data-action="reward-map-toggle">日本全体で見る</button>`;
     app.append(dialog);dialog.showModal();alignMapPins();
     const zoom=initMapZoom(dialog.querySelector('.reward-map-surface'),dialog.querySelector('.map-layers'),{focus:mapPoint(pref),buttonScale:3});zoom.centerOn(mapPoint(pref),3);
-    dialog.addEventListener('close',()=>dialog.remove(),{once:true});state.cleanup.push(()=>{dialog.close();dialog.remove();});return;
+    dialog.addEventListener('close',()=>{dialog.remove();if(control.isConnected)control.focus({preventScroll:true});},{once:true});state.cleanup.push(()=>{dialog.close();dialog.remove();});
+    if(!QUEST_MOTION.reduced())dialog.animate([{opacity:0,transform:'translateY(12px) scale(.97)'},{opacity:1,transform:'none'}],{duration:240,easing:'cubic-bezier(.16,1,.3,1)'});
+    return;
   }
   if(action==='close-reward-map'){control.closest('dialog').close();return;}
-  if(action==='reward-map-toggle'){control.closest('dialog').querySelector('.reward-map-surface')._mapZoom.toggle();return;}
+  if(action==='reward-map-toggle'){const zoom=control.closest('dialog').querySelector('.reward-map-surface')._mapZoom;zoom.toggle();control.textContent=zoom.getState().scale>1.01?'日本全体で見る':'この県を大きく見る';sound('ui-open');return;}
   if(action==='memory-answer'){
     const expanded=control.getAttribute('aria-expanded')==='true';
     control.setAttribute('aria-expanded',String(!expanded));

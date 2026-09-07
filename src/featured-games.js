@@ -81,7 +81,7 @@
         if(feedbackTime>0){feedbackTime-=dt;if(feedbackTime<=0){feedback.textContent='';banner.classList.remove('is-feedback');banner.textContent=def.acts[model.phase];}}
         const remaining=Math.max(0,def.time-model.elapsed);
         const nextGoal=def.goal*(Math.min(2,model.stars)+1);
-        progress.style.setProperty('--score-progress',`${Math.min(100,model.score/(def.goal*3)*100)}%`);
+        progress.style.setProperty('--score-ratio',String(Math.min(1,model.score/(def.goal*3))));
         progress.setAttribute('aria-valuenow',String(Math.min(def.goal*3,model.score)));
         progress.querySelectorAll('span').forEach((star,index)=>star.classList.toggle('is-earned',model.stars>index));
         status.textContent=`${'★'.repeat(model.stars)}${'☆'.repeat(3-model.stars)}　${model.score}点${model.stars<3?` ／ つぎの星まで ${nextGoal-model.score}点`:'　３つ星！ どこまで のばせる？'}`;

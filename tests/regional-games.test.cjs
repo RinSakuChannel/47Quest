@@ -14,4 +14,14 @@ for(const [code,factory] of Object.entries(games)){
   }
   game.input?.('cancel',{x:0,y:0,down:false},previous);game.draw();
 }
-console.log('PASS: 44 regional factories, 60-second simulated inputs, finite rendering, cancellation (not visual or clearability testing)');
+// Grabbing an edge must preserve the cursor offset, not teleport the block.
+{
+ let snow=null;
+ const game=games['05']({tell(){},win(){},box(){},line(){},target(){},text(text,x,y){if(text==='雪')snow={x,y};}});
+ game.input('down',{x:180,y:405});
+ game.input('move',{x:181,y:406});game.draw();
+ assert.equal(snow.x,151);assert.equal(snow.y,396);
+ game.input('cancel',{x:181,y:406});game.draw();
+ assert.equal(snow.x,150);assert.equal(snow.y,395);
+}
+console.log('PASS: 44 regional factories, finite rendering, cancellation and Akita grab offset (not visual or clearability testing)');

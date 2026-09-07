@@ -5,10 +5,12 @@
 .fg-intro:has(.fg-mystery-stage){gap:clamp(4px,1vh,12px)}
 .fg-intro:has(.fg-mystery-stage) .fg-demo{font-size:clamp(26px,4vmin,48px)}
 .fg-star-track{position:absolute;left:8%;right:8%;bottom:8%;height:10px;background:#173e5120;border-radius:20px;pointer-events:none}
-.fg-star-track>i{display:block;width:var(--score-progress,0%);height:100%;border-radius:inherit;background:linear-gradient(90deg,#77cbbb,#ffda62);transition:width 260ms ease-out}
+.fg-star-track>i{display:block;width:100%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#77cbbb,#ffda62);transform:scaleX(var(--score-ratio,0));transform-origin:left;transition:transform 260ms cubic-bezier(.16,1,.3,1)}
 .fg-star-track>span{position:absolute;top:50%;translate:-50% -50%;color:#97aaa7;font-size:20px;line-height:1;text-shadow:0 1px #fff}
 .fg-star-track>span:nth-of-type(1){left:33.333%}.fg-star-track>span:nth-of-type(2){left:66.666%}.fg-star-track>span:nth-of-type(3){left:100%}
-.fg-star-track>span.is-earned{color:#da9c1e;filter:drop-shadow(0 0 3px #ffe36e)}
+.fg-star-track>span.is-earned{color:#da9c1e;filter:drop-shadow(0 0 3px #ffe36e);animation:star-earned 360ms cubic-bezier(.16,1,.3,1) both}
+@keyframes star-earned{0%{transform:scale(.75) rotate(-18deg)}45%{transform:scale(1.65) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
+@media(prefers-reduced-motion:reduce){.fg-star-track>span.is-earned{animation:none}}
 .fg-bank:not([hidden])~.fg-star-track{right:55%}
 @media(max-height:560px){.fg-star-track{bottom:calc(3% + 28px);height:6px}.fg-star-track>span{font-size:15px}}
 @keyframes mystery-breathe{to{transform:translateY(-4px) rotate(2deg)}}

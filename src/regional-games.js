@@ -21,7 +21,7 @@
     const effects=[];
     const api={get phase(){return ctx.model.phase;},get time(){return ctx.model.elapsed;},
       random,clamp,dist,
-      win(x=500,y=300){if(celebrate>0)return;ctx.hit(3);celebrate=.32;for(let i=0;i<18;i++)effects.push({x,y,vx:random(-190,190),vy:random(-280,-90),life:.7});},
+      win(x=500,y=300){if(celebrate>0)return;ctx.hit(3);celebrate=.32;const count=window.QUEST_MOTION?.reduced()?0:18;for(let i=0;i<count;i++)effects.push({x,y,vx:random(-190,190),vy:random(-280,-90),life:.7});},
       miss:ctx.miss,tell:ctx.tell,
       circle(x,y,r,color='#ffd65f'){c.fillStyle=color;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();},
       box(x,y,w,h,color='#fff9e4'){c.fillStyle=color;c.beginPath();c.roundRect(x,y,w,h,Math.min(16,w/2,h/2));c.fill();},
@@ -88,9 +88,9 @@
     return {input(k,q,prev){if(k==='move'&&q.down&&dist(q,p)<160){v.x=(q.x-prev.x)*10;v.y=(q.y-prev.y)*10;}},step(dt){p.x=clamp(p.x+v.x*dt,40,960);p.y=clamp(p.y+v.y*dt,60,490);v.x*=Math.exp(-dt*1.5);v.y*=Math.exp(-dt*1.5);if(dist(p,goal)<60)a.win();},draw(){a.line([{x:820,y:500},{x:820,y:80}],'#599357',16);a.line([{x:650,y:goal.y},{x:870,y:goal.y}],'#599357');a.target(goal.x,goal.y);a.icon('🎐',p.x,p.y,90);a.text('かざりを 払って 枝へ！',500,550);}};
   });
   register('05','かまくら 建築隊','青い雪ブロックを 光る場所へ！','左の青い雪ブロックをつかもう。光る丸まで運ぶと、かまくらができるよ。','🧊 → 🛖',a=>{
-    const slots=[{x:390,y:390},{x:610,y:390},{x:420,y:285},{x:580,y:285},{x:500,y:195}];let i=0,block={x:150,y:395},drag=false;
+    const slots=[{x:390,y:390},{x:610,y:390},{x:420,y:285},{x:580,y:285},{x:500,y:195}];let i=0,block={x:150,y:395},drag=false,grab={x:0,y:0};
     const reset=()=>{block={x:150,y:395};};
-    return {input(k,p){if(k==='down'&&dist(p,block)<105)drag=true;if(k==='move'&&drag)block={x:p.x,y:p.y};if(k==='up'&&drag){drag=false;if(dist(block,slots[i])<90){i++;a.tell(i===slots.length?'かまくら できた！':`あと ${slots.length-i}こ！`);if(i===slots.length)a.win();reset();}else{a.tell('光る丸へ はこぼう');reset();}}if(k==='cancel'){drag=false;reset();}},draw(){
+    return {input(k,p){if(k==='down'&&dist(p,block)<105){drag=true;grab={x:p.x-block.x,y:p.y-block.y};}if(k==='move'&&drag)block={x:p.x-grab.x,y:p.y-grab.y};if(k==='up'&&drag){drag=false;if(dist(block,slots[i])<90){i++;a.tell(i===slots.length?'かまくら できた！':`あと ${slots.length-i}こ！`);if(i===slots.length)a.win();reset();}else{a.tell('光る丸へ はこぼう');reset();}}if(k==='cancel'){drag=false;reset();}},draw(){
       if(a.winterScene)a.winterScene(i/slots.length);else a.box(0,0,1000,600,'#dcebf0');
       a.box(45,255,210,250,'#b9dce8');a.text('① つかむ',150,285,28,'#173e51');
       slots.slice(0,i).forEach((s,n)=>{a.box(s.x-72,s.y-50,144,100,n%2?'#d7eaf0':'#edf8fa');a.line([{x:s.x-60,y:s.y-39},{x:s.x+55,y:s.y-39}],'#fff',6);a.line([{x:s.x-60,y:s.y+42},{x:s.x+55,y:s.y+42}],'#a9c6d3',4);});
