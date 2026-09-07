@@ -6,6 +6,6 @@ window.CHARACTER_ART = Object.fromEntries(
   })
 );
 // Material-grown anatomy and gentler personalities; keep successful v3 art.
-for (const code of ['17','25','28','39','43','47']) {
+for (const code of ['04','17','19','22','25','28','31','39','43','47']) {
   window.CHARACTER_ART[code] = `./assets/characters/v4/${code}.webp`;
 }
