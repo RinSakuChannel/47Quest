@@ -470,7 +470,7 @@ function shell(content, { progress = 0, label = 'にほん発見アドベンチ�
     <section class="app-screen ${home ? 'is-title-screen' : ''}">
       <header class="topbar">
         <button class="brand" data-action="home" aria-label="ホームへ戻る">
-          <span class="brand-mark">47Q</span><span class="brand-name">47Quest</span>
+          <span class="brand-mark guide-brand"><img src="./assets/images/japan-guide.webp" alt="" /></span><span class="brand-name">47Quest</span>
         </button>
         <div class="top-title">${label}</div>
         <div class="top-actions">
@@ -508,7 +508,7 @@ function renderHome() {
       </div>
       <header class="title-stage">
         <p class="title-call">にほん全国・発見アドベンチャー</p>
-        <div class="game-logo" aria-label="47Quest"><span>47</span><strong>Quest</strong><i>ご当地なかまを つかまえろ</i></div>
+        <div class="game-logo illustrated-logo" aria-label="47Quest にほん全国 大ぼうけん"><img src="./assets/images/47quest-logo.webp" alt="47Quest にほん全国 大ぼうけん" /></div>
         <p class="title-copy">地図を見つけて、ご当地ゲームへ飛びこもう</p>
         <div class="daily-quest" aria-label="今日の冒険 ${Math.min(3, daily.clears)}回クリア">
           <span>きょうの ぼうけん</span>
@@ -598,7 +598,7 @@ function renderMap() {
         <p class="eyebrow">こんどの場所は</p>
         <h1><ruby>${pref.name}<rt>${pref.reading}</rt></ruby></h1>
         <span class="discovery-region">${pref.region}</span>
-        <p class="discovery-instruction"><i aria-hidden="true"></i>赤いところを<br>おぼえよう</p>
+        <p class="discovery-instruction guide-dialogue"><img class="japan-guide" src="./assets/images/japan-guide.webp" alt="日本列島の案内役" /><span>赤いところを<br>おぼえよう</span></p>
         <div class="discovery-route" aria-label="場所、文字、ゲームの順で遊ぶ"><b>1 場所</b><span>2 文字</span><span>3 ゲーム</span></div>
       </aside>
       <div class="map-card map-stage map-discovery-stage" data-code="${pref.code}" style="--origin:${point.x}% ${point.y}%;--shift-x:${50 - point.x}%;--shift-y:${50 - point.y}%;--zoom:2.2">
@@ -658,7 +658,7 @@ function renderWriting(mode = state.writeMode) {
     <section class="scene writing-scene">
       <aside class="lesson-panel">
         <p class="eyebrow">${isHiragana ? 'まずは よみかた' : 'つぎは 漢字'}</p>
-        <h1 class="title">お手本を見て<br>書いてみよう</h1>
+        <h1 class="title guide-dialogue"><img class="japan-guide" src="./assets/images/japan-guide.webp" alt="日本列島の案内役" /><span>お手本を見て<br>書いてみよう</span></h1>
         <div class="sample-word" aria-label="お手本 ${word}"><span class="sample-word-text">${word}</span></div>
         <p class="lesson-tip">大きく、のびのび書こう。</p>
       </aside>
@@ -791,7 +791,7 @@ function renderGame() {
   app.innerHTML = shell(`
     <section class="scene game-scene ${window.QUEST_FEATURED_GAMES?.definitions[pref.code] ? 'featured-scene' : ''}">
       <aside class="game-info">
-        <div><p class="eyebrow">${pref.name}・${setup.title}</p><h1 class="micro-command">${setup.command}</h1></div>
+        <div class="guide-dialogue"><img class="japan-guide" src="./assets/images/japan-guide.webp" alt="日本列島の案内役" /><div><p class="eyebrow">${pref.name}・${setup.title}</p><h1 class="micro-command">${setup.command}</h1></div></div>
         ${button('ゲームはあとで →', 'game-skip', 'game-skip-button')}
       </aside>
       <div class="game-board">

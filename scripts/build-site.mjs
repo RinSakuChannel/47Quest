@@ -8,6 +8,7 @@ const files=['index.html','games.html','styles.css',...readdirSync('src').filter
 const artContext={window:{}};vm.runInNewContext(readFileSync('src/character-art.js','utf8'),artContext);
 for(let i=1;i<=47;i++){const code=String(i).padStart(2,'0');files.push((artContext.window.CHARACTER_ART[code]||`assets/characters/${code}.png`).replace(/^\.\//,''),`assets/maps/play-overlays/${code}.png`,`assets/maps/play-overlays-portrait/${code}.png`);}
 let bytes=0;
+files.push('assets/images/japan-guide.webp','assets/images/47quest-logo.webp');
 for(let i=1;i<=47;i++)files.push(`assets/sounds/voices/${String(i).padStart(2,'0')}.wav`);
 for(const file of files){if(!existsSync(file))throw Error(`Missing required asset: ${file}`);const target=join(output,file);mkdirSync(dirname(target),{recursive:true});copyFileSync(file,target);bytes+=statSync(file).size;}
 // Remove obsolete generated copies only. Source artwork is never removed.
