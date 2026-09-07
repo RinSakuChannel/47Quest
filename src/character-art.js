@@ -5,3 +5,7 @@ window.CHARACTER_ART = Object.fromEntries(
     return [code, `./assets/characters/v3/${code}.webp`];
   })
 );
+// Material-grown anatomy and gentler personalities; keep successful v3 art.
+for (const code of ['17','25','28','39','43','47']) {
+  window.CHARACTER_ART[code] = `./assets/characters/v4/${code}.webp`;
+}
