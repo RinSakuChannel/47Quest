@@ -29,8 +29,20 @@
       text(s,x,y,size=28,color='#173e51'){c.fillStyle=color;c.font=`900 ${size}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(s,x,y);},
       icon(s,x,y,size=70){this.text(s,x,y,size);},
       mascot(x,y,size=130){if(mascot.complete&&mascot.naturalWidth){const scale=size/Math.max(mascot.naturalWidth,mascot.naturalHeight),w=mascot.naturalWidth*scale,h=mascot.naturalHeight*scale;c.drawImage(mascot,x-w/2,y-h/2,w,h);}else this.icon('🐟',x,y,size*.65);},
+      winterScene(progress){
+        const sky=c.createLinearGradient(0,0,0,600);sky.addColorStop(0,'#183657');sky.addColorStop(1,'#789aaa');c.fillStyle=sky;c.fillRect(0,0,1000,600);
+        this.circle(835,95,40,'#fff3c9');
+        for(let i=0;i<9;i++){const x=i*135-30,y=345+(i%3)*20;this.line([{x,y:y+100},{x,y:y-80}],'#26485e',10);this.line([{x:x-35,y},{x,y:y-65},{x:x+35,y}],'#426579',17);}
+        c.fillStyle='#e5f3f5';c.beginPath();c.ellipse(500,605,710,155,0,0,Math.PI*2);c.fill();
+        const snow=c.createRadialGradient(445,245,20,510,330,220);snow.addColorStop(0,'#fff');snow.addColorStop(.65,'#e9f4f5');snow.addColorStop(1,'#9cb8c9');
+        c.save();c.globalAlpha=.2+progress*.8;c.fillStyle=snow;c.beginPath();c.ellipse(500,355,195,205,0,Math.PI,Math.PI*2);c.lineTo(695,463);c.quadraticCurveTo(500,500,305,463);c.closePath();c.fill();c.restore();
+        const glow=c.createRadialGradient(500,405,8,500,405,90);glow.addColorStop(0,'#ffe795');glow.addColorStop(1,'#e7a44000');c.fillStyle=glow;c.fillRect(410,315,180,180);
+        this.box(458,360,84,115,'#674831');this.box(468,372,64,90,'#eab663');this.circle(500,404,10,'#fff3af');
+        for(let i=0;i<45;i++){const x=(i*137+Math.sin(aTime()+i)*14)%1000,y=(i*97+aTime()*22)%520;this.circle(x,y,1+i%3,'#ffffffaa');}
+      },
       target(x,y,r=42){c.strokeStyle='#d6a221';c.lineWidth=6;c.setLineDash([10,8]);c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();c.setLineDash([]);},
     };
+    function aTime(){return ctx.model.elapsed;}
     let game=games[code](api);
     function event(e,kind){
       const r=canvas.getBoundingClientRect();previous={...pointer};pointer={x:clamp((e.clientX-r.left)/r.width*1000,0,1000),y:clamp((e.clientY-r.top)/r.height*600,0,600),down:kind==='down'?true:kind==='up'||kind==='cancel'?false:pointer.down};
@@ -79,12 +91,12 @@
     const slots=[{x:390,y:390},{x:610,y:390},{x:420,y:285},{x:580,y:285},{x:500,y:195}];let i=0,block={x:150,y:395},drag=false;
     const reset=()=>{block={x:150,y:395};};
     return {input(k,p){if(k==='down'&&dist(p,block)<105)drag=true;if(k==='move'&&drag)block={x:p.x,y:p.y};if(k==='up'&&drag){drag=false;if(dist(block,slots[i])<90){i++;a.tell(i===slots.length?'かまくら できた！':`あと ${slots.length-i}こ！`);if(i===slots.length)a.win();reset();}else{a.tell('光る丸へ はこぼう');reset();}}if(k==='cancel'){drag=false;reset();}},draw(){
-      a.box(0,0,1000,600,'#dcebf0');
+      if(a.winterScene)a.winterScene(i/slots.length);else a.box(0,0,1000,600,'#dcebf0');
       a.box(45,255,210,250,'#b9dce8');a.text('① つかむ',150,285,28,'#173e51');
-      a.target(500,305,205);slots.slice(0,i).forEach((s,n)=>{a.box(s.x-72,s.y-50,144,100,n%2?'#e7f7fb':'#fff');a.line([{x:s.x-65,y:s.y-42},{x:s.x+65,y:s.y-42},{x:s.x+65,y:s.y+42},{x:s.x-65,y:s.y+42},{x:s.x-65,y:s.y-42}],'#84b6ca',5);});
+      slots.slice(0,i).forEach((s,n)=>{a.box(s.x-72,s.y-50,144,100,n%2?'#d7eaf0':'#edf8fa');a.line([{x:s.x-60,y:s.y-39},{x:s.x+55,y:s.y-39}],'#fff',6);a.line([{x:s.x-60,y:s.y+42},{x:s.x+55,y:s.y+42}],'#a9c6d3',4);});
       if(slots[i]){a.target(slots[i].x,slots[i].y,70);a.text('② ここへ',slots[i].x,slots[i].y-100,25,'#9b741c');}
       a.box(block.x-68,block.y-47,136,94,drag?'#8ed5ef':'#a8e1f4');a.line([{x:block.x-61,y:block.y-40},{x:block.x+61,y:block.y-40},{x:block.x+61,y:block.y+40},{x:block.x-61,y:block.y+40},{x:block.x-61,y:block.y-40}],'#287da2',7);a.text('雪',block.x,block.y,30,'#173e51');
-      a.icon('🕯',500,445,62);a.text(`できた ${i} / 5　入口は あけておこう`,500,550,28);
+      a.text(`できた ${i} / 5　入口は あけておこう`,500,550,28);if(a.mascot)a.mascot(840,390,170);
     }};
   });
   register('06','さくらんぼ ふたごの引っ越し','２つを いっしょに 穴へ！','片方を動かすと、もう片方も軸に引かれるよ。２つとも輪に入れよう。','🍒',a=>{

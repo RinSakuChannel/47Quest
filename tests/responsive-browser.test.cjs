@@ -181,6 +181,14 @@ async function drawEnoughInk(page) {
       await assertPageNoScroll(page, `${name} reveal`);
       await assertReadableText(page, `${name} reveal`);
       assert.ok(await page.locator('.reveal-character img').evaluate(img => img.complete && img.naturalWidth > 0), `${name}: reveal character did not load`);
+      await page.locator('[data-action="reward-map"]').click();
+      await assertInsideViewport(page,'.reward-map-dialog,.reward-map-surface',`${name} reward map`);
+      assert.equal(await page.locator('.reward-map-surface').evaluate(e=>e._mapZoom.getState().scale),3);
+      await page.locator('[data-action="reward-map-toggle"]').click();
+      assert.equal(await page.locator('.reward-map-surface').evaluate(e=>e._mapZoom.getState().scale),1);
+      await page.locator('[data-action="close-reward-map"]').click();
+      await page.locator('.reward-map-dialog').waitFor({state:'detached'});
+      assert.equal(await page.locator('.reward-map-dialog').count(),0);
       if (isPhone) {
         const character = await page.locator('.reveal-character-wrap').boundingBox();
         assert.ok(character.width >= Math.min(145, width * .38), `${name}: reward character is too small (${character.width}px)`);
@@ -315,7 +323,7 @@ async function drawEnoughInk(page) {
         await assertPageNoScroll(page, `${name} nationwide completion`);
         await assertReadableText(page, `${name} nationwide completion`);
       }
-      for (const code of ['03','23','26']) {
+      for (const code of ['03','05','23','26']) {
         await page.evaluate(code => {state.current=PREFECTURE_DATA.find(p=>p.code===code);state.round=[state.current];state.roundIndex=0;renderGame();}, code);
         await assertReadableText(page, `${name} ${code} instructions`);
         await page.locator('.fg-intro button').click();

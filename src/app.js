@@ -433,6 +433,10 @@ function alignMapPins() {
     const point = mapPoint(pref);
     pin.style.left = `${box.left + box.width * point.x / 100}px`;
     pin.style.top = `${box.top + box.height * point.y / 100}px`;
+    if(layers.closest('.gacha-map-preview')){
+      const x=box.left+box.width*point.x/100,y=box.top+box.height*point.y/100;
+      layers.style.setProperty('--preview-transform',`translate(${layers.clientWidth/2-x*5}px,${layers.clientHeight/2-y*5}px) scale(5)`);
+    }
   });
 }
 
@@ -1665,7 +1669,7 @@ function renderRewardReveal() {
         <div class="reveal-profile-chips"><span>名産 ${pref.specialty}</span><span>とくいわざ ${pref.specialMove}</span></div>
         <p class="reveal-prefecture-feature"><b>${pref.name}って？</b>${pref.feature}</p>
         ${characterStats(pref, 'reveal-stats')}
-        <div class="gacha-prefecture-map"><strong>${pref.name}は赤いところ</strong>${mapLayers(pref,`${pref.name}の場所を示す日本地図`)}</div>
+        <div class="gacha-prefecture-map"><strong>${pref.name}は赤いところ<br><small>タップで大きく見る</small></strong><button class="gacha-map-preview" data-action="reward-map" data-code="${pref.code}" aria-label="${pref.name}の地図を大きく見る">${mapLayers(pref,`${pref.name}の場所を示す日本地図`).replace(/<a class="map-source-link"[\s\S]*?<\/a>/,'')}</button></div>
       </div>
       ${button(reviewContinues ? 'つぎのおさらいへ →' : `${state.round.length}県のおさらい完了！ →`, 'reward-reveal-next', 'primary-button sun reveal-next-button')}
     </section>`, { progress: 92 + state.reviewIndex * 2, label: `仲間ゲット！ ${state.reviewIndex} / ${state.round.length}` });
@@ -1814,6 +1818,16 @@ app.addEventListener('click', (event) => {
   const control = event.target.closest('[data-action]');
   if (!control || control.disabled) return;
   const action = control.dataset.action;
+  if(action==='reward-map'){
+    const pref=PREFECTURES.find(p=>p.code===control.dataset.code);
+    const dialog=document.createElement('dialog');dialog.className='reward-map-dialog';
+    dialog.innerHTML=`<header><strong>${pref.name}（${pref.reading}）</strong><button data-action="close-reward-map">閉じる</button></header><div class="reward-map-surface">${mapLayers(pref,`${pref.name}の場所`)}</div><button data-action="reward-map-toggle">全体／拡大</button>`;
+    app.append(dialog);dialog.showModal();alignMapPins();
+    const zoom=initMapZoom(dialog.querySelector('.reward-map-surface'),dialog.querySelector('.map-layers'),{focus:mapPoint(pref),buttonScale:3});zoom.centerOn(mapPoint(pref),3);
+    dialog.addEventListener('close',()=>dialog.remove(),{once:true});state.cleanup.push(()=>{dialog.close();dialog.remove();});return;
+  }
+  if(action==='close-reward-map'){control.closest('dialog').close();return;}
+  if(action==='reward-map-toggle'){control.closest('dialog').querySelector('.reward-map-surface')._mapZoom.toggle();return;}
   if(action==='memory-answer'){
     const expanded=control.getAttribute('aria-expanded')==='true';
     control.setAttribute('aria-expanded',String(!expanded));
