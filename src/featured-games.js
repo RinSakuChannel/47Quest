@@ -56,7 +56,7 @@
         hit(points=1){
           const oldStars=model.stars;model.hit(points);sound(model.streak%3===0?'combo':'good');
           tell(model.stars>oldStars?`★ ${model.stars}つ！ ${model.stars===3?'大成功！':'まだ いける！'}`:model.streak>=3?`${model.streak}れんぞく！ ＋${points}`:`やった！ ＋${points}`);
-          if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){
+          if(!(window.QUEST_MOTION?.reduced()??window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)){
             status.getAnimations().forEach(animation=>animation.cancel());
             status.animate([{scale:'1'},{scale:'1.04',offset:.3},{scale:'1'}],{duration:280,easing:'ease-out'});
           }

@@ -392,7 +392,7 @@ function characterStats(pref, className = '') {
 
 function animateCharacterStats(root = document) {
   const values = root.querySelectorAll?.('[data-stat-value]') || [];
-  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reduce = window.QUEST_MOTION.reduced();
   values.forEach((element, index) => {
     const target = Number(element.dataset.statValue) || 0;
     if (reduce) { element.textContent = target; return; }
@@ -447,7 +447,7 @@ window.addEventListener('resize', () => {
 });
 
 function animateMountedScene() {
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.QUEST_MOTION.reduced()) return;
   const scene = app.querySelector('.scene');
   if (!scene) return;
   const groups = scene.querySelectorAll(':scope > header, :scope > aside, :scope > .map-card, :scope > .writing-board, :scope > .game-board, :scope > .collection-grid, :scope > .button-row');
@@ -478,7 +478,8 @@ function shell(content, { progress = 0, label = 'にほん発見アドベンチ�
           ${!home ? '<button class="icon-button" data-action="collection" aria-label="図鑑を見る">ずかん</button>' : ''}
           <button class="icon-button sound-menu-button" data-action="audio-panel" aria-label="音量を調整する" aria-expanded="false">${state.sound ? '🔊' : '音×'}</button>
           <section class="audio-panel" hidden aria-label="音量設定">
-            <header><strong>おとの大きさ</strong><button type="button" data-action="audio-panel" aria-label="音量設定を閉じる">×</button></header>
+            <header><strong>おと・演出</strong><button type="button" data-action="audio-panel" aria-label="音量設定を閉じる">×</button></header>
+            <label><span>アニメーション</span><select data-motion aria-label="アニメーション"><option value="auto" ${QUEST_MOTION.mode==='auto'?'selected':''}>端末の設定に合わせる</option><option value="full" ${QUEST_MOTION.mode==='full'?'selected':''}>しっかり演出</option><option value="calm" ${QUEST_MOTION.mode==='calm'?'selected':''}>ひかえめ</option></select></label>
             <label><span>BGM <output data-volume-output="bgm">${state.bgmVolume}</output></span><input type="range" min="0" max="100" step="1" value="${state.bgmVolume}" data-volume="bgm" aria-label="BGM音量"></label>
             <label><span>こうか音・Voice <output data-volume-output="se">${state.seVolume}</output></span><input type="range" min="0" max="100" step="1" value="${state.seVolume}" data-volume="se" aria-label="効果音とキャラクターVoiceの音量"></label>
             <button type="button" class="audio-master-button" data-action="sound">${state.sound ? 'すべての音を消す' : '音を出す'}</button>
@@ -614,7 +615,7 @@ function renderMap() {
 }
 
 function playMapDiscovery(pref) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.QUEST_MOTION.reduced()) return;
   const surface=document.querySelector('.map-discovery-stage');
   const content=surface?.querySelector('.map-layers');
   if (!content) return;
@@ -1806,7 +1807,7 @@ app.addEventListener('click', (event) => {
   if (characterTarget) {
     const pref = PREFECTURES.find((item) => item.code === characterTarget.dataset.characterCode);
     characterCry(pref);
-    if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    if (!window.QUEST_MOTION.reduced()) {
       characterTarget.animate([
         { scale: '1', rotate: '0deg', translate: '0 0' },
         { scale: '1.09', rotate: '-2deg', translate: '0 -7px', offset: .42 },
@@ -1984,7 +1985,7 @@ app.addEventListener('pointerdown', (event) => {
   ripple.style.left = `${event.clientX}px`;
   ripple.style.top = `${event.clientY}px`;
   ripple.innerHTML = '<b></b><b></b><b></b><b></b>';
-  if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) document.body.append(ripple);
+  if (!window.QUEST_MOTION.reduced()) document.body.append(ripple);
   control.classList.add('is-pressing');
   window.setTimeout(() => ripple.remove(), 520);
   const release = () => {
@@ -1995,7 +1996,7 @@ app.addEventListener('pointerdown', (event) => {
   };
   const springRelease = () => {
     release();
-    if (control.isConnected && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) control.animate([
+    if (control.isConnected && !window.QUEST_MOTION.reduced()) control.animate([
       { scale: '.965', translate: '0 2px' },
       { scale: '1.035', translate: '0 -1px', offset: .55 },
       { scale: '1', translate: '0 0' },
@@ -2027,6 +2028,11 @@ app.addEventListener('input', (event) => {
 });
 
 app.addEventListener('change', (event) => {
+  if(event.target.matches('[data-motion]')){
+    window.QUEST_MOTION.set(event.target.value);
+    animateMountedScene();
+    return;
+  }
   const slider = event.target.closest('[data-volume]');
   if (!slider || !state.sound) return;
   if (slider.dataset.volume === 'se') sound('good');
