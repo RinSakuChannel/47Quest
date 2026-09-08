@@ -541,10 +541,24 @@ function renderHome() {
           ${button('▶ ぼうけん スタート', 'start', 'primary-button sun title-start-button')}
           <div>${button('⚡ いきなりクイズ', 'quick-quiz', 'primary-button quick-quiz-button')}${button(`図鑑 ${count} / 47`, 'collection', 'secondary-button')}${button('🔊 おと', 'audio-panel', 'secondary-button')}</div>
         </div>
+        <div class="title-motion" role="group" aria-label="タイトルのアニメーション"><span>アニメーション</span>${[['auto','標準'],['full','なめらか']].map(([mode,label])=>`<button type="button" data-action="title-motion" data-mode="${mode}" aria-pressed="${QUEST_MOTION.mode===mode}">${label}</button>`).join('')}</div>
         <span class="title-progress">仲間 ${count} / 47　・　${state.journeyLap}周目 あと${47-state.cleared.size}県</span>
       </header>
     </section>`, { home: true, progress: Math.round(count / 47 * 100), label: '47の仲間をさがそう' });
   pixelateOpeningFriends();
+}
+
+// Animate inside the artwork's reserved box, never beyond a clipped card.
+function bounceCharacter(container) {
+  const art = container.querySelector('.home-roamer-pixels, img') || container;
+  art.getAnimations().filter(a => a.id === 'character-bounce').forEach(a => a.cancel());
+  const animation = art.animate([
+    { translate:'0 0', scale:'1' },
+    { translate:'0 2%', scale:'.94', offset:.18 },
+    { translate:'0 -4%', scale:'.90', offset:.48 },
+    { translate:'0 0', scale:'1' }
+  ], { duration:560, easing:'cubic-bezier(.16,1,.3,1)' });
+  animation.id = 'character-bounce';
 }
 
 function pixelateOpeningFriends() {
@@ -1593,18 +1607,17 @@ function renderReviewCompare() {
   app.innerHTML = shell(`
     <section class="scene compare-scene">
       <aside class="compare-heading">
-        <p class="eyebrow">答え合わせ　漢字</p>
-        <h1 class="title">同じように<br>書けたかな？</h1>
-        <p class="body-copy">形と文字の順番を、自分の目でゆっくり見くらべよう。</p>
+        <h1 class="title">見くらべよう</h1>
+        <p class="body-copy">文字の形と、ならび順をチェック。</p>
       </aside>
       <div class="compare-grid">
+        <section class="compare-card answer-card"><span>お手本</span><strong>${answer}</strong></section>
         <section class="compare-card"><span>じぶんの文字</span><img src="${state.inkPreview}" alt="自分が書いた文字" /></section>
-        <section class="compare-card answer-card"><span>正しい漢字</span><strong>${answer}</strong></section>
       </div>
       <div class="compare-actions action-dock">
-        ${hintUsed ? '<p>ヒントを見たので、今回は練習として進めるよ。</p>' : button('見本を見ずに書けた', 'review-correct', 'primary-button sun')}
-        ${button('ちがった・もう一度', 'review-retry', 'secondary-button')}
-        ${hintUsed ? button('見本を見て練習できた', 'review-learned', 'primary-button') : ''}
+        <p>${hintUsed ? 'ヒントを使った今回は、練習として記録するよ。' : 'お手本なしで書けていたら「書けた！」を押そう。'}</p>
+        ${button('書きなおす', 'review-retry', 'secondary-button')}
+        ${hintUsed ? button('練習できた →', 'review-learned', 'primary-button sun') : button('書けた！ →', 'review-correct', 'primary-button sun')}
       </div>
     </section>`, { progress: 88 + state.reviewIndex * 5, label: '答え合わせ　漢字' });
 }
@@ -1831,12 +1844,7 @@ app.addEventListener('click', (event) => {
     const pref = PREFECTURES.find((item) => item.code === characterTarget.dataset.characterCode);
     characterCry(pref);
     if (!window.QUEST_MOTION.reduced()) {
-      characterTarget.animate([
-        { scale: '1', rotate: '0deg', translate: '0 0' },
-        { scale: '1.09', rotate: '-2deg', translate: '0 -7px', offset: .42 },
-        { scale: '.985', rotate: '1deg', translate: '0 1px', offset: .72 },
-        { scale: '1', rotate: '0deg', translate: '0 0' },
-      ], { duration: 560, easing: 'cubic-bezier(.16,1,.3,1)' });
+      bounceCharacter(characterTarget);
     }
   }
   const control = event.target.closest('[data-action]');
@@ -1871,11 +1879,15 @@ app.addEventListener('click', (event) => {
   if (action === 'home') return renderHome();
   if (action === 'character-cry') { characterCry(state.current); return; }
   if (action === 'start') return startRound();
+  if (action === 'title-motion') {
+    QUEST_MOTION.set(control.dataset.mode);
+    app.querySelectorAll('[data-action="title-motion"]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mode===QUEST_MOTION.mode)));
+    return;
+  }
   if (action === 'quick-quiz') return startQuickQuiz();
   if (action === 'hero-cheer') {
     const art = control.querySelector('.home-roamer-art');
-    art?.getAnimations().forEach(animation => animation.cancel());
-    art?.animate([{ transform: 'translateY(0) scale(1)' }, { transform: 'translateY(-24px) scale(1.12) rotate(8deg)', offset: .45 }, { transform: 'translateY(0) scale(1)' }], { duration: 650, easing: 'ease-out' });
+    if (art && !QUEST_MOTION.reduced()) bounceCharacter(art);
     return;
   }
   if (action === 'collection') return renderCollection();

@@ -148,14 +148,20 @@ async function drawEnoughInk(page) {
       if (process.env.QUEST_TEXT_SWEEP === '1') {
         const failures = [];
         for (const code of await page.evaluate(() => PREFECTURES.map(pref => pref.code))) {
-          for (const screen of ['reward', 'hiragana', 'kanji']) {
+          for (const screen of ['reward', 'hiragana', 'kanji','detail','compare-0','compare-1','review-0','review-1','review-2','game']) {
             await page.evaluate(({code,screen}) => {
               state.sound=false;
               const pref=PREFECTURES.find(pref=>pref.code===code);
-              state.current=pref;state.round=[pref];state.roundIndex=0;
+              state.current=pref;state.round=[pref];state.roundIndex=0;state.reviewIndex=0;
               if(screen==='reward') {
                 state.gachaRewards=[pref];state.rewardRevealIndex=0;state.reviewIndex=1;
                 renderRewardReveal();
+              } else if(screen==='detail') renderDetail(pref);
+              else if(screen==='game') renderGame();
+              else if(screen.startsWith('compare-')||screen.startsWith('review-')) {
+                state.reviewPhase='kanji';state.reviewHints={[`${code}-kanji`]:Number(screen.split('-')[1])};
+                if(screen.startsWith('compare-')) {const canvas=document.createElement('canvas');canvas.width=800;canvas.height=300;state.inkPreview=canvas.toDataURL();renderReviewCompare();}
+                else renderReview();
               } else renderWriting(screen);
             }, {code,screen});
             await page.evaluate(() => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
@@ -163,11 +169,13 @@ async function drawEnoughInk(page) {
               await assertReadableText(page, `${name} ${code} ${screen}`);
               await assertPageNoScroll(page, `${name} ${code} ${screen}`);
               await assertInsideViewport(page, '.reveal-name-card,.reveal-next-button,.sample-word-text,.writing-tools button', `${name} ${code} ${screen}`);
+              await assertInsideViewport(page,'.compare-heading,.compare-card,.compare-actions button,.character-profile-card,.profile-actions button,.review-writing-top,.fg-intro button',`${name} ${code} ${screen}`);
+              await assertNoHiddenOverflow(page,'.compare-heading,.compare-actions,.compare-actions button,.character-profile-card,.review-writing-top',`${name} ${code} ${screen}`);
             } catch(error) { failures.push(error.message); }
           }
         }
-        console.log(`${name}: 141 prefecture/text screens checked`);
-        assert.deepEqual(failures, [], failures.join('\n'));
+        console.log(`${name}: 470 prefecture/text screens checked`);
+        if(failures.length){fs.mkdirSync('.verification',{recursive:true});fs.writeFileSync(`.verification/layout-${name}.json`,JSON.stringify(failures,null,2));console.log(`${name}: ${failures.length} failures (see .verification/layout-${name}.json)`);process.exitCode=1;}
         await context.close();
         continue;
       }
@@ -396,5 +404,5 @@ async function drawEnoughInk(page) {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
   }
-  console.log('PASS: desktop, tablet and phone full flow stays inside one viewport');
+  if (!process.exitCode) console.log('PASS: desktop, tablet and phone full flow stays inside one viewport');
 })().catch(error => { console.error(error); process.exit(1); });
