@@ -3,12 +3,23 @@
   const all=window.QUEST_FEATURED_GAMES;
   let cleanup=[];let current='',galleryPage=0;
   let context,bgm,se,timer=0;
-  const volume=()=>{if(!context)return;const music=(Number(document.querySelector('#bgm-volume').value)/100)**2;const effects=(Number(document.querySelector('#se-volume').value)/100)**2;bgm.gain.setTargetAtTime(music*.42,context.currentTime,.02);se.gain.setTargetAtTime(effects*.7,context.currentTime,.02);};
-  const sound=event=>{if(context)window.QUEST_AUDIO.effect(context,se,current,event);};
-  const audio=()=>{try{context ||=new(window.AudioContext||window.webkitAudioContext)();if(!bgm){bgm=context.createGain();se=context.createGain();bgm.connect(context.destination);se.connect(context.destination);}context.resume();volume();let step=0,at=context.currentTime+.05;const schedule=()=>{while(at<context.currentTime+.15){window.QUEST_AUDIO.music(context,bgm,'game',step++,at);at+=60/118/2;}};schedule();timer=setInterval(schedule,80);}catch{/* silent play still works */}};
+  let soundEnabled=false;
+  const muteButton=document.querySelector('#sound-toggle');
+  muteButton.addEventListener('click',()=>{
+    soundEnabled=!soundEnabled;
+    muteButton.textContent=`音 ${soundEnabled?'ON':'OFF'}`;
+    muteButton.setAttribute('aria-pressed',String(soundEnabled));
+    window.QUEST_CHARACTER_CRIES?.stop();
+    if(soundEnabled&&current&&!document.querySelector('#player').hidden&&!timer) audio();
+    volume();
+    if(!soundEnabled){clearInterval(timer);timer=0;context?.suspend();}
+  });
+  const volume=()=>{if(!context)return;const music=(Number(document.querySelector('#bgm-volume').value)/100)**2;const effects=(Number(document.querySelector('#se-volume').value)/100)**2;bgm.gain.setTargetAtTime((soundEnabled?music:0)*.42,context.currentTime,.02);se.gain.setTargetAtTime((soundEnabled?effects:0)*.7,context.currentTime,.02);};
+  const sound=event=>{if(soundEnabled&&context)window.QUEST_AUDIO.effect(context,se,current,event);};
+  const audio=()=>{if(!soundEnabled)return;try{context ||=new(window.AudioContext||window.webkitAudioContext)();if(!bgm){bgm=context.createGain();se=context.createGain();bgm.connect(context.destination);se.connect(context.destination);}context.resume();volume();let step=0,at=context.currentTime+.05;const schedule=()=>{while(at<context.currentTime+.15){window.QUEST_AUDIO.music(context,bgm,'game',step++,at);at+=60/118/2;}};schedule();timer=setInterval(schedule,80);}catch{/* silent play still works */}};
   document.querySelectorAll('#bgm-volume,#se-volume').forEach(slider=>slider.addEventListener('input',()=>{window.QUEST_CHARACTER_CRIES?.stop();volume();}));
   const stop=()=>{window.QUEST_CHARACTER_CRIES?.stop();cleanup.forEach(fn=>fn());cleanup=[];clearInterval(timer);timer=0;};
-  const voice=()=>{if(!context||!current)return;const level=Number(document.querySelector('#se-volume').value)/100;if(level<=0)return;window.QUEST_CHARACTER_CRIES?.play(context,current,Math.min(1,level*1.8),se);};
+  const voice=()=>{if(!soundEnabled||!context||!current)return;const level=Number(document.querySelector('#se-volume').value)/100;if(level<=0)return;window.QUEST_CHARACTER_CRIES?.play(context,current,Math.min(1,level*1.8),se);};
   const close=()=>{stop();document.querySelector('#player').hidden=true;document.querySelector('#result').hidden=true;};
   const launch=code=>{
     stop();current=code;document.querySelector('#result').hidden=true;document.querySelector('#player').hidden=false;

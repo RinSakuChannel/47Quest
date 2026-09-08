@@ -23,7 +23,7 @@ const state = {
   unlocked: new Set(storage.get('47quest-unlocked', [])),
   cleared: new Set(storage.get('47quest-cleared', [])),
   journeyLap: Math.max(1, Math.floor(Number(storage.get('47quest-journey-lap', 1)) || 1)),
-  sound: storage.get('47quest-sound', true),
+  sound: false,
   bgmVolume: Math.max(0, Math.min(100, Number(storage.get('47quest-bgm-volume', 34)) || 0)),
   seVolume: Math.max(0, Math.min(100, Number(storage.get('47quest-se-volume', 42)) || 0)),
   cleanup: [], gameFinished: false, currentRun: null,
@@ -497,7 +497,8 @@ function shell(content, { progress = 0, label = 'にほん発見アドベンチ�
         <div class="top-actions">
           <button class="icon-button" data-action="gacha" aria-label="コインでガチャ">🪙 ${state.coins}</button>
           ${!home ? '<button class="icon-button" data-action="collection" aria-label="図鑑を見る">ずかん</button>' : ''}
-          <button class="icon-button sound-menu-button" data-action="audio-panel" aria-label="音量を調整する" aria-expanded="false">${state.sound ? '🔊' : '音×'}</button>
+          <button class="icon-button sound-toggle-button" data-action="sound" aria-label="音声" aria-pressed="${state.sound}">音 ${state.sound ? 'ON' : 'OFF'}</button>
+          <button class="icon-button sound-menu-button" data-action="audio-panel" aria-label="音量を調整する" aria-expanded="false">設定</button>
           <section class="audio-panel" hidden aria-label="音量設定">
             <header><strong>おと・演出</strong><button type="button" data-action="audio-panel" aria-label="音量設定を閉じる">×</button></header>
             <label><span>アニメーション</span><select data-motion aria-label="アニメーション"><option value="auto" ${QUEST_MOTION.mode==='auto'?'selected':''}>端末の設定に合わせる</option><option value="full" ${QUEST_MOTION.mode==='full'?'selected':''}>しっかり演出</option><option value="calm" ${QUEST_MOTION.mode==='calm'?'selected':''}>ひかえめ</option></select></label>
@@ -1903,9 +1904,8 @@ app.addEventListener('click', (event) => {
   if (action === 'sound') {
     state.sound = !state.sound; storage.set('47quest-sound', state.sound);
     updateAudioVolume();
-    const soundButton = document.querySelector('.sound-menu-button');
-    if (soundButton) soundButton.textContent = state.sound ? '🔊' : '音×';
-    control.textContent = state.sound ? 'すべての音を消す' : '音を出す';
+    syncSoundControls();
+    if (!state.sound) window.QUEST_CHARACTER_CRIES?.stop();
     if (state.sound) { sound('good'); startBgm(requestedMusic.scene, requestedMusic.variant); } else stopBgm();
     return;
   }
@@ -2069,11 +2069,20 @@ window.addEventListener('wheel', (event) => {
   if (event.ctrlKey && !event.target.closest?.('[data-map-pannable="true"]')) event.preventDefault();
 }, { passive: false });
 
+function syncSoundControls() {
+  document.querySelectorAll('.sound-toggle-button').forEach(button => {
+    button.textContent = `音 ${state.sound ? 'ON' : 'OFF'}`;
+    button.setAttribute('aria-pressed', String(state.sound));
+  });
+  const master=document.querySelector('.audio-master-button');
+  if(master) master.textContent=state.sound?'すべての音を消す':'音を出す';
+}
 window.addEventListener('keydown', (event) => {
   if (event.key.toLowerCase() === 'm') {
     state.sound = !state.sound; storage.set('47quest-sound', state.sound);
     updateAudioVolume();
-    document.querySelector('.sound-menu-button')?.replaceChildren(document.createTextNode(state.sound ? '🔊' : '音×'));
+    syncSoundControls();
+    if (!state.sound) window.QUEST_CHARACTER_CRIES?.stop();
     if (state.sound) startBgm(requestedMusic.scene, requestedMusic.variant); else stopBgm();
   }
 });

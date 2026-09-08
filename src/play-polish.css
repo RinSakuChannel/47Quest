@@ -83,6 +83,15 @@
 /* JS owns these entrances; a second CSS entrance would multiply transforms. */
 .scene > :where(header,aside,.map-card,.writing-board,.game-board,.collection-grid,.button-row) {animation:none;}
 .hud-chip,.fg-status,.result-score,[data-stat-value] {font-variant-numeric:tabular-nums;}
+.sound-toggle-button {white-space:nowrap!important;min-width:66px!important;font-size:14px!important;background:#e5edef;color:#254654;}
+.sound-toggle-button[aria-pressed="true"] {background:#ffe17d;color:#173e51;}
+.sound-menu-button {font-size:12px!important;padding-inline:7px!important;}
+@media(max-width:600px){
+ .top-actions{gap:3px}
+ .sound-toggle-button{min-width:60px!important;padding-inline:5px!important;font-size:12px!important}
+ .sound-menu-button{min-width:32px!important;padding-inline:4px!important}
+ .top-title{font-size:12px;text-wrap:balance}
+}
 .reveal-voice-button {position:relative;padding:0;border:0;background:transparent;box-shadow:none;color:#173e51;cursor:pointer;}
 .reveal-voice-label {position:absolute;right:0;bottom:0;z-index:4;display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 12px;border:2px solid #fff;border-radius:24px;background:#fffdf5ef;box-shadow:0 3px 12px #102b4030;font-size:13px;font-weight:800;white-space:nowrap;}
 .reveal-voice-button:focus-visible {outline-color:#fff0a5;}

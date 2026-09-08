@@ -179,6 +179,7 @@ async function drawEnoughInk(page) {
       assert.equal(await page.locator('.home-roamer-pixels').count(), 6, `${name}: coarse title mosaics were not rendered`);
       assert.ok(await page.locator('.home-roamer-pixels').first().evaluate(canvas => canvas.width === 12 && canvas.height === 12), `${name}: title mosaic is not coarse enough`);
       if (name === 'desktop') {
+        await page.locator('.sound-toggle-button').click();
         await page.locator('.sound-menu-button').click();
         assert.equal(await page.locator('[data-volume="bgm"]').inputValue(), '34', 'default BGM must be twenty percent quieter');
         assert.equal(await page.locator('[data-volume="se"]').inputValue(), '42', 'SE/Voice slider default changed unexpectedly');
