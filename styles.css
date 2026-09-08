@@ -793,7 +793,7 @@ button:focus-visible, [role="button"]:focus-visible, canvas:focus-visible { outl
 .pref-mascot-art { cursor:pointer; transform-origin:center 78%; transition:filter .24s ease,scale .28s cubic-bezier(.16,1,.3,1),translate .28s cubic-bezier(.16,1,.3,1); }
 .pref-mascot-art:hover { scale:1.035; translate:0 -.15rem; filter:drop-shadow(0 .75rem .55rem rgba(18,59,83,.26)); }
 button,.review-prefecture-choice,[role="button"] { transition-property:translate,scale,filter,box-shadow,background-color,border-color; transition-duration:.2s; transition-timing-function:cubic-bezier(.16,1,.3,1); }
-.is-pressing { translate:0 .16rem!important; scale:.965!important; }
+.is-pressing { translate:0 0!important; scale:1!important; }
 
 @media (max-width:760px), (pointer:coarse) {
   .primary-button,.secondary-button,.tool-button,.icon-button,.review-prefecture-choice { min-height:3rem; }

@@ -2036,9 +2036,9 @@ app.addEventListener('pointerdown', (event) => {
   const springRelease = () => {
     release();
     if (control.isConnected && !window.QUEST_MOTION.reduced()) control.animate([
-      { scale: '.965', translate: '0 2px' },
-      { scale: '1.035', translate: '0 -1px', offset: .55 },
-      { scale: '1', translate: '0 0' },
+      { filter: 'brightness(1.14)' },
+      { filter: 'brightness(1.04)', offset: .55 },
+      { filter: 'brightness(1)' },
     ], { duration: 240, easing: 'cubic-bezier(.16,1,.3,1)' });
   };
   window.addEventListener('pointerup', springRelease, { once: true });
