@@ -1572,12 +1572,8 @@ function renderReview() {
   app.innerHTML = shell(`
     <section class="scene review-scene">
       <header class="review-writing-top">
-        <div class="review-writing-context"><span class="review-number">漢</span><strong>${pref.region}の赤い場所</strong><span>漢字</span></div>
-        <div class="hint-stack">
-          ${hint >= 1 ? `<span class="hint-chip">最初の文字: ${maskedWord}</span>` : '<span class="hint-chip">答えはまだ見えないよ</span>'}
-          ${hint >= 2 ? `<span class="hint-chip">見本: ${word}</span>` : ''}
-        </div>
-        ${button(hint === 0 ? '最初の文字を見る' : hint === 1 ? '答えを見る' : '見本を表示中', 'review-hint', 'secondary-button', hint >= 2 ? 'disabled' : '')}
+        <div class="review-writing-context"><strong>${pref.region}の赤い場所を、漢字で書こう</strong></div>
+        ${hint >= 1 ? `<p class="review-answer-hint" aria-live="polite">${hint >= 2 ? `お手本：${word}` : `最初の文字：${maskedWord}`}</p>` : ''}
       </header>
       <div class="writing-board">
         <div class="canvas-shell">
