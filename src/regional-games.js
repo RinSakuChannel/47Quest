@@ -191,8 +191,8 @@
         if(gust>0)for(let i=-1;i<=1;i++)a.line([{x:fan+i*32,y:460},{x:fan+i*55,y:460-(1-gust/.4)*230}],'#83b6b3',5);a.icon('🪭',fan,490,70+gust*70);a.text('花びらの下を タップして あおごう！',500,565,27);}};
   });
   register('27','たこやき 三つの手しごと','生地 → 具 → 返す！','穴をタップして生地と具を入れよう。黄色になったら返して完成！','🐙',a=>{
-    const pans=Array.from({length:4},(_,i)=>({x:300+i%2*380,y:200+Math.floor(i/2)*230,stage:0,heat:0}));let served=0;
-    return {input(k,p){if(k!=='down')return;const pan=pans.find(v=>dist(v,p)<100);if(!pan)return;if(pan.stage<2)pan.stage++;else if(pan.heat>=2){served++;pan.stage=0;pan.heat=0;if(served===4)a.win();}else a.tell('黄色になるまで まとう');},step(dt){pans.forEach(p=>{if(p.stage===2)p.heat+=dt;});},draw(){a.box(140,65,720,475,'#5a625e');pans.forEach(p=>{a.circle(p.x,p.y,90,p.stage===0?'#303c38':p.stage===1?'#f2ddb0':p.heat<2?'#eacba3':'#e9a844');a.text(p.stage===0?'生地':p.stage===1?'具':p.heat<2?'焼いてる':'返す！',p.x,p.y,28,p.stage===0?'#fff':'#563e30');});a.text(`できた ${served} / 4`,500,570);}};
+    const pans=Array.from({length:4},(_,i)=>({x:300+i%2*380,y:200+Math.floor(i/2)*230,stage:0,heat:0,rate:random(.85,1.15)}));let served=0;
+    return {input(k,p){if(k!=='down')return;const pan=pans.find(v=>dist(v,p)<100);if(!pan)return;if(pan.stage<2)pan.stage++;else if(pan.heat>=2){served++;pan.stage=0;pan.heat=0;pan.rate=random(.85,1.15);a.tell('くるっ！ できあがり！');if(served===4)a.win(pan.x,pan.y);}else a.tell('黄色になるまで まとう');},step(dt){pans.forEach(p=>{if(p.stage===2){p.heat+=dt*p.rate;if(p.heat>5.5){p.stage=0;p.heat=0;a.tell('焼きすぎた！ 生地からもう一度');}}});},draw(){a.box(140,65,720,475,'#5a625e');pans.forEach(p=>{a.circle(p.x,p.y,90,p.stage===0?'#303c38':p.stage===1?'#f2ddb0':p.heat<2?'#eacba3':p.heat>4?'#bf783b':'#e9a844');if(p.stage===2){a.box(p.x-55,p.y+49,110,9,'#eee2bc');a.box(p.x-55,p.y+49,Math.max(1,p.heat/5.5*110),9,p.heat>4?'#cf573c':'#599d83');}a.text(p.stage===0?'生地':p.stage===1?'具':p.heat<2?'焼いてる':p.heat>4?'いそいで！':'返す！',p.x,p.y,28,p.stage===0?'#fff':'#563e30');});a.text(`できた ${served} / 4`,500,570);}};
   });
   register('28','コウノトリ 風の道','上むきの風を えがこう','鳥の下から上へ線を描くと浮かぶよ。右の巣まで風で案内しよう。','🕊',a=>{
     let bird={x:100,y:300},vy=0;const strokes=[];
@@ -215,8 +215,8 @@
     return {input(k,p){if(k==='down'&&dist(p,tip)<85)held=true;if(k==='move'&&held){tip={x:p.x,y:p.y};if(holes[i]&&dist(tip,holes[i])<38){path.push({...holes[i]});i++;if(i===3)a.win();}}if(k==='up'||k==='cancel')held=false;},draw(){holes.forEach((p,n)=>{a.circle(p.x,p.y,65,'#7ab99e');a.circle(p.x,p.y,23,'#f7f5dc');if(n===i)a.target(p.x,p.y,38);});a.line([...path,tip],'#df6460',10);a.circle(tip.x,tip.y,22,'#c83c49');a.text('赤い先をつかんで 穴へ通す',500,550);}};
   });
   register('33','もも ふんわり着地','クッションで やさしく受けよう','指のクッションを桃の下へ。受けたら下へゆっくり動かして衝撃を吸おう。','🍑',a=>{
-    let y=80,v=0,caught=false,soft=0,pad=430;const x=random(260,740);
-    return {step(dt,p){pad=clamp(p.y,180,490);if(!caught){v+=dt*90;y+=v*dt;if(p.down&&Math.abs(p.x-x)<100&&y>pad-50){caught=true;soft=0;}}else{y=pad-45;soft+=dt;if(soft>1.5&&pad>410)a.win();}if(y>550){y=80;v=0;a.tell('桃の下で クッションをおそう');}},draw(){a.icon('🍑',x,y,85);a.box(x-95,pad,190,40,'#dcabc8');a.line([{x:100,y:530},{x:900,y:530}],'#a5b38b',10);a.text('桃の下でおす → ゆっくり下へ',500,570,26);}};
+    let y=80,v=0,caught=false,soft=0,pad=330;const x=random(260,740);
+    return {step(dt,p){const previous=pad;pad=clamp(p.y,220,490);if(!caught){v+=dt*90;y+=v*dt;if(p.down&&Math.abs(p.x-x)<100&&y>pad-50&&y<pad+35){caught=true;soft=0;a.tell('受けた！ 押したまま ゆっくり下へ');}}else{y=pad-45;const speed=Math.abs(pad-previous)/Math.max(dt,.001);if(!p.down||speed>650){caught=false;v=30;soft=0;a.tell('急がず、押したまま下へ');}else if(pad>previous&&speed<400){soft+=pad-previous;if(soft>=60&&pad>410)a.win(x,pad);}}if(y>550){y=80;v=0;a.tell('桃の下で クッションをおそう');}},draw(){a.icon('🍑',x,y,85);a.box(x-95,pad,190,40,'#dcabc8');a.line([{x:100,y:530},{x:900,y:530}],'#a5b38b',10);a.text(caught?'押したまま ゆっくり下へ':'桃の下で クッションをおそう',500,570,26);}};
   });
   register('34','もみじ 水門の旅','水門をひらいて 舟を通そう','赤い水門をタップして開こう。舟が通ると水が減るので次の門へ！','🍁',a=>{
     const gates=[false,false,false];let x=100;
@@ -250,8 +250,9 @@
     return {input(k,p){if(k!=='down')return;const row=p.y<300?0:1,m=nearest(row);if(m&&Math.cos(angle+m.offset)>.82){m.done=true;hits++;a.tell('シュッ！');if(hits===marks.length)a.win(760,row?370:230);}else{a.miss();a.tell('光が筆に来たら！');}},step(dt){angle+=dt*(1.35+hits*.1);},draw(){a.box(220,120,560,350,'#fff');[230,370].forEach(y=>a.line([{x:245,y},{x:755,y}],'#d3e6ea',48));marks.forEach(m=>{if(m.done)return;const x=500+Math.cos(angle+m.offset)*245,y=(m.row?370:230)+Math.sin(angle+m.offset)*22;a.circle(x,y,22,Math.cos(angle+m.offset)>.82?'#ffd34f':'#4f8ba3');});a.icon('🖌',790,230,66);a.icon('🖌',790,370,66);a.text(`模様 ${hits} / ${marks.length}`,500,70,34);a.text('右で光ったら 上か下をタップ！',500,540,27);}};
   });
   register('42','カステラ おすそわけ','人数にあわせて 切り分けよう','縦にスワイプして切ろう。３人なら２本の切れ目で３つに分けるよ。','🍰',a=>{
-    const people=Math.random()<.5?3:4;let cuts=[],start=null;
-    return {input(k,p){if(k==='down')start={...p};if(k==='up'&&start){if(Math.abs(p.y-start.y)>130&&p.x>200&&p.x<800&&cuts.every(x=>Math.abs(x-p.x)>55)){cuts.push(p.x);if(cuts.length===people-1)a.win();}start=null;}if(k==='cancel')start=null;},draw(){a.box(200,190,600,210,'#f2d989');a.box(200,190,600,40,'#b58244');cuts.forEach(x=>a.line([{x,y:190},{x,y:400}],'#fff9e9',10));a.text(`${people}人で たべよう！`,500,100,36);a.text(`縦にスーッと切る　${cuts.length+1} / ${people} 切れ`,500,520);}};
+    const people=Math.random()<.5?3:4,left=random(150,230),width=random(540,620);let cuts=[],start=null;
+    const guides=Array.from({length:people-1},(_,i)=>left+width*(i+1)/people);
+    return {input(k,p){if(k==='down')start={...p};if(k==='up'&&start){const x=(start.x+p.x)/2,guide=guides.find(g=>Math.abs(g-x)<40&&!cuts.includes(g));if(Math.abs(p.y-start.y)>130&&Math.min(p.y,start.y)<260&&Math.max(p.y,start.y)>330&&Math.abs(p.x-start.x)<90){if(guide!==undefined){cuts.push(guide);a.tell('すぱっ！ 同じ大きさ！');if(cuts.length===people-1)a.win(x,300);}else a.tell('光る線にそって 切ってみよう');}start=null;}if(k==='cancel')start=null;},draw(){a.box(left,190,width,210,'#f2d989');a.box(left,190,width,40,'#b58244');guides.forEach(x=>{if(!cuts.includes(x)){for(let y=205;y<400;y+=30)a.line([{x,y},{x,y:y+14}],'#fff4c3',4);a.target(x,160,15);}});cuts.forEach(x=>a.line([{x,y:190},{x,y:400}],'#fff9e9',10));a.text(`${people}人で 同じ大きさに！`,500,100,36);a.text(`光る線を 縦にスーッ　${cuts.length+1} / ${people} 切れ`,500,520);}};
   });
   register('43','火の国 水路づくり','石をおいて 水を道へ！','石を光るところへ動かすと、水が熱い岩へ流れるよ。全部冷やそう。','💧',a=>{
     const slots=[{x:random(280,340),y:random(150,210)},{x:random(490,550),y:random(270,330)},{x:random(720,790),y:random(380,420)}];let i=0,stone={x:100,y:460},held=false;

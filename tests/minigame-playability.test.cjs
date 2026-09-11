@@ -25,3 +25,26 @@ for(let trial=0;trial<15;trial++){
 }
 const cancelled=setup('23');cancelled.game.input('down',{x:650,y:160,down:true});cancelled.game.input('cancel',{x:650,y:160,down:false});cancelled.game.input('up',{x:650,y:160,down:false});for(let i=0;i<40;i++)cancelled.step();assert.equal(cancelled.draw().icons.filter(i=>i.s==='🔥').length,3,'cancel never fires');
 console.log('PASS: 3 redesigned games playable, idle cannot win, aim cancellation, 15 randomized trajectories');
+for(let trial=0;trial<20;trial++){
+ const cake=setup('42');const guides=cake.draw().targets;
+ cake.game.input('down',{x:80,y:170});cake.game.input('up',{x:80,y:420});assert.equal(cake.wins,0);
+ for(const g of guides){cake.game.input('down',{x:g.x,y:170});cake.game.input('up',{x:g.x,y:420});}
+ assert.equal(cake.wins,1,'equal slices clear every randomized cake');
+ const peach=setup('33');const x=peach.draw().icons.find(i=>i.s==='🍑').x;
+ for(let i=0;i<100;i++)peach.game.step(.05,{down:true,x,y:330});
+ assert.equal(peach.wins,0,'holding still cannot complete the soft landing');
+ for(let y=332;y<=450;y+=2)peach.game.step(.05,{down:true,x,y});
+ assert.ok(peach.wins,'a gradual downward catch completes the soft landing');
+}
+console.log('PASS: 20 randomized equal-slicing and controlled peach landings; stationary hold cannot win');
+for(let trial=0;trial<20;trial++){
+ const grill=setup('27'),pans=[{x:300,y:200},{x:680,y:200},{x:300,y:430},{x:680,y:430}];
+ for(const p of pans){grill.tap(p);grill.tap(p);}
+ for(let i=0;i<50;i++)grill.step(.05);
+ for(const p of pans)grill.tap(p);
+ assert.equal(grill.wins,1,'all four pans can be served despite different heat rates');
+ const burned=setup('27');for(const p of pans){burned.tap(p);burned.tap(p);}
+ for(let i=0;i<140;i++)burned.step(.05);
+ for(const p of pans)burned.tap(p);assert.equal(burned.wins,0,'overcooking resets the pan instead of awarding points');
+}
+console.log('PASS: takoyaki timing and overcooking recovery across 20 rounds');
