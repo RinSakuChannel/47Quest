@@ -34,10 +34,12 @@
     let practicing=false,practiceDone=false;
     practiceButton.addEventListener('click',()=>{practicing=true;intro.querySelector('button').click();});
     field.append(intro);
+    const stopGuide=window.QUEST_GESTURE_GUIDE?.mount(intro.querySelector('.fg-demo'),pref.code)||(()=>{});
+    registerCleanup(stopGuide);
     let alive=true, raf=0; const cleanups=[];
     registerCleanup(()=>{alive=false;cancelAnimationFrame(raf);cleanups.forEach(fn=>fn());});
     intro.querySelector('button').addEventListener('click',()=>{
-      intro.remove();sound('tap');
+      stopGuide();intro.remove();sound('tap');
       const model=round(def.goal,def.time);
       model.playTime=0;
       const pace={easy:.75,normal:1,challenge:1.18}[difficulty.value]||1;

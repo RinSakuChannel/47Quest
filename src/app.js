@@ -554,12 +554,14 @@ function renderHome() {
 function bounceCharacter(container) {
   const art = container.querySelector('.home-roamer-pixels, img') || container;
   art.getAnimations().filter(a => a.id === 'character-bounce').forEach(a => a.cancel());
-  const animation = art.animate([
-    { translate:'0 0', scale:'1' },
-    { translate:'0 2%', scale:'.94', offset:.18 },
-    { translate:'0 -4%', scale:'.90', offset:.48 },
-    { translate:'0 0', scale:'1' }
-  ], { duration:560, easing:'cubic-bezier(.16,1,.3,1)' });
+  const life=container.dataset.life||container.querySelector('[data-life]')?.dataset.life||'sway';
+  const reactions={
+    weight:[{scale:'1'},{scale:'.94 .90',offset:.25},{scale:'.98',rotate:'-1deg',offset:.55},{scale:'1',rotate:'0deg'}],
+    drift:[{scale:'1',translate:'0 0'},{scale:'.94',translate:'2% -2%',rotate:'-3deg',offset:.4},{scale:'.96',translate:'-1% -1%',rotate:'2deg',offset:.75},{scale:'1',translate:'0 0',rotate:'0deg'}],
+    spring:[{scale:'1',translate:'0 0'},{scale:'.96 .88',translate:'0 1%',offset:.2},{scale:'.88 .96',translate:'0 -2%',offset:.45},{scale:'.98 .94',translate:'0 1%',offset:.7},{scale:'1',translate:'0 0'}],
+    sway:[{scale:'1',rotate:'0deg'},{scale:'.94',rotate:'-4deg',offset:.3},{scale:'.95',rotate:'3deg',offset:.65},{scale:'1',rotate:'0deg'}]
+  };
+  const animation = art.animate(reactions[life]||reactions.sway, { duration:life==='drift'?850:life==='weight'?650:560, easing:'cubic-bezier(.16,1,.3,1)' });
   animation.id = 'character-bounce';
 }
 
