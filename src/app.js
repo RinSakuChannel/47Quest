@@ -391,7 +391,9 @@ function openGuideHelp(opener){
 
 function mascot(pref, className = 'pref-mascot') {
   const image = window.CHARACTER_ART?.[pref.code] || `./assets/characters/${pref.code}.png`;
-  return `<div class="${className} pref-mascot-art" role="img" aria-label="${pref.character}。タップすると声が聞けます" data-character-code="${pref.code}"><img src="${image}" alt="" draggable="false" decoding="async" /></div>`;
+  const motif=`${pref.character} ${pref.characterCopy} ${pref.specialty}`;
+  const motion=/雪|石|だるま|城|いも|大仏/.test(motif)?'weight':/魚|海|雲|くらげ/.test(motif)?'drift':/うどん|もち|こんにゃく|麺/.test(motif)?'spring':'sway';
+  return `<div class="${className} pref-mascot-art" data-life="${motion}" role="img" aria-label="${pref.character}。タップすると声が聞けます" data-character-code="${pref.code}"><img src="${image}" alt="" draggable="false" decoding="async" /></div>`;
 }
 
 function characterCry(pref) {
@@ -539,7 +541,7 @@ function renderHome() {
         </div>
         <div class="title-actions">
           ${button('▶ ぼうけん スタート', 'start', 'primary-button sun title-start-button')}
-          <div>${button('⚡ いきなりクイズ', 'quick-quiz', 'primary-button quick-quiz-button')}${button(`図鑑 ${count} / 47`, 'collection', 'secondary-button')}${button('🔊 おと', 'audio-panel', 'secondary-button')}</div>
+          <div>${button('⚡ いきなりクイズ', 'quick-quiz', 'primary-button quick-quiz-button')}${button(`図鑑 ${count} / 47`, 'collection', 'secondary-button')}${button('旅の記録', 'journey', 'secondary-button')}</div>
         </div>
         <div class="title-motion" role="group" aria-label="タイトルのアニメーション"><span>アニメーション</span>${[['auto','標準'],['full','なめらか']].map(([mode,label])=>`<button type="button" data-action="title-motion" data-mode="${mode}" aria-pressed="${QUEST_MOTION.mode===mode}">${label}</button>`).join('')}</div>
         <span class="title-progress">仲間 ${count} / 47　・　${state.journeyLap}周目 あと${47-state.cleared.size}県</span>
@@ -821,6 +823,7 @@ function renderGame() {
   const pref = state.current;
   const setup = currentMicroGame();
   state.currentRun = buildRunMeta(pref);
+  state.currentRun.buddyCode=[...state.unlocked].at(-1);
   if (window.QUEST_FEATURED_GAMES?.definitions[pref.code]) {
     state.currentRun.challenge = { id:'score', icon:'★', label:`${setup.goal}点でクリア・${setup.goal*3}点で３つ星！` };
   }
@@ -847,10 +850,11 @@ function updateHud(score, goal, time) {
   const scoreElement = document.querySelector('#game-score');
   const timeElement = document.querySelector('#game-time');
   if (scoreElement) scoreElement.textContent = `${score} / ${goal}`;
-  if (timeElement) timeElement.textContent = Math.max(0, time).toFixed(1);
+  if (timeElement) timeElement.textContent = time == null ? '練習' : Math.max(0, time).toFixed(1);
 }
 
 function finishGame(success, performance = {}) {
+  const setup=currentMicroGame();
   if (state.gameFinished) return;
   state.gameFinished = true;
   cleanups();
@@ -888,7 +892,7 @@ function finishGame(success, performance = {}) {
         </header>
         <div class="result-details">
           ${success ? `<div class="clear-friend is-mystery">${mascot(state.current, 'clear-friend-art')}<div><strong>${state.current.character}</strong><p>仲間も おおよろこび！</p><span>おさらいで 仲間にしよう</span></div></div>` : '<p class="result-retry-copy">もう一度やってみよう。</p>'}
-          <p class="result-learning"><b>${state.current.name}メモ</b>${state.current.feature}<br><span>名産・名物：${state.current.specialty}</span></p>
+          <p class="result-learning"><b>つぎの目標：${stars<3?`あと${Math.max(1,setup.goal*(stars+1)-(performance.score||0))}点で星${stars+1}つ`:`${records[state.current.code].bestScore+1}点で自己ベスト更新`}</b><br>${state.current.name}：${state.current.feature}</p>
         </div>
         ${success
           ? `<div class="result-actions">${button('もう一度あそぶ', 'game-retry', 'secondary-button')}${button(state.replay ? '県のページへ' : '場所クイズへ', 'game-next', 'primary-button sun')}</div>`
@@ -1674,6 +1678,14 @@ function startRewardReveal() {
   return renderReward();
 }
 
+function revealRewardDetails() {
+  const scene=app.querySelector('.reward-reveal-scene');
+  if(!scene)return;
+  scene.classList.remove('is-introducing');
+  scene.querySelector('.reward-reveal-skip')?.remove();
+  scene.querySelector('.reveal-name-card')?.removeAttribute('inert');
+}
+
 function renderRewardReveal() {
   cleanups();
   state.screen = 'reward-reveal';
@@ -1707,6 +1719,14 @@ function renderRewardReveal() {
       ${button(reviewContinues ? 'つぎのおさらいへ →' : `${state.round.length}県のおさらい完了！ →`, 'reward-reveal-next', 'primary-button sun reveal-next-button')}
     </section>`, { progress: 92 + state.reviewIndex * 2, label: `仲間ゲット！ ${state.reviewIndex} / ${state.round.length}` });
   sound('reveal');
+  const scene=app.querySelector('.reward-reveal-scene');
+  if(!QUEST_MOTION.reduced()){
+    scene.classList.add('is-introducing');
+    scene.querySelector('.reveal-name-card').setAttribute('inert','');
+    scene.insertAdjacentHTML('beforeend',button('紹介を見る →','reward-show-details','reward-reveal-skip'));
+    const timer=setTimeout(revealRewardDetails,isNew?2100:800);
+    state.cleanup.push(()=>clearTimeout(timer));
+  }
   const revealSounds = [
     window.setTimeout(() => sound('win'), 830),
     window.setTimeout(() => characterCry(pref), 1250),
@@ -1719,6 +1739,7 @@ function renderReward() {
   cleanups();
   state.screen = 'reward';
   const earned = earnedThisRound();
+  const completedRegions=[...new Set(earned.map(p=>p.region))].filter(region=>PREFECTURES.filter(p=>p.region===region).every(p=>state.cleared.has(p.code)));
   const confetti = Array.from({ length: 28 }, (_, index) => `<i style="--x:${(index * 37) % 100}%;--color:${['#ff6b56','#ffcf54','#71d3ad','#80ccef','#c9ace5'][index % 5]};--speed:${3.4 + (index % 6) * .35}s;--delay:${-(index % 9) * .45}s"></i>`).join('');
   app.innerHTML = shell(`
     <section class="scene reward-scene memory-reward-scene">
@@ -1733,12 +1754,22 @@ function renderReward() {
           <span class="memory-learning">${state.reviewResults[pref.code]?.kanji?'見本なしで書けた（自己確認）':'見本といっしょに練習'}</span>
         </button>`).join('') : '<div class="empty-reward">書き直しは何回でもできるよ。失敗ではなく、覚える途中。</div>'}
       </div>
-      <p class="memory-progress">${state.journeyLap}周目　${state.cleared.size} / 47県 <span>あと${47-state.cleared.size}県の発見！</span></p>
+      <p class="memory-progress ${completedRegions.length?'region-milestone':''}">${completedRegions.length?`★ ${completedRegions.join('・')}を一周！`:`${state.journeyLap}周目　${state.cleared.size} / 47県`} <span>あと${47-state.cleared.size}県の発見！</span></p>
       <div class="button-row">
         ${button('もう1セット遊ぶ', 'start', 'primary-button sun')}
         ${button('図鑑を見る', 'collection', 'secondary-button')}
       </div>
     </section>`, { progress: 100, label: state.quickQuiz ? 'いきなりクイズ クリア' : '冒険クリア' });
+}
+
+function renderJourney() {
+  cleanups();state.screen='journey';
+  const regions=[...new Set(PREFECTURES.map(p=>p.region))];
+  const learning=storage.get('47quest-learning',{});
+  app.innerHTML=shell(`<section class="scene journey-scene"><header><p class="eyebrow">${state.journeyLap}周目の旅</p><h1>にほんの旅の記録</h1><p>仲間の発見と、文字の練習を見よう。</p></header><div class="journey-regions">${regions.map(region=>{
+    const prefs=PREFECTURES.filter(p=>p.region===region),found=prefs.filter(p=>state.unlocked.has(p.code)).length,visited=prefs.filter(p=>state.cleared.has(p.code)).length;
+    return `<article class="journey-region ${visited===prefs.length?'is-complete':''}"><h2>${region}</h2><strong>${visited} / ${prefs.length}県</strong><progress value="${visited}" max="${prefs.length}" aria-label="${region}の今周の進み具合"></progress><p>仲間 ${found}体</p><small>${visited===prefs.length?'この地方を一周！':`あと${prefs.length-visited}県の冒険`}</small></article>`;
+  }).join('')}</div><p class="journey-note">見本なしで書けた自己確認：${PREFECTURES.filter(p=>learning[p.code]?.recalled>0).length}県<br>キャラの獲得数は、漢字の正解判定ではありません。</p><div class="button-row action-dock">${button('ホームへ','home','secondary-button')}${button('冒険へ','start','primary-button sun')}</div></section>`,{label:'旅の記録'});
 }
 
 function renderNationComplete() {
@@ -1873,6 +1904,8 @@ app.addEventListener('click', (event) => {
     sound(/home|back|cancel|prev/.test(action) ? 'ui-back' : /collection|open-pref|settings|zoom/.test(action) ? 'ui-open' : 'ui-confirm');
   }
   if (action === 'home') return renderHome();
+  if (action === 'journey') return renderJourney();
+  if (action === 'reward-show-details') { revealRewardDetails();return; }
   if (action === 'character-cry') { characterCry(state.current); return; }
   if (action === 'start') return startRound();
   if (action === 'title-motion') {

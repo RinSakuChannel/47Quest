@@ -297,8 +297,8 @@ async function drawEnoughInk(page) {
       assert.ok(lessonLayout.scrollWidth <= lessonLayout.clientWidth + 1, `${name}: game instructions overflow horizontally`);
       assert.ok(lessonLayout.fontSize >= 18, `${name}: game instructions are too small`);
       assert.ok(lessonLayout.balanced, `${name}: game instruction lines are not balanced`);
-      if (isPhone) await page.locator('.fg-intro button').tap();
-      else await page.locator('.fg-intro button').click();
+      if (isPhone) await page.getByRole('button',{name:'チャレンジ！',exact:true}).tap();
+      else await page.getByRole('button',{name:'チャレンジ！',exact:true}).click();
       await page.waitForSelector('.rg-canvas');
       const regionalCanvas = await page.locator('.rg-canvas').boundingBox();
       assert.ok(Math.abs(regionalCanvas.width / regionalCanvas.height - 5 / 3) < .02,
@@ -361,7 +361,7 @@ async function drawEnoughInk(page) {
       for (const code of ['03','05','23','26']) {
         await page.evaluate(code => {state.current=PREFECTURE_DATA.find(p=>p.code===code);state.round=[state.current];state.roundIndex=0;renderGame();}, code);
         await assertReadableText(page, `${name} ${code} instructions`);
-        await page.locator('.fg-intro button').click();
+        await page.getByRole('button',{name:'チャレンジ！',exact:true}).click();
         await page.waitForSelector('.rg-canvas');
         await assertPageNoScroll(page, `${name} ${code} game`);
         await assertInsideViewport(page, '.rg-canvas,.fg-banner,.fg-status,.fg-star-track', `${name} ${code} game`);

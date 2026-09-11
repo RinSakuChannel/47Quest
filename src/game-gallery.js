@@ -26,7 +26,7 @@
     document.querySelector('#game-title').textContent=`${names[code]||code}・${all.definitions[code].title}`;
     const field=document.querySelector('#field');field.replaceChildren();
     audio();
-    all.start({field,pref:{code},sound,registerCleanup(fn){cleanup.push(fn);},updateHud(score,goal,time){document.querySelector('#hud').textContent=`${Math.ceil(time)}秒`;},finish(success,result){stop();sound('win');voice();document.querySelector('#result').hidden=false;const friend=document.querySelector('#friend');friend.src=window.CHARACTER_ART?.[code]||`./assets/characters/${code}.png`;friend.dataset.characterCode=code;document.querySelector('#record').textContent=`${'★'.repeat(result.stars)}　${result.score}点　「${window.QUEST_PERSONALITIES?.[code]?.line || ''}」`;}});
+    all.start({field,pref:{code},sound,registerCleanup(fn){cleanup.push(fn);},updateHud(score,goal,time){document.querySelector('#hud').textContent=time==null?'練習':`${Math.ceil(time)}秒`;},finish(success,result){stop();sound('win');voice();document.querySelector('#result').hidden=false;const friend=document.querySelector('#friend');friend.src=window.CHARACTER_ART?.[code]||`./assets/characters/${code}.png`;friend.dataset.characterCode=code;document.querySelector('#record').textContent=`${'★'.repeat(result.stars)}　${result.score}点　「${window.QUEST_PERSONALITIES?.[code]?.line || ''}」`;}});
   };
   document.querySelector('#status').textContent=`47都道府県から 遊びたいゲームをえらぼう。場所や文字も覚える冒険はホームから！`;
   const entries=Object.entries(all.definitions).sort(([a],[b])=>a.localeCompare(b));

@@ -19,15 +19,15 @@
     const mascot=new Image();if(window.CHARACTER_ART?.[code])mascot.src=window.CHARACTER_ART[code];
     let pointer={x:500,y:300,down:false},previous={...pointer};let done=false,celebrate=0,interacted=false;
     const effects=[];
-    const api={get phase(){return ctx.model.phase;},get time(){return ctx.model.elapsed;},
+    const api={get phase(){return ctx.model.phase;},get time(){return ctx.model.playTime??ctx.model.elapsed;},
       random,clamp,dist,
-      win(x=500,y=300){if(celebrate>0)return;ctx.hit(3);celebrate=.32;const count=window.QUEST_MOTION?.reduced()?0:18;for(let i=0;i<count;i++)effects.push({x,y,vx:random(-190,190),vy:random(-280,-90),life:.7});},
+      win(x=500,y=300){if(celebrate>0)return;ctx.hit(3);celebrate=.55;const count=window.QUEST_MOTION?.reduced()?0:18;for(let i=0;i<count;i++)effects.push({x,y,vx:random(-190,190),vy:random(-280,-90),life:.7});effects.push({x:clamp(x,100,900),y:clamp(y,90,470),vx:0,vy:window.QUEST_MOTION?.reduced()?0:-55,life:.55,label:ctx.practicing?'できた':'+3'});},
       miss:ctx.miss,tell:ctx.tell,
-      circle(x,y,r,color='#ffd65f'){c.fillStyle=color;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();},
-      box(x,y,w,h,color='#fff9e4'){c.fillStyle=color;c.beginPath();c.roundRect(x,y,w,h,Math.min(16,w/2,h/2));c.fill();},
+      circle(x,y,r,color='#ffd65f'){c.save();if(r>12){c.shadowColor='#173e5126';c.shadowBlur=5;c.shadowOffsetY=4;}c.fillStyle=color;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();c.shadowColor='transparent';if(r>12){const g=c.createRadialGradient(x-r*.3,y-r*.4,0,x,y,r);g.addColorStop(0,'#ffffff35');g.addColorStop(.6,'#ffffff00');g.addColorStop(1,'#173e5112');c.fillStyle=g;c.fill();}c.restore();},
+      box(x,y,w,h,color='#fff9e4'){c.save();if(w<800&&h>20){c.shadowColor='#173e5120';c.shadowBlur=4;c.shadowOffsetY=4;}c.fillStyle=color;c.beginPath();c.roundRect(x,y,w,h,Math.min(16,w/2,h/2));c.fill();c.restore();},
       line(points,color='#50776e',width=8){if(!points.length)return;c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.beginPath();points.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.stroke();},
       text(s,x,y,size=28,color='#173e51'){c.fillStyle=color;c.font=`900 ${size}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(s,x,y);},
-      icon(s,x,y,size=70){this.text(s,x,y,size);},
+      icon(s,x,y,size=70){if(!window.QUEST_GAME_ILLUSTRATIONS?.draw(c,s,x,y,size,api.time))this.text(s,x,y,size);},
       mascot(x,y,size=130){if(mascot.complete&&mascot.naturalWidth){const scale=size/Math.max(mascot.naturalWidth,mascot.naturalHeight),w=mascot.naturalWidth*scale,h=mascot.naturalHeight*scale;c.drawImage(mascot,x-w/2,y-h/2,w,h);}else this.icon('🐟',x,y,size*.65);},
       winterScene(progress){
         const sky=c.createLinearGradient(0,0,0,600);sky.addColorStop(0,'#183657');sky.addColorStop(1,'#789aaa');c.fillStyle=sky;c.fillRect(0,0,1000,600);
@@ -42,7 +42,7 @@
       },
       target(x,y,r=42){c.strokeStyle='#d6a221';c.lineWidth=6;c.setLineDash([10,8]);c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();c.setLineDash([]);},
     };
-    function aTime(){return ctx.model.elapsed;}
+    function aTime(){return api.time;}
     let game=games[code](api);
     function event(e,kind){
       const r=canvas.getBoundingClientRect();previous={...pointer};pointer={x:clamp((e.clientX-r.left)/r.width*1000,0,1000),y:clamp((e.clientY-r.top)/r.height*600,0,600),down:kind==='down'?true:kind==='up'||kind==='cancel'?false:pointer.down};
@@ -59,7 +59,7 @@
       else if(interacted)game.step?.(dt,pointer);
       c.clearRect(0,0,1000,600);c.fillStyle='#f7f5dc';c.fillRect(0,0,1000,600);
       game.draw();
-      for(const e of effects){e.life-=dt;e.x+=e.vx*dt;e.y+=e.vy*dt;e.vy+=600*dt;if(e.life>0)api.circle(e.x,e.y,5,'#efad31');}
+      for(const e of effects){e.life-=dt;e.x+=e.vx*dt;e.y+=e.vy*dt;if(!e.label)e.vy+=600*dt;if(e.life>0){if(e.label)api.text(e.label,e.x,e.y,38,'#173e51');else api.circle(e.x,e.y,5,'#efad31');}}
       for(let i=effects.length-1;i>=0;i--)if(effects[i].life<=0)effects.splice(i,1);
       // Keep the board visible: the banner owns success copy, particles mark the action.
     }};
@@ -211,7 +211,7 @@
     return {input(k,q){if(k==='move'&&q.down&&!flying)height=clamp(450-q.y,30,220);if(k==='down'&&q.x<230&&!flying){flying=true;v={x:260,y:-height*1.7};}},step(dt){if(!flying)return;p.x+=v.x*dt;p.y+=v.y*dt;v.y+=dt*220;if(p.y>=430&&v.y>0){if(Math.abs(p.x-goal)<100)a.win();else{flying=false;p={x:130,y:420};a.tell('砂山の高さを かえてみよう');}}},draw(){a.box(0,440,1000,160,'#e6c58a');a.line([{x:170,y:440},{x:340,y:440-height},{x:440,y:440}],'#cfae70',30);a.target(goal,420,90);a.icon('🛷',p.x,p.y,70);a.text('砂山を上下 → 左のそりをタップ',500,555,26);}};
   });
   register('32','まが玉 糸とおし','穴に 糸をとおそう','赤い糸の先をつかんで、光る穴へ順番に通そう。','🧵',a=>{
-    const holes=[{x:250,y:200},{x:550,y:360},{x:800,y:180}];let tip={x:100,y:450},i=0,path=[{x:100,y:450}],held=false;
+    const holes=[{x:random(230,290),y:random(170,240)},{x:random(490,570),y:random(320,380)},{x:random(760,820),y:random(160,240)}];let tip={x:100,y:450},i=0,path=[{x:100,y:450}],held=false;
     return {input(k,p){if(k==='down'&&dist(p,tip)<85)held=true;if(k==='move'&&held){tip={x:p.x,y:p.y};if(holes[i]&&dist(tip,holes[i])<38){path.push({...holes[i]});i++;if(i===3)a.win();}}if(k==='up'||k==='cancel')held=false;},draw(){holes.forEach((p,n)=>{a.circle(p.x,p.y,65,'#7ab99e');a.circle(p.x,p.y,23,'#f7f5dc');if(n===i)a.target(p.x,p.y,38);});a.line([...path,tip],'#df6460',10);a.circle(tip.x,tip.y,22,'#c83c49');a.text('赤い先をつかんで 穴へ通す',500,550);}};
   });
   register('33','もも ふんわり着地','クッションで やさしく受けよう','指のクッションを桃の下へ。受けたら下へゆっくり動かして衝撃を吸おう。','🍑',a=>{
@@ -228,7 +228,7 @@
     return {input(k){if(k==='down')big=!big;},step(dt){x+=dt*(125+passed*18);if(x>gate.x-15){if(big===gate.big){passed++;a.tell(gate.big?'大きく通過！':'小さく通過！');if(passed>=4)a.win(gate.x,300);else next();}else{x=150;a.miss();a.tell(gate.big?'大きくなって！':'小さくなって！');}}},draw(){a.box(0,0,1000,600,'#d6edf0');const gap=gate.big?180:90;a.box(gate.x-18,80,36,220-gap/2,'#557f88');a.box(gate.x-18,300+gap/2,36,220-gap/2,'#557f88');a.text(gate.big?'大':'小',gate.x,55,34);a.icon('🐡',x,300,big?150:76);a.text(`門 ${passed} / 4　タップで ${big?'小さく':'大きく'}`,500,550,27);}};
   });
   register('36','阿波おどり 大行列','左右の足で リズムをきざもう','下の輪に足あとが入ったら、同じ側をタップ。踊りの仲間を増やそう！','👣',a=>{
-    let notes=[],spawn=0,count=0,next=0;
+    let notes=[],spawn=0,count=0,next=Math.floor(random(0,2));
     return {input(k,p){if(k!=='down')return;const side=p.x<500?0:1;const n=notes.find(n=>n.side===side&&Math.abs(n.y-430)<80);if(n){notes.splice(notes.indexOf(n),1);count++;if(count>=6)a.win();}else a.tell('輪にきたら タップ！');},step(dt){spawn-=dt;if(spawn<=0){notes.push({side:next++%2,y:70});spawn=1.1;}notes.forEach(n=>n.y+=dt*170);notes=notes.filter(n=>n.y<550);},draw(){[300,700].forEach(x=>a.target(x,430,75));notes.forEach(n=>a.icon('👣',n.side?700:300,n.y,65));a.text(`踊る仲間 ${count} / 6`,500,40);a.text('左の足　　　　　　右の足',500,570);}};
   });
   register('38','みかん船 くぐれ波門','上下タップで 波門をくぐろう！','上か下をタップして船を動かそう。波のすき間を3つくぐって、みかんを港へ！','⛵',a=>{
@@ -237,7 +237,7 @@
     return {input(k,p){if(k==='down')boat.y=clamp(boat.y+(p.y<300?-95:95),105,495);},step(dt){boat.x+=dt*(135+passed*20);if(boat.x>gateX-15){if(Math.abs(boat.y-gapY)<90){passed++;a.tell('ざぶん！');if(passed>=3)a.win(gateX,gapY);else next();}else{a.miss();a.tell('波のすき間へ！');next();}}},draw(){a.box(0,0,1000,600,'#ccecf1');a.box(0,500,1000,100,'#83cad7');a.box(gateX-24,70,48,Math.max(10,gapY-90-70),'#67b5ce');a.box(gateX-24,gapY+90,48,510-(gapY+90),'#67b5ce');a.target(gateX,gapY,88);a.icon('⛵',boat.x,boat.y,105);a.text(`波門 ${passed} / 3`,500,55,34);a.text('画面の 上・下をタップ！',500,555,27);}};
   });
   register('39','かつお 糸のかけひき','引く・ゆるめるで つり上げよう','押すと引く、離すと糸がゆるむよ。赤くなったら離して切れないように！','🎣',a=>{
-    let tension=.3,progress=0;
+    let tension=random(.2,.4),progress=0;
     return {step(dt,p){tension=clamp(tension+dt*(p.down?.35:-.5)+Math.sin(a.time*2)*dt*.08,0,1);if(p.down&&tension<.88)progress+=dt*.18;if(tension>=1){progress=Math.max(0,progress-.2);tension=.3;a.tell('赤くなったら はなそう！');}if(progress>=1)a.win();},draw(){const fish={x:700-progress*420,y:390-progress*150};a.icon('🎣',220,140,90);a.line([{x:250,y:160},fish],tension>.8?'#da624f':'#88a6a0',6);a.icon('🐟',fish.x,fish.y,100);a.box(200,480,600,28,'#ddd');a.box(200,480,Math.max(1,tension*600),28,tension>.8?'#da624f':'#7cb899');a.text('引く → 赤くなる前に ゆるめる',500,555,26);}};
   });
   register('40','めんたいこ 二段ジャンプ','タップで 波をとびこそう','タップでジャンプ。空中でもう一度押すと高く飛べるよ。','🌊',a=>{
@@ -254,7 +254,7 @@
     return {input(k,p){if(k==='down')start={...p};if(k==='up'&&start){if(Math.abs(p.y-start.y)>130&&p.x>200&&p.x<800&&cuts.every(x=>Math.abs(x-p.x)>55)){cuts.push(p.x);if(cuts.length===people-1)a.win();}start=null;}if(k==='cancel')start=null;},draw(){a.box(200,190,600,210,'#f2d989');a.box(200,190,600,40,'#b58244');cuts.forEach(x=>a.line([{x,y:190},{x,y:400}],'#fff9e9',10));a.text(`${people}人で たべよう！`,500,100,36);a.text(`縦にスーッと切る　${cuts.length+1} / ${people} 切れ`,500,520);}};
   });
   register('43','火の国 水路づくり','石をおいて 水を道へ！','石を光るところへ動かすと、水が熱い岩へ流れるよ。全部冷やそう。','💧',a=>{
-    const slots=[{x:320,y:180},{x:520,y:290},{x:750,y:390}];let i=0,stone={x:100,y:460},held=false;
+    const slots=[{x:random(280,340),y:random(150,210)},{x:random(490,550),y:random(270,330)},{x:random(720,790),y:random(380,420)}];let i=0,stone={x:100,y:460},held=false;
     return {input(k,p){if(k==='down'&&dist(p,stone)<75)held=true;if(k==='move'&&held)stone={x:p.x,y:p.y};if(k==='up'&&held){held=false;if(slots[i]&&dist(stone,slots[i])<70){i++;if(i===3)a.win();}stone={x:100,y:460};}if(k==='cancel')held=false;},draw(){a.line([{x:150,y:70},...slots.slice(0,i)],'#71bdd5',28);slots.forEach((s,n)=>{a.circle(s.x,s.y,60,n<i?'#82bdaf':'#dc8854');if(n===i)a.target(s.x,s.y,70);});a.circle(stone.x,stone.y,45,'#89968b');a.text('石で水の向きをかえて 岩を冷やす',500,550,26);}};
   });
   register('44','温泉たまご 三色湯めぐり','光ったお湯へ 卵をはこぼう！','光る温泉を順番に見て、卵をドラッグ。熱・ぬる・冷のコースが毎回変わるよ。','🥚',a=>{

@@ -26,18 +26,35 @@
       .map(line=>`<span class="fg-lesson-line">${line.trim()}</span>`).join('');
     const art=window.CHARACTER_ART?.[pref.code];
     intro.innerHTML=`<p>25秒の ご当地チャレンジ</p>${art?`<div class="fg-mystery-stage" aria-hidden="true"><img src="${art}" alt=""/><i>？</i></div>`:''}<strong>${lessonLines}</strong><div class="fg-demo" aria-hidden="true">${def.demo}</div><span>★ ${def.goal}点　★★ ${def.goal*2}点　★★★ ${def.goal*3}点</span><button type="button">チャレンジ！</button>`;
+    const settings=node('label','fg-difficulty','あそびの速さ ');
+    const difficulty=node('select','');difficulty.setAttribute('aria-label','あそびの速さ');
+    difficulty.innerHTML='<option value="easy">ゆっくり</option><option value="normal" selected>ふつう</option><option value="challenge">挑戦</option>';
+    settings.append(difficulty);intro.insertBefore(settings,intro.lastElementChild);
+    const practiceButton=node('button','fg-practice','時間なしで れんしゅう');intro.append(practiceButton);
+    let practicing=false,practiceDone=false;
+    practiceButton.addEventListener('click',()=>{practicing=true;intro.querySelector('button').click();});
     field.append(intro);
     let alive=true, raf=0; const cleanups=[];
     registerCleanup(()=>{alive=false;cancelAnimationFrame(raf);cleanups.forEach(fn=>fn());});
     intro.querySelector('button').addEventListener('click',()=>{
       intro.remove();sound('tap');
       const model=round(def.goal,def.time);
+      model.playTime=0;
+      const pace={easy:.75,normal:1,challenge:1.18}[difficulty.value]||1;
+      const practiceBadge=node('span','fg-practice-badge','練習：まず１回できればOK');practiceBadge.hidden=!practicing;
+      field.append(practiceBadge);
       const world=node('div','fg-world'); const banner=node('strong','fg-banner',def.acts[0]);
       const status=node('div','fg-status'); const feedback=node('div','fg-feedback');feedback.setAttribute('role','status');
+      const buddyArt=window.CHARACTER_ART?.[runMeta.buddyCode];
+      const buddy=buddyArt?node('button','fg-buddy'):null;
+      if(buddy){buddy.type='button';buddy.dataset.characterCode=runMeta.buddyCode;buddy.setAttribute('aria-label','応援している仲間の声を聞く');const img=node('img','');img.src=buddyArt;img.alt='';buddy.append(img);field.append(buddy);}
       const progress=node('div','fg-star-track');progress.setAttribute('role','progressbar');progress.setAttribute('aria-label','３つ星までの得点');progress.setAttribute('aria-valuemin','0');progress.setAttribute('aria-valuemax',String(def.goal*3));
       progress.innerHTML='<i></i><span>★</span><span>★</span><span>★</span>';
       const end=node('button','fg-bank','ここで おわる →');end.hidden=true;
-      end.addEventListener('click',()=>{if(model.score>=def.goal)complete();});
+      end.addEventListener('click',()=>{
+        if(practicing&&practiceDone){practicing=false;practiceBadge.remove();model.elapsed=0;model.score=0;model.streak=0;model.best=0;model.misses=0;end.textContent='ここで おわる →';lastPhase=-1;feedbackTime=0;feedback.textContent='';sound('pop');return;}
+        if(model.score>=def.goal)complete();
+      });
       field.append(world,banner,status,feedback,end,progress);
       world.addEventListener('pointerdown',()=>sound('action'));
       world.addEventListener('pointermove',event=>{if(event.buttons)sound('motion');});
@@ -51,17 +68,22 @@
           banner.classList.add('is-feedback');
         }else feedback.textContent=text;
       };
-      const ctx={world,model,cleanups,sound,tell,
+      const ctx={world,model,cleanups,sound,tell,get practicing(){return practicing;},
         point(e){const r=world.getBoundingClientRect();return {x:clamp((e.clientX-r.left)/r.width*100,0,100),y:clamp((e.clientY-r.top)/r.height*100,0,100)};},
         hit(points=1){
+          if(practicing){practiceDone=true;practiceBadge.textContent='できた！ 本番にすすもう';end.textContent='本番へ →';sound('good');return;}
           const oldStars=model.stars;model.hit(points);sound(model.streak%3===0?'combo':'good');
+          if(buddy&&!window.QUEST_MOTION?.reduced()){
+            const image=buddy.querySelector('img');image.getAnimations().forEach(a=>a.cancel());
+            image.animate([{transform:'scale(.92)'},{transform:'translateY(-3px) scale(.9)',offset:.5},{transform:'none'}],{duration:400});
+          }
           tell(model.stars>oldStars?`★ ${model.stars}つ！ ${model.stars===3?'大成功！':'まだ いける！'}`:model.streak>=3?`${model.streak}れんぞく！ ＋${points}`:`やった！ ＋${points}`);
           if(!(window.QUEST_MOTION?.reduced()??window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)){
             status.getAnimations().forEach(animation=>animation.cancel());
             status.animate([{scale:'1'},{scale:'1.04',offset:.3},{scale:'1'}],{duration:280,easing:'ease-out'});
           }
         },
-        miss(){model.miss();sound('wrong');tell('だいじょうぶ！ もういちど');},
+        miss(){if(!practicing)model.miss();sound('tap');tell('もういちど。'+def.command);},
       };
       const game=engines[pref.code](ctx);
       if(world.querySelector('.rg-canvas'))field.classList.add('has-regional-canvas');
@@ -74,9 +96,9 @@
       function loop(now){
         if(!alive)return;
         const dt=document.hidden?0:Math.min(.05,Math.max(0,(now-last)/1000));last=now;
-        if(model.tick(dt)){complete(model.score>=def.goal);return;}
+        if(!practicing&&model.tick(dt)){complete(model.score>=def.goal);return;}
         if(lastPhase!==model.phase){lastPhase=model.phase;if(feedbackTime<=0)banner.textContent=def.acts[lastPhase];sound('pop');}
-        game.update(dt);
+        if(!practiceDone||!practicing){const step=dt*(practicing?.75:pace);model.playTime+=step;game.update(step);}
         if(!alive)return;
         if(feedbackTime>0){feedbackTime-=dt;if(feedbackTime<=0){feedback.textContent='';banner.classList.remove('is-feedback');banner.textContent=def.acts[model.phase];}}
         const remaining=Math.max(0,def.time-model.elapsed);
@@ -86,8 +108,10 @@
         progress.querySelectorAll('span').forEach((star,index)=>star.classList.toggle('is-earned',model.stars>index));
         status.textContent=`${'★'.repeat(model.stars)}${'☆'.repeat(3-model.stars)}　${model.score}点${model.stars<3?` ／ つぎの星まで ${nextGoal-model.score}点`:'　３つ星！ どこまで のばせる？'}`;
         if(remaining===0)banner.textContent='あせらず れんしゅう！ あと'+Math.max(0,def.goal-model.score)+'点';
-        end.hidden=model.score<def.goal;
-        updateHud(model.score,def.goal,remaining);
+        end.hidden=practicing?!practiceDone:model.score<def.goal;
+        if(practicing)status.textContent=practiceDone?'できた！ 本番へすすもう':'時間は気にせず、操作してみよう';
+        progress.hidden=practicing;
+        updateHud(model.score,def.goal,practicing?null:remaining);
         raf=requestAnimationFrame(loop);
       }
       raf=requestAnimationFrame(loop);
@@ -122,12 +146,15 @@
 
   function factory(ctx){
     const {world,model}=ctx;
+    const parcelArt=kind=>kind
+      ? '<svg viewBox="0 0 80 80" aria-hidden="true"><path d="M14 67C0 28 35 8 68 10C75 45 55 74 14 67Z" fill="#74ad65" stroke="#366c48" stroke-width="4"/><path d="M8 74L59 23M28 54L25 34M39 43L57 46" fill="none" stroke="#d5e9a4" stroke-width="3" stroke-linecap="round"/></svg>'
+      : '<svg viewBox="0 0 80 80" aria-hidden="true"><path d="M20 9C42 0 52 21 48 31C45 40 69 40 70 56C72 77 42 82 33 64C27 52 14 55 9 40C4 24 9 15 20 9Z" fill="#dfb879" stroke="#966337" stroke-width="4"/><path d="M20 18L33 43L54 68M12 32L37 21M23 48L47 35M37 63L65 52" fill="none" stroke="#b78547" stroke-width="3" stroke-linecap="round"/></svg>';
     world.append(node('div','fg-conveyor'));
-    const bins=['🥜','🍃'].map((glyph,i)=>{const b=node('div',`fg-bin fg-bin-${i}`);b.innerHTML=`<b>${glyph}</b><span>${i?'はっぱ':'らっかせい'}</span>`;world.append(b);return b;});
+    const bins=[0,1].map(i=>{const b=node('div',`fg-bin fg-bin-${i}`);b.innerHTML=`<b>${parcelArt(i)}</b><span>${i?'はっぱ':'らっかせい'}</span>`;world.append(b);return b;});
     const items=[];let spawn=0,serial=0;
     function add(){
       const kind=Math.random()<.65?0:1;const gold=model.phase===2&&kind===0&&serial%3===0;
-      const n=node('button',`fg-parcel${gold?' is-gold':''}`,kind?'🍃':'🥜');
+      const n=node('button',`fg-parcel${gold?' is-gold':''}`);n.innerHTML=parcelArt(kind);
       n.setAttribute('aria-label',kind?'葉っぱを葉の箱へ':'落花生を落花生の箱へ');
       const o={n,kind,gold,x:5,y:33+(serial++%2)*12,drag:false};items.push(o);world.append(n);
       n.addEventListener('pointerdown',e=>{o.drag=true;n.setPointerCapture(e.pointerId);n.classList.add('is-held');ctx.sound('tap');});
