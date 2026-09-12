@@ -51,4 +51,5 @@
 - GitHub Pages: 上記SHAを指定して再ビルドし、状態が `built` になったことを確認した。
 - 現行公開URL: `https://rinsakuchannel.github.io/47Quest/`
 - 公開後確認: PC 1440×900、スマートフォン390×844でHTTP 200、生成画像ロゴなし、新ワードマーク表示、画像破損0、失敗リクエスト0、JavaScript例外0、縦横スクロール0、スタートから地図画面への遷移成功を確認した。
+- 文字組み確認: 47県×11画面×7端末幅の3,619画面で、語中改行、最終行の孤立1文字、文字のクリップ、画面スクロールを自動検査した。
 - 旧Sites URL `https://forty-seven-quest.zitanchannel.chatgpt.site/` は以前のバージョンであり、現行公開先としては扱わない。

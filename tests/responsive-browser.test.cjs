@@ -84,6 +84,15 @@ async function assertReadableText(page, label) {
         const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
         while (walker.nextNode()) {
           if (walker.currentNode.parentElement?.closest('rt,[aria-hidden="true"]')) continue;
+          const segmenter = new Intl.Segmenter('ja', { granularity:'word' });
+          for (const segment of segmenter.segment(walker.currentNode.data)) {
+            if (!segment.isWordLike || !/[ぁ-んァ-ヶ一-龠々]/.test(segment.segment) || [...segment.segment].length < 2) continue;
+            const wordRange=document.createRange();
+            wordRange.setStart(walker.currentNode,segment.index);
+            wordRange.setEnd(walker.currentNode,segment.index+segment.segment.length);
+            const wordLines=[...wordRange.getClientRects()].map(rect=>Math.round(rect.top));
+            if(new Set(wordLines).size>1)problems.push(`split-word:${segment.segment}`);
+          }
           for (let index = 0; index < walker.currentNode.data.length; index += 1) {
             const char = walker.currentNode.data[index]; if (/\s/.test(char)) continue;
             const range = document.createRange(); range.setStart(walker.currentNode, index); range.setEnd(walker.currentNode, index + 1);
@@ -148,12 +157,16 @@ async function drawEnoughInk(page) {
       if (process.env.QUEST_TEXT_SWEEP === '1') {
         const failures = [];
         for (const code of await page.evaluate(() => PREFECTURES.map(pref => pref.code))) {
-          for (const screen of ['reward', 'hiragana', 'kanji','detail','compare-0','compare-1','review-0','review-1','review-2','game']) {
+          for (const screen of ['map','reward', 'hiragana', 'kanji','detail','compare-0','compare-1','review-0','review-1','review-2','game']) {
             await page.evaluate(({code,screen}) => {
               state.sound=false;
               const pref=PREFECTURES.find(pref=>pref.code===code);
               state.current=pref;state.round=[pref];state.roundIndex=0;state.reviewIndex=0;
-              if(screen==='reward') {
+              if(screen==='map') {
+                renderMap();
+                const copy=document.querySelector('.discovery-instruction .japanese-phrase-lines');
+                if(copy)copy.innerHTML=japanesePhraseItems(`${pref.name}の場所と名前を`,'おぼえよう');
+              } else if(screen==='reward') {
                 state.gachaRewards=[pref];state.rewardRevealIndex=0;state.reviewIndex=1;
                 renderRewardReveal();
               } else if(screen==='detail') renderDetail(pref);
@@ -174,7 +187,7 @@ async function drawEnoughInk(page) {
             } catch(error) { failures.push(error.message); }
           }
         }
-        console.log(`${name}: 470 prefecture/text screens checked`);
+        console.log(`${name}: 517 prefecture/text screens checked`);
         if(failures.length){fs.mkdirSync('.verification',{recursive:true});fs.writeFileSync(`.verification/layout-${name}.json`,JSON.stringify(failures,null,2));console.log(`${name}: ${failures.length} failures (see .verification/layout-${name}.json)`);process.exitCode=1;}
         await context.close();
         continue;
@@ -184,6 +197,7 @@ async function drawEnoughInk(page) {
       await assertPageNoScroll(page, `${name} title`);
       await assertReadableText(page, `${name} title`);
       assert.equal(await page.locator('.home-roamer [data-character-code]').count(), 6, `${name}: title characters are not voice-enabled`);
+      assert.equal(new Set(await page.locator('.home-roamer [data-character-code]').evaluateAll(nodes => nodes.map(node => node.dataset.characterCode))).size, 6, `${name}: title character draw contains duplicates`);
       assert.equal(await page.locator('.home-roamer img').count(), 6, `${name}: title friend art is incomplete`);
       assert.equal(await page.locator('.home-roamer-pixels').count(), 0, `${name}: coarse pixel mosaics returned`);
       assert.ok(await page.locator('.home-roamer.is-mystery img').evaluateAll(images => images.length > 0 && images.every(image => getComputedStyle(image).filter.includes('brightness(0)'))), `${name}: unmet friend is not concealed as a silhouette`);
@@ -232,8 +246,12 @@ async function drawEnoughInk(page) {
         const character = await page.locator('.reveal-character-wrap').boundingBox();
         assert.ok(character.width >= Math.min(145, width * .38), `${name}: reward character is too small (${character.width}px)`);
         assert.equal(await page.locator('.reveal-get-banner').isVisible(), false, `${name}: duplicate reward headings overlap`);
-        const introWraps = await page.locator('.reveal-name-card > small').evaluate(element => element.getClientRects().length);
-        assert.equal(introWraps, 1, `${name}: reward intro has an orphaned line`);
+        const introLines = await page.locator('.reveal-name-card > small').evaluate(element => {
+          const tops=[];const walker=document.createTreeWalker(element,NodeFilter.SHOW_TEXT);
+          while(walker.nextNode())for(let index=0;index<walker.currentNode.data.length;index++){if(/\s/.test(walker.currentNode.data[index]))continue;const range=document.createRange();range.setStart(walker.currentNode,index);range.setEnd(walker.currentNode,index+1);const rect=range.getBoundingClientRect();if(rect.width)tops.push(Math.round(rect.top));}
+          return new Set(tops).size;
+        });
+        assert.equal(introLines, 1, `${name}: reward intro has an orphaned line`);
       }
 
       await page.goto(baseUrl, { waitUntil:'networkidle' });

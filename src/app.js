@@ -370,9 +370,35 @@ function button(label, action, className = 'primary-button', extra = '') {
   return `<button class="${className}" data-action="${action}" ${extra}>${copy}</button>`;
 }
 
+const japaneseWordSegmenter = typeof Intl?.Segmenter === 'function' ? new Intl.Segmenter('ja', { granularity:'word' }) : null;
+function applyJapaneseLineBreaks(root = app) {
+  if (!japaneseWordSegmenter || !root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  for (const node of nodes) {
+    if (!/[ぁ-んァ-ヶ一-龠々]/.test(node.data) || node.data.trim().length < 4) continue;
+    if (node.parentElement?.closest('script,style,textarea,option,ruby,rt,.sample-word-text,.trace-word,.brand-wordmark,.quest-wordmark')) continue;
+    const parts = [...japaneseWordSegmenter.segment(node.data)];
+    if (parts.length < 2) continue;
+    const fragment = document.createDocumentFragment();
+    let previous = '';
+    parts.forEach((part, index) => {
+      const length = [...part.segment.trim()].length;
+      if (index && part.isWordLike && length >= 2 && !/[ごお御]$/.test(previous.trim())) fragment.append(document.createElement('wbr'));
+      fragment.append(part.segment);
+      previous = part.segment;
+    });
+    node.replaceWith(fragment);
+  }
+}
+
 function guideButton(){
   return '<button type="button" class="guide-help" data-action="guide-help" aria-label="案内役にヒントを聞く"><img class="japan-guide" src="./assets/images/japan-guide-simple.svg" alt="日本列島の案内役" /><span aria-hidden="true">？</span></button>';
 }
+
+function japanesePhraseItems(...phrases){ return phrases.map(phrase=>`<span>${phrase}</span>`).join(''); }
+function japanesePhraseLines(...phrases){ return `<span class="japanese-phrase-lines">${japanesePhraseItems(...phrases)}</span>`; }
 
 function openGuideHelp(opener){
   if(app.querySelector('.guide-help-dialog'))return;
@@ -488,6 +514,7 @@ function animateMountedScene() {
 
 function shell(content, { progress = 0, label = 'にほん発見アドベンチャー', home = false } = {}) {
   queueMicrotask(() => {
+    applyJapaneseLineBreaks(app);
     startBgm(state.screen, state.current?.code || '');
     requestAnimationFrame(() => { animateMountedScene(); alignMapPins(); });
   });
@@ -520,7 +547,12 @@ function renderHome() {
   cleanups();
   state.screen = 'home';
   const count = state.unlocked.size;
-  const openingFriends = ['01','02','10','29','37','47'].map((code) => PREFECTURES.find((pref) => pref.code === code));
+  const openingFriends = [...PREFECTURES];
+  for (let index = openingFriends.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(Math.random() * (index + 1));
+    [openingFriends[index], openingFriends[target]] = [openingFriends[target], openingFriends[index]];
+  }
+  openingFriends.length = 6;
   app.innerHTML = shell(`
     <section class="scene home-scene">
       <div class="map-card home-map">
@@ -614,7 +646,7 @@ function renderMap() {
         <p class="eyebrow">こんどの場所は</p>
         <h1><ruby>${pref.name}<rt>${pref.reading}</rt></ruby></h1>
         <span class="discovery-region">${pref.region}</span>
-        <div class="discovery-instruction guide-dialogue">${guideButton()}<span>赤いところを<br>おぼえよう</span></div>
+        <div class="discovery-instruction guide-dialogue">${guideButton()}${japanesePhraseLines('赤いところを','おぼえよう')}</div>
         <div class="discovery-route" aria-label="場所、文字、ゲームの順で遊ぶ"><b>1 場所</b><span>2 文字</span><span>3 ゲーム</span></div>
       </aside>
       <div class="map-card map-stage map-discovery-stage" data-code="${pref.code}" style="--origin:${point.x}% ${point.y}%;--shift-x:${50 - point.x}%;--shift-y:${50 - point.y}%;--zoom:2.2">
@@ -655,7 +687,11 @@ function playMapDiscovery(pref) {
       const zoomed=content.style.transform;
       controller.reset();
       camera=content.animate([{transform:zoomed},{transform:content.style.transform}],{duration:1100,easing:'cubic-bezier(.45,0,.2,1)'});
-      camera.onfinish=()=>{content.classList.remove('is-discovery-playing');const copy=document.querySelector('.discovery-instruction');if(copy)copy.textContent=`${pref.name}の場所と名前を おぼえよう`;};
+      camera.onfinish=()=>{
+        content.classList.remove('is-discovery-playing');
+        const copy=document.querySelector('.discovery-instruction .japanese-phrase-lines');
+        if(copy){copy.innerHTML=japanesePhraseItems(`${pref.name}の場所と名前を`,'おぼえよう');applyJapaneseLineBreaks(copy);}
+      };
     },1300);
   });
 }
@@ -1800,7 +1836,7 @@ function renderCollection() {
             ${unlocked
               ? mascot(pref, 'collection-mascot')
               : '<div class="collection-mascot collection-mascot-locked" role="img" aria-label="まだ見つけていない仲間"><span aria-hidden="true">？</span></div>'}
-            <span><small class="eyebrow">${unlocked ? pref.name : '？？？'}</small><h3>${unlocked ? pref.character : 'まだ ひみつ'}</h3><p>${unlocked ? `名産：${pref.specialty}` : '冒険のおさらいをすると出会えるよ。'}</p>${unlocked ? `<span class="collection-feature">${pref.feature}</span>${compactCharacterStats(pref)}` : ''}</span>
+            <span><small class="eyebrow">${unlocked ? pref.name : '？？？'}</small><h3>${unlocked ? pref.character : 'まだ ひみつ'}</h3><p>${unlocked ? `名産：${pref.specialty}` : '冒険のおさらいをすると 出会えるよ。'}</p>${unlocked ? `<span class="collection-feature">${pref.feature}</span>${compactCharacterStats(pref)}` : ''}</span>
           </button>`;
         }).join('')}
       </div>
@@ -1827,7 +1863,7 @@ function renderDetail(pref) {
         <button class="zoom-button" data-action="map-zoom">＋ 近くで見る</button>
       </div>
       <aside class="character-profile-card" style="--profile-color:${pref.color}">
-        <div class="profile-heading">${mascot(pref, 'detail-mascot')}<div><small>${pref.reading}</small><h1>${pref.character}</h1><strong>${pref.name}</strong></div></div>
+        <div class="profile-heading">${mascot(pref, 'detail-mascot')}<div><small>${pref.reading}</small><h1 class="${[...pref.character].length >= 7 ? 'is-long-name' : ''}">${pref.character}</h1><strong>${pref.name}</strong></div></div>
         <p class="profile-copy">${pref.characterCopy}</p><p class="profile-copy">「${pref.voiceLine || ''}」</p>
         <dl class="prefecture-facts">
           <div><dt>名産・名物</dt><dd>${pref.specialty}</dd></div>
@@ -1835,7 +1871,7 @@ function renderDetail(pref) {
           <div><dt>とくいわざ</dt><dd>${pref.specialMove}</dd></div>
         </dl>
         ${characterStats(pref)}
-        <div class="profile-actions action-dock">${button('♪ 声をきく', 'character-cry', 'secondary-button')}${button('ミニゲームで遊ぶ', 'replay-game', 'primary-button sun profile-play-button', `aria-label="${game?.title || pref.gameTitle}を遊ぶ"`)}</div>
+        <div class="profile-actions action-dock">${button('♪ 声をきく', 'character-cry', 'secondary-button')}${button('ゲームで遊ぶ', 'replay-game', 'primary-button sun profile-play-button', `aria-label="${game?.title || pref.gameTitle}を遊ぶ"`)}</div>
       </aside>
     </section>`, { progress: Math.round(state.unlocked.size / 47 * 100), label: `${pref.name}のページ` });
   initMapZoom(document.querySelector('.map-stage'), document.querySelector('.map-stage .map-layers'), { focus: mapPoint(pref) });
