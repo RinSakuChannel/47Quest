@@ -46,4 +46,8 @@
 
 ## 公開確認
 
-公開後に、リモートリポジトリのコミット一致、公開処理の成功状態、公開ビルドの主要ページ到達を追記する。公開前の時点では未確認とする。
+- 修正版コミット: `95a56f2838c9b9a2b72f085ddcbcbe803c1e902b`
+- GitHub: `RinSakuChannel/47Quest` の `main` へpushし、`ls-remote`で同一SHAを確認した。
+- Sites: バージョン3として同一SHAと検証済みアーカイブを保存し、本番デプロイ `appgdep_6aa4b801f2288191ae24220ade1aac13` が `succeeded` になったことを確認した。
+- 公開URL: `https://forty-seven-quest.zitanchannel.chatgpt.site`
+- 公開後確認: 実ブラウザでホーム、冒険開始後の県地図、手書き画面、ミニゲーム広場、北海道ゲームの説明とCanvas開始まで遷移し、コンソールエラー0件を確認した。
