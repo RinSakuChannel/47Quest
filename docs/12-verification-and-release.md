@@ -46,8 +46,8 @@
 
 ## 公開確認
 
-- 修正版コミット: `95a56f2838c9b9a2b72f085ddcbcbe803c1e902b`
+- キャラクター復帰・リンク修正版コミット: `19c1b0cdffd91848798e6b9654f4562c18ab69f3`
 - GitHub: `RinSakuChannel/47Quest` の `main` へpushし、`ls-remote`で同一SHAを確認した。
-- Sites: バージョン3として同一SHAと検証済みアーカイブを保存し、本番デプロイ `appgdep_6aa4b801f2288191ae24220ade1aac13` が `succeeded` になったことを確認した。
+- Sites: バージョン4として同一SHAと47画像を含む検証済みアーカイブを保存し、本番デプロイ `appgdep_6aa4be16ecb88191b90c7d0ac4883070` が `succeeded` になったことを確認した。
 - 公開URL: `https://forty-seven-quest.zitanchannel.chatgpt.site`
-- 公開後確認: 実ブラウザでホーム、冒険開始後の県地図、手書き画面、ミニゲーム広場、北海道ゲームの説明とCanvas開始まで遷移し、コンソールエラー0件を確認した。
+- 公開後確認: 実ブラウザで47体すべての画像decodeに成功。添付で壊れていた山口県のゲーム説明画像も表示され、失敗リクエスト・4xx応答0件を確認した。
