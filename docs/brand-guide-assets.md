@@ -4,6 +4,7 @@ Generated with the built-in image generation tool on 2026-09-07, then encoded as
 
 - `assets/images/47quest-logo.webp`: 900 × 600, 123620 bytes.
 - `assets/images/japan-guide.webp`: 400 × 600, 52194 bytes.
+- `assets/images/japan-guide-simple.svg`: 512 × 512 viewBox. 2026-09-12に、スマートフォンの小表示でも輪郭と表情が読めるよう、装備や離れた島粒を省き、丸い列島ボディ・大きな顔・短い四肢だけの案内役へ置換した。これは装飾キャラクターであり、学習用地図には使用しない。
 
 ## Generation prompts
 

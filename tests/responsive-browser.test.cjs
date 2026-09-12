@@ -273,6 +273,8 @@ async function drawEnoughInk(page) {
       await page.waitForTimeout(900);
       await assertInsideViewport(page, '.game-overlay,.result-card,.result-summary,.result-details,.result-actions button', `${name} result`);
       assert.equal(await page.locator('.result-card [data-character-code]').count(), 1, `${name}: result character is not voice-enabled`);
+      assert.equal(await page.locator('.clear-friend.is-mystery').count(), 1, `${name}: clear result reveals the character before review`);
+      assert.equal(await page.locator('.clear-friend-art img').evaluate(element => getComputedStyle(element).filter), 'brightness(0)', `${name}: clear character is not a silhouette`);
       await assertNoHiddenOverflow(page, '.result-card,.result-details', `${name} result`);
       await assertPageNoScroll(page, `${name} result`);
       await assertReadableText(page, `${name} result`);

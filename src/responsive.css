@@ -35,7 +35,7 @@ html,body,#app,.app-screen{width:100%;height:100dvh;min-height:100dvh;overflow:h
 .result-score{margin:3px 0 0!important;font-size:clamp(14px,1.6vw,18px)}
 .new-record{margin:0;font-size:clamp(11px,1.1vw,14px)}
 .result-details{min-height:0;display:grid;grid-template-columns:minmax(210px,.9fr) minmax(260px,1.1fr);align-items:center;gap:clamp(7px,1.4vw,16px);overflow:hidden}
-.clear-friend{min-width:0;min-height:0;margin:0;gap:clamp(6px,1vw,12px);overflow:hidden}
+.clear-friend{min-width:0;min-height:0;margin:0;gap:clamp(6px,1vw,12px);overflow:visible;padding-block:4px}
 .clear-friend-art{width:min(140px,24dvh,40%)}
 .clear-friend strong{font-size:clamp(18px,2vw,26px)}
 .clear-friend p,.clear-friend span{margin:0;font-size:clamp(13px,1.35vw,17px);line-height:1.3}

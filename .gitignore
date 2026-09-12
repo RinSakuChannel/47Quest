@@ -14,4 +14,5 @@ assets/maps/selected/
 assets/images/*
 !assets/images/japan-map-play.png
 !assets/images/japan-map-play-portrait.png
+!assets/images/japan-guide-simple.svg
 assets/characters/contact-sheet.png

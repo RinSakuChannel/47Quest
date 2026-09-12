@@ -14,7 +14,7 @@ const state = {
   screen: 'home', round: [], roundIndex: 0, current: null, replay: false,
   quickQuiz: false,
   newlyUnlocked: new Set(), rewardRevealIndex: 0,
-  coins: Math.max(0, Math.floor(Number(storage.get('47quest-coins', 0)) || 0)), gachaRewards: [], gachaBusy: false, gachaFromReview: false, gachaPrefecture: null,
+  coins: Math.max(0, Math.floor(Number(storage.get('47quest-coins', 0)) || 0)), gachaRewards: [], gachaBusy: false, gachaFromReview: false, gachaPrefecture: null, rewardFromReview: false,
   writeMode: 'hiragana', strokes: [], trace: true, mapZoomed: false,
   reviewIndex: 0, reviewPhase: 'location', reviewHints: {}, reviewResults: {}, inkPreview: '',
   reviewLocationAttempts: {}, reviewLocationWrong: {}, reviewLocationResolved: false,
@@ -371,7 +371,7 @@ function button(label, action, className = 'primary-button', extra = '') {
 }
 
 function guideButton(){
-  return '<button type="button" class="guide-help" data-action="guide-help" aria-label="案内役にヒントを聞く"><img class="japan-guide" src="./assets/images/japan-guide.webp" alt="日本列島の案内役" /><span aria-hidden="true">？</span></button>';
+  return '<button type="button" class="guide-help" data-action="guide-help" aria-label="案内役にヒントを聞く"><img class="japan-guide" src="./assets/images/japan-guide-simple.svg" alt="日本列島の案内役" /><span aria-hidden="true">？</span></button>';
 }
 
 function openGuideHelp(opener){
@@ -382,7 +382,7 @@ function openGuideHelp(opener){
     ? ['お手本を見ながら、大きく書いてみよう。','まちがえても大丈夫。「もどす」で一画だけ消せるよ。','ひらがなを知っていたら、スキップして漢字へ進めるよ。']
     : [`赤い場所が${pref.name}。${pref.region}にあるよ。`,'「近くで見る」で形を見て、全体に戻して場所も覚えよう。','地図は指2本で拡大できるよ。PCでは Ctrl を押しながらホイールを回そう。'];
   const dialog=document.createElement('dialog');dialog.className='guide-help-dialog';dialog.setAttribute('aria-label','案内役のヒント');
-  dialog.innerHTML='<img src="./assets/images/japan-guide.webp" alt="日本列島の案内役" /><div><h2>いっしょに やってみよう</h2><ul></ul><button type="button" data-action="guide-close">わかった！ もどる</button></div>';
+  dialog.innerHTML='<img src="./assets/images/japan-guide-simple.svg" alt="日本列島の案内役" /><div><h2>いっしょに やってみよう</h2><ul></ul><button type="button" data-action="guide-close">わかった！ もどる</button></div>';
   const list=dialog.querySelector('ul');
   for(const line of lines){const item=document.createElement('li');item.textContent=line;list.append(item);}
   app.append(dialog);dialog.showModal();sound('ui-open');
@@ -495,7 +495,7 @@ function shell(content, { progress = 0, label = 'にほん発見アドベンチ�
     <section class="app-screen ${home ? 'is-title-screen' : ''}">
       <header class="topbar">
         <button class="brand" data-action="home" aria-label="ホームへ戻る">
-          <span class="brand-mark guide-brand"><img src="./assets/images/japan-guide.webp" alt="" /></span><span class="brand-name">47Quest</span>
+          <span class="brand-mark guide-brand"><img src="./assets/images/japan-guide-simple.svg" alt="" /></span><span class="brand-name">47Quest</span>
         </button>
         <div class="top-title">${label}</div>
         <div class="top-actions">
@@ -520,7 +520,6 @@ function renderHome() {
   cleanups();
   state.screen = 'home';
   const count = state.unlocked.size;
-  const daily = dailyProgress();
   const openingFriends = ['01','02','10','29','37','47'].map((code) => PREFECTURES.find((pref) => pref.code === code));
   app.innerHTML = shell(`
     <section class="scene home-scene">
@@ -536,17 +535,10 @@ function renderHome() {
         <p class="title-call">にほん全国・発見アドベンチャー</p>
         <div class="game-logo illustrated-logo" aria-label="47Quest にほん全国 大ぼうけん"><img src="./assets/images/47quest-logo.webp" alt="47Quest にほん全国 大ぼうけん" /></div>
         <p class="title-copy">地図を見つけて、ご当地ゲームへ飛びこもう</p>
-        <div class="daily-quest" aria-label="今日の冒険 ${Math.min(3, daily.clears)}回クリア">
-          <span>きょうの ぼうけん</span>
-          <strong>${Array.from({ length: 3 }, (_, index) => `<i class="${index < daily.clears ? 'is-done' : ''}">${index < daily.clears ? '★' : '☆'}</i>`).join('')}</strong>
-          <small>${daily.clears >= 3 ? 'きょうのスタンプ完成' : `あと ${3 - daily.clears}回で スタンプ完成`}</small>
-        </div>
         <div class="title-actions">
           ${button('▶ ぼうけん スタート', 'start', 'primary-button sun title-start-button')}
-          <div>${button('⚡ いきなりクイズ', 'quick-quiz', 'primary-button quick-quiz-button')}${button(`図鑑 ${count} / 47`, 'collection', 'secondary-button')}${button('旅の記録', 'journey', 'secondary-button')}</div>
+          <nav class="title-shortcuts" aria-label="ほかの遊び">${button('<span aria-hidden="true">⚡</span><span>クイズ</span>', 'quick-quiz', 'title-shortcut quick-quiz-button', 'aria-label="いきなりクイズ"')}${button('<span aria-hidden="true">◇</span><span>図鑑 <b>'+count+'</b>/47</span>', 'collection', 'title-shortcut', 'aria-label="図鑑 '+count+' / 47"')}${button('<span aria-hidden="true">↗</span><span>旅の記録</span>', 'journey', 'title-shortcut')}</nav>
         </div>
-        <div class="title-motion" role="group" aria-label="タイトルのアニメーション"><span>アニメーション</span>${[['auto','標準'],['full','なめらか']].map(([mode,label])=>`<button type="button" data-action="title-motion" data-mode="${mode}" aria-pressed="${QUEST_MOTION.mode===mode}">${label}</button>`).join('')}</div>
-        <span class="title-progress">仲間 ${count} / 47　・　${state.journeyLap}周目 あと${47-state.cleared.size}県</span>
       </header>
     </section>`, { home: true, progress: Math.round(count / 47 * 100), label: '47の仲間をさがそう' });
   pixelateOpeningFriends();
@@ -594,6 +586,7 @@ function startRound() {
   state.gachaRewards = [];
   state.gachaFromReview = false;
   state.gachaPrefecture = null;
+  state.rewardFromReview = false;
   renderMap();
 }
 
@@ -609,6 +602,7 @@ function startQuickQuiz() {
   state.gachaRewards = [];
   state.gachaFromReview = false;
   state.gachaPrefecture = null;
+  state.rewardFromReview = false;
   state.reviewIndex = 0;
   state.reviewPhase = 'location';
   state.reviewHints = {};
@@ -829,7 +823,7 @@ function renderGame() {
   app.innerHTML = shell(`
     <section class="scene game-scene ${window.QUEST_FEATURED_GAMES?.definitions[pref.code] ? 'featured-scene' : ''}">
       <aside class="game-info">
-        <div class="guide-dialogue"><img class="japan-guide" src="./assets/images/japan-guide.webp" alt="日本列島の案内役" /><div><p class="eyebrow">${pref.name}・${setup.title}</p><h1 class="micro-command">${setup.command}</h1></div></div>
+        <div class="guide-dialogue"><img class="japan-guide" src="./assets/images/japan-guide-simple.svg" alt="日本列島の案内役" /><div><p class="eyebrow">${pref.name}・${setup.title}</p><h1 class="micro-command">${setup.command}</h1></div></div>
         ${button('ゲームはあとで →', 'game-skip', 'game-skip-button')}
       </aside>
       <div class="game-board">
@@ -890,7 +884,7 @@ function finishGame(success, performance = {}) {
           ${success && newBest ? '<strong class="new-record">NEW BEST</strong>' : ''}
         </header>
         <div class="result-details">
-          ${success ? `<div class="clear-friend">${mascot(state.current, 'clear-friend-art')}<div><strong>${state.current.character}</strong><p>仲間も おおよろこび！</p><span>おさらいで 仲間にしよう</span></div></div>` : `<div class="clear-friend retry-friend">${mascot(state.current, 'clear-friend-art retry-friend-art')}<div><strong>だいじょうぶ</strong><p>動きを見て、もう一回。</p><span>${setup.command}</span></div></div>`}
+          ${success ? `<div class="clear-friend is-mystery">${mascot(state.current, 'clear-friend-art')}<div><strong>${state.current.character}</strong><p>仲間も おおよろこび！</p><span>おさらいで 仲間にしよう</span></div></div>` : `<div class="clear-friend retry-friend">${mascot(state.current, 'clear-friend-art retry-friend-art')}<div><strong>だいじょうぶ</strong><p>動きを見て、もう一回。</p><span>${setup.command}</span></div></div>`}
           <p class="result-learning"><b>つぎの目標：${stars<3?`あと${Math.max(1,setup.goal*(stars+1)-(performance.score||0))}点で星${stars+1}つ`:`${records[state.current.code].bestScore+1}点で自己ベスト更新`}</b><br>${state.current.name}：${state.current.feature}</p>
         </div>
         ${success
@@ -1659,9 +1653,11 @@ function renderGacha() {
 function pullGacha() {
   if(state.screen!=='gacha'||state.gachaBusy||state.coins<1)return;
   state.gachaBusy=true;
-  const pref=state.gachaFromReview&&state.gachaPrefecture
+  const pulledFromReview=Boolean(state.gachaFromReview&&state.gachaPrefecture);
+  const pref=pulledFromReview
     ? state.gachaPrefecture
     : PREFECTURES[Math.floor(Math.random()*PREFECTURES.length)];
+  state.rewardFromReview=pulledFromReview;
   state.gachaFromReview=false;
   state.gachaPrefecture=null;
   state.coins-=1; storage.set('47quest-coins',state.coins);
@@ -1691,7 +1687,7 @@ function renderRewardReveal() {
   const earned = earnedThisRound();
   const pref = earned[state.rewardRevealIndex];
   const isNew = state.newlyUnlocked.has(pref.code);
-  const reviewContinues = state.reviewIndex < state.round.length;
+  const reviewContinues = state.rewardFromReview && state.reviewIndex < state.round.length;
   app.innerHTML = shell(`
     <section class="scene reward-reveal-scene" style="--reveal-color:${pref.color}">
       <div class="reveal-curtain" aria-hidden="true"><i></i><i></i></div>
@@ -1715,8 +1711,8 @@ function renderRewardReveal() {
         ${characterStats(pref, 'reveal-stats')}
         <div class="gacha-prefecture-map"><strong>${pref.name}は赤いところ<br><small>タップで大きく見る</small></strong><button class="gacha-map-preview" data-action="reward-map" data-code="${pref.code}" aria-label="${pref.name}の地図を大きく見る">${mapLayers(pref,`${pref.name}の場所を示す日本地図`).replace(/<a class="map-source-link"[\s\S]*?<\/a>/,'')}</button></div>
       </div>
-      ${button(reviewContinues ? 'つぎのおさらいへ →' : `${state.round.length}県のおさらい完了！ →`, 'reward-reveal-next', 'primary-button sun reveal-next-button')}
-    </section>`, { progress: 92 + state.reviewIndex * 2, label: `仲間ゲット！ ${state.reviewIndex} / ${state.round.length}` });
+      ${button(state.rewardFromReview ? (reviewContinues ? 'つぎのおさらいへ →' : `${state.round.length}県のおさらい完了！ →`) : 'ガチャへもどる →', 'reward-reveal-next', 'primary-button sun reveal-next-button')}
+    </section>`, { progress: state.rewardFromReview ? 92 + state.reviewIndex * 2 : 0, label: state.rewardFromReview ? `仲間ゲット！ ${state.reviewIndex} / ${state.round.length}` : 'なかまガチャ　仲間ゲット！' });
   sound('reveal');
   const scene=app.querySelector('.reward-reveal-scene');
   if(!QUEST_MOTION.reduced()){
@@ -1974,11 +1970,19 @@ app.addEventListener('click', (event) => {
   if (action === 'game-next') return state.replay ? renderDetail(state.current) : renderLocationQuiz();
   if (action === 'game-skip') return renderLocationQuiz();
   if (action === 'reward-reveal-next') {
-    if (state.reviewIndex < state.round.length) return renderReviewLocation();
-    return state.cleared.size >= PREFECTURES.length ? renderNationComplete() : renderReward();
+    if (state.rewardFromReview) {
+      if (state.reviewIndex < state.round.length) return renderReviewLocation();
+      return state.cleared.size >= PREFECTURES.length ? renderNationComplete() : renderReward();
+    }
+    return renderGacha();
   }
   if (action === 'journey-next-lap') return startNextJourneyLap();
-  if (action === 'gacha') return renderGacha();
+  if (action === 'gacha') {
+    state.gachaFromReview=false;
+    state.gachaPrefecture=null;
+    state.rewardFromReview=false;
+    return renderGacha();
+  }
   if (action === 'gacha-pull') return pullGacha();
   if (action === 'review-coin-next' && state.screen === 'review-coin') return renderGacha();
   if (action === 'location-map') {
