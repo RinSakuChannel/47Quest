@@ -28,9 +28,10 @@ assert.ok(hit.alpha>=200,`${width} ${code}: pin must land inside the solid prefe
 assert.ok(hit.dx<1.5&&hit.dy<1.5,`${width} ${code}: rendered tip offset ${JSON.stringify(hit)}`);
 }
 }
-await page.setViewportSize({width:390,height:844});await page.evaluate(()=>{state.current=PREFECTURE_DATA.find(p=>p.code==='31');state.round=[state.current];renderMap();});await page.waitForTimeout(1000);
+await page.setViewportSize({width:390,height:844});await page.evaluate(()=>{state.current=PREFECTURE_DATA.find(p=>p.code==='31');state.round=[state.current];renderMap();});
+await page.waitForFunction(()=>document.querySelector('.map-stage')?._mapZoom?.getState().scale===3,null,{timeout:1800});
 assert.ok(await page.locator('.map-stage').evaluate(e=>e._mapZoom.getState().scale===3),'initial prefecture zoom');
-await page.waitForTimeout(1600);
+await page.waitForFunction(()=>document.querySelector('.map-stage')?._mapZoom?.getState().scale===1,null,{timeout:3500});
 assert.equal(await page.locator('.map-stage').evaluate(e=>e._mapZoom.getState().scale),1,'returns to whole map');
 fs.mkdirSync('.verification/maps',{recursive:true});await page.screenshot({path:'.verification/maps/tottori-phone.png'});
 console.log('PASS: 94 actual overlay pixel checks and transformed pin-tip alignments');

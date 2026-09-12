@@ -5,6 +5,7 @@
   <title>47Quest ミニゲーム広場</title>
   <link rel="stylesheet" href="./src/featured-games.css">
   <link rel="stylesheet" href="./src/game-gallery.css">
+  <link rel="stylesheet" href="./src/character-actors.css">
   <script src="./src/prefectures.js" defer></script>
   <script src="./src/character-personalities.js" defer></script>
   <script src="./src/motion-settings.js" defer></script>
@@ -25,7 +26,7 @@
   <section id="player" hidden>
     <nav><button id="back">← 一覧へ</button><h2 id="game-title"></h2><div class="gallery-audio"><label>BGM <input id="bgm-volume" type="range" min="0" max="100" value="29" aria-label="BGM音量"></label><label>SE・Voice <input id="se-volume" type="range" min="0" max="100" value="42" aria-label="効果音とキャラクターVoiceの音量"></label></div><span id="hud"></span></nav>
     <div id="field"></div>
-    <div id="result" hidden><h2>できた！</h2><img id="friend" alt="喜んでいる仲間。タップすると声が聞けます"><p id="record"></p><button id="again">もう一回！</button><button id="return">一覧へ</button></div>
+    <div id="result" hidden><h2>できた！</h2><button id="friend" aria-label="喜んでいる仲間。タップすると声が聞けます"></button><p id="record"></p><button id="again">もう一回！</button><button id="return">一覧へ</button></div>
   </section>
 </body>
 </html>

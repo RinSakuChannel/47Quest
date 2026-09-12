@@ -6,7 +6,8 @@ const root=process.cwd();const output=join(root,'build');
 if(existsSync(output)&&lstatSync(output).isSymbolicLink())throw Error('Build output must not be a symlink');
 const files=['index.html','games.html','styles.css',...readdirSync('src').filter(f=>/\.(js|css)$/.test(f)).map(f=>'src/'+f),'assets/images/japan-map-play.png','assets/images/japan-map-play-portrait.png'];
 const artContext={window:{}};vm.runInNewContext(readFileSync('src/character-art.js','utf8'),artContext);
-for(let i=1;i<=47;i++){const code=String(i).padStart(2,'0');files.push((artContext.window.CHARACTER_ART[code]||`assets/characters/${code}.png`).replace(/^\.\//,''),`assets/maps/play-overlays/${code}.png`,`assets/maps/play-overlays-portrait/${code}.png`);}
+if(Object.keys(artContext.window.CHARACTER_ART||{}).length!==47)throw Error('Character actor registry must contain 47 entries');
+for(let i=1;i<=47;i++){const code=String(i).padStart(2,'0');files.push(`assets/maps/play-overlays/${code}.png`,`assets/maps/play-overlays-portrait/${code}.png`);}
 let bytes=0;
 files.push('assets/images/japan-guide.webp','assets/images/47quest-logo.webp');
 for(let i=1;i<=47;i++)files.push(`assets/sounds/voices/${String(i).padStart(2,'0')}.wav`);
