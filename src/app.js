@@ -365,7 +365,9 @@ function sound(kind = 'tap') {
 }
 
 function button(label, action, className = 'primary-button', extra = '') {
-  return `<button class="${className}" data-action="${action}" ${extra}>${label}</button>`;
+  // Preserve short space-separated phrases and arrows without splitting kana.
+  const copy=label.includes('<')?label:label.split(/(\s+)/).map(part=>!part.trim()||[...part].length>6?part:`<span class="button-phrase">${part}</span>`).join('');
+  return `<button class="${className}" data-action="${action}" ${extra}>${copy}</button>`;
 }
 
 function guideButton(){

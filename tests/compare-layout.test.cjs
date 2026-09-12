@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),path=require('node:path');
 const {pathToFileURL}=require('node:url');
 const {chromium}=require('C:/Users/freecar/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 (async()=>{const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});try{
-for(const [width,height] of [[1440,900],[768,1024],[390,844],[360,640],[844,390]]){
+for(const [width,height] of [[1440,900],[768,1024],[390,844],[360,640],[320,568],[844,390]]){
 const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});await page.goto(pathToFileURL(path.resolve('build/index.html')).href);
 for(const hint of [0,1]){
 await page.evaluate(hint=>{state.current=PREFECTURES.find(p=>p.code==='45');state.reviewPhase='kanji';state.reviewHints={'45-kanji':hint};const c=document.createElement('canvas');c.width=800;c.height=300;const ctx=c.getContext('2d');ctx.font='100px serif';ctx.fillStyle='#173e51';ctx.fillText('宮崎県',150,190);state.inkPreview=c.toDataURL();renderReviewCompare();},hint);
@@ -13,5 +13,5 @@ for(const button of await page.locator('.compare-actions button').all()){const b
 if(hint)await page.screenshot({path:`.verification/compare-${width}.png`});
 }
 await page.close();}
-console.log('PASS: compare stacked, unclipped, usable buttons in both hint states at five sizes');
+console.log('PASS: compare stacked, unclipped, usable buttons in both hint states at six sizes including 320px');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
