@@ -65,7 +65,7 @@
         point(e){const r=world.getBoundingClientRect();return {x:clamp((e.clientX-r.left)/r.width*100,0,100),y:clamp((e.clientY-r.top)/r.height*100,0,100)};},
         hit(points=1){
           if(practicing){practiceDone=true;practiceBadge.textContent='できた！ 本番にすすもう';end.textContent='本番へ →';sound('good');return;}
-          model.hit(points);sound(model.streak%3===0?'combo':'good');
+          model.hit(points);model.score=Math.min(def.goal,model.score);sound(model.streak%3===0?'combo':'good');
           if(buddy&&!window.QUEST_MOTION?.reduced()){
             const image=buddy.querySelector('img');image.getAnimations().forEach(a=>a.cancel());
             image.animate([{transform:'scale(.92)'},{transform:'translateY(-3px) scale(.9)',offset:.5},{transform:'none'}],{duration:400});
@@ -119,12 +119,12 @@
     world.innerHTML='<div class="fg-orchard-tree"><i></i><i></i><i></i></div><div class="fg-grass"></div>';
     const basket=node('div','fg-basket','');basket.setAttribute('aria-label','りんごを受けるかご');world.append(basket);
     const guide=node('span','fg-control-tip','← 指をうごかす →');world.append(guide);
-    let x=50,target=50,spawn=.1,serial=0;const fruits=[];
-    const move=e=>{target=clamp(ctx.point(e).x,9,91);};
+    let x=50,target=50,spawn=.1,serial=0,engaged=false;const fruits=[];
+    const move=e=>{target=clamp(ctx.point(e).x,9,91);engaged=true;basket.classList.add('is-engaged');};
     world.addEventListener('pointerdown',e=>{world.setPointerCapture(e.pointerId);move(e);});
     world.addEventListener('pointermove',move);
     world.tabIndex=0;world.setAttribute('aria-label','左右キーでもかごを動かせます');
-    world.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();target=clamp(target+(e.key==='ArrowLeft'?-9:9),9,91);}});
+    world.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();target=clamp(target+(e.key==='ArrowLeft'?-9:9),9,91);engaged=true;basket.classList.add('is-engaged');}});
     const add=()=>{const gold=model.phase===2&&serial++%3===0;const n=node('i',`fg-apple${gold?' is-gold':''}`);n.setAttribute('aria-label',gold?'金のりんご':'りんご');world.append(n);fruits.push({n,x:12+Math.random()*76,y:4,speed:15+Math.random()*5,wave:Math.random()*6,gold});};
     return {update(dt){
       x+=(target-x)*Math.min(1,dt*18);basket.style.left=`${x}%`;
@@ -133,7 +133,7 @@
         f.y+=f.speed*dt;
         const fx=clamp(f.x+(model.phase>0?Math.sin(model.elapsed*1.6+f.wave)*8:0),6,94);
         f.n.style.left=`${fx}%`;f.n.style.top=`${f.y}%`;f.n.style.rotate=`${Math.sin(f.y*.08)*15}deg`;
-        if(f.y>=78&&f.y<=88&&Math.abs(fx-x)<13){ctx.hit(f.gold?3:1);f.n.remove();fruits.splice(fruits.indexOf(f),1);basket.classList.toggle('is-full',model.score%2===0);}
+        if(engaged&&f.y>=78&&f.y<=88&&Math.abs(fx-x)<13){ctx.hit(f.gold?3:1);engaged=false;basket.classList.remove('is-engaged');f.n.remove();fruits.splice(fruits.indexOf(f),1);basket.classList.toggle('is-full',model.score%2===0);}
         else if(f.y>102){f.n.remove();fruits.splice(fruits.indexOf(f),1);model.streak=0;}
       }
     }};
@@ -192,7 +192,7 @@
     grip.addEventListener('keyup',e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();release();}});
     grip.addEventListener('blur',()=>{if(key){drag=false;key=false;current=0;draw();}});
     next();
-    return {update(dt){if(key){current=Math.min(70,current+dt*23);draw();}if(cooldown>0){cooldown-=dt;if(cooldown<=0){grip.disabled=false;noodle.classList.remove('is-served');next();}}}};
+    return {update(dt){if(key){current=Math.min(70,current+dt*23);draw();}if(cooldown>0){cooldown-=dt;if(cooldown<=0){cooldown=0;grip.disabled=false;noodle.classList.remove('is-served');next();}}}};
   }
   const engines={'02':orchard,'12':factory,'37':kitchen};
   for (const [code,definition] of Object.entries(window.QUEST_REGIONAL_GAMES?.definitions || {})) {

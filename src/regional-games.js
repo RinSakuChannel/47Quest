@@ -8,13 +8,13 @@
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const random=(a,b)=>a+Math.random()*(b-a);
   const gestures={
-    '01':'ころがす','03':'タップ','04':'スワイプ','05':'つかんで運ぶ','06':'片方をドラッグ','07':'左右へ動かす','08':'タイミングタップ','09':'引いて放す','10':'支点を動かす','11':'返して運ぶ','13':'ひびをタップ','14':'影で追う','15':'寄せて巻く','16':'覚えてタップ','17':'そっと運ぶ','18':'こすって運ぶ','19':'枝を回す','20':'押して放す','21':'潜って戻る','22':'新芽を引く','23':'狙って放す','24':'開いたら引く','25':'左右を交互にタップ','26':'下から風を送る','27':'順番にタップ','28':'上向きに描く','29':'おじぎへ運ぶ','30':'分岐を切り替える','31':'砂を盛って出発','32':'糸先を通す','33':'受けてゆっくり下ろす','34':'先の門を開く','35':'大・小を切り替える','36':'足あと側をタップ','38':'上・下を選ぶ','39':'押す・放す','40':'二段ジャンプ','41':'上・下を選ぶ','42':'縦に切る','43':'石を運ぶ','44':'光る湯へ運ぶ','45':'包んで回す','46':'根をなぞって引く','47':'泳いで戻る'
+    '01':'ころがす','03':'タップ','04':'スワイプ','05':'つかんで運ぶ','06':'片方をドラッグ','07':'左右へ動かす','08':'タイミングタップ','09':'引いて放す','10':'支点を動かす','11':'返して運ぶ','13':'ひびをタップ','14':'影で追う','15':'寄せて巻く','16':'覚えてタップ','17':'そっと運ぶ','18':'こすって運ぶ','19':'枝を回す','20':'押して放す','21':'潜って戻る','22':'新芽を引く','23':'狙って放す','24':'開いたら引く','25':'左右を交互にタップ','26':'下から風を送る','27':'順番にタップ','28':'上向きに描く','29':'おじぎへ運ぶ','30':'分岐を切り替える','31':'砂を盛って出発','32':'糸先を通す','33':'受けてゆっくり下ろす','34':'先の門を開く','35':'大・小を選ぶ','36':'足あと側をタップ','38':'上・下を選ぶ','39':'押す・放す','40':'二段ジャンプ','41':'上・下を選ぶ','42':'縦に切る','43':'石を運ぶ','44':'光る湯へ運ぶ','45':'包んで回す','46':'根をなぞって引く','47':'泳いで戻る'
   };
   const variations={
     '01':'坂・雪だまり・雪玉の重さ','03':'おかわりの順番と食べる速さ','04':'枝の高さと風向き','05':'積む順番と光る場所','06':'穴の間隔とふたごの引かれ方','07':'鈴の位置・速さ・横風','08':'回転位置と狙う面','09':'距離と飛ぶ角度','10':'支点とだるまの重さ','11':'火加減と両面の焼け方','13':'ひびの場所と増える間隔','14':'群れと網の位置','15':'米粒と海苔の位置','16':'光る場所と順番','17':'風と器の位置','18':'骨と土の厚さ','19':'光の向きと熟れ方','20':'谷幅と橋の長さ','21':'魚の深さと流れ','22':'新芽の場所と伸び方','23':'火の場所と揺れ幅','24':'真珠の場所と閉じる速さ','25':'流れと左右の曲がり','26':'輪の場所と花びらの流れ','27':'注文と焼ける速さ','28':'巣の高さと気流','29':'おじぎする順番','30':'箱の空きと流れる間隔','31':'ゴール距離と必要な砂','32':'穴の位置と糸のたわみ','33':'落下高と受ける位置','34':'門の順番と水量','35':'門の大きさと流速','36':'左右の並びとテンポ','38':'波門の高さと間隔','39':'引く力と危険の予兆','40':'波幅と足場の高さ','41':'模様の高さと回転速度','42':'人数と生地の幅','43':'水路と熱い岩の位置','44':'三色湯の順番','45':'果実の角度と網幅','46':'根の分岐と深さ','47':'泡・輪・潮の流れ'
   };
   function register(code,title,command,lesson,icon,factory){
-    definitions[code]={title,command,lesson,demo:icon,gesture:gestures[code],variation:variations[code],goal:3,time:20,acts:['まず 1回','少し速くなるよ','ラスト']};games[code]=factory;
+    definitions[code]={title,command,lesson,demo:icon,gesture:gestures[code],variation:variations[code],goal:3,time:20,acts:[command,'その調子。つづけよう','ラスト。あと少し']};games[code]=factory;
   }
   function create(code,ctx){
     const canvas=document.createElement('canvas');canvas.className='rg-canvas';
@@ -52,7 +52,7 @@
       win(x=500,y=300){if(celebrate>0)return;ctx.hit(3);celebrate=.72;const count=window.QUEST_MOTION?.reduced()?4:22;for(let i=0;i<count;i++)effects.push({x,y,vx:random(-210,210),vy:random(-300,-80),life:.75,color:i%3===0?'#fff5a4':'#efad31'});effects.push({x:clamp(x,100,900),y:clamp(y,90,470),vx:0,vy:window.QUEST_MOTION?.reduced()?0:-55,life:.7,label:ctx.practicing?'できた':'＋3'});},
       miss(){missFlash=.36;ctx.miss();},tell:ctx.tell,
       circle(x,y,r,color='#ffd65f'){c.save();if(r>12){c.shadowColor='#173e5126';c.shadowBlur=5;c.shadowOffsetY=4;}c.fillStyle=color;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();c.shadowColor='transparent';if(r>12){const g=c.createRadialGradient(x-r*.3,y-r*.4,0,x,y,r);g.addColorStop(0,'#ffffff35');g.addColorStop(.6,'#ffffff00');g.addColorStop(1,'#173e5112');c.fillStyle=g;c.fill();}c.restore();},
-      box(x,y,w,h,color='#fff9e4'){if(x<=0&&y<=0&&w>=1000&&h>=600){paintBackdrop(color);return;}c.save();if(w<800&&h>20){c.shadowColor='#173e5120';c.shadowBlur=4;c.shadowOffsetY=4;}c.fillStyle=color;c.beginPath();c.roundRect(x,y,w,h,Math.min(16,w/2,h/2));c.fill();c.restore();},
+      box(x,y,w,h,color='#fff9e4'){if(x<=0&&y<=0&&w>=1000&&h>=600){paintBackdrop(color);return;}if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0)return;c.save();if(w<800&&h>20){c.shadowColor='#173e5120';c.shadowBlur=4;c.shadowOffsetY=4;}c.fillStyle=color;c.beginPath();c.roundRect(x,y,w,h,Math.max(0,Math.min(16,w/2,h/2)));c.fill();c.restore();},
       line(points,color='#50776e',width=8){if(!points.length)return;c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.beginPath();points.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.stroke();},
       text(s,x,y,size=28,color='#173e51'){c.fillStyle=color;c.font=`900 ${size}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(s,x,y);},
       icon(s,x,y,size=70){if(!window.QUEST_GAME_ILLUSTRATIONS?.draw(c,s,x,y,size,api.time))this.text(s,x,y,size);},
@@ -68,7 +68,7 @@
         this.box(458,360,84,115,'#674831');this.box(468,372,64,90,'#eab663');this.circle(500,404,10,'#fff3af');
         for(let i=0;i<45;i++){const x=(i*137+Math.sin(aTime()+i)*14)%1000,y=(i*97+aTime()*22)%520;this.circle(x,y,1+i%3,'#ffffffaa');}
       },
-      target(x,y,r=42){c.strokeStyle='#d6a221';c.lineWidth=6;c.setLineDash([10,8]);c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();c.setLineDash([]);},
+      target(x,y,r=42){const pulse=window.QUEST_MOTION?.reduced()?0:Math.sin(aTime()*5)*3;c.save();c.strokeStyle='#d6a221';c.lineWidth=6;c.setLineDash([10,8]);c.beginPath();c.arc(x,y,Math.max(4,r+pulse),0,Math.PI*2);c.stroke();c.globalAlpha=.12;c.fillStyle='#ffd65f';c.beginPath();c.arc(x,y,Math.max(4,r-8+pulse),0,Math.PI*2);c.fill();c.restore();},
     };
     function aTime(){return api.time;}
     let game=games[code](api);
@@ -133,9 +133,9 @@
     return {input(k,q){if(k==='down')held=p.findIndex(v=>dist(v,q)<65);if(k==='move'&&held>=0){p[held]={x:q.x,y:q.y};const other=p[1-held],d=dist(other,p[held]);if(d>150){other.x+=(p[held].x-other.x)*(d-150)/d;other.y+=(p[held].y-other.y)*(d-150)/d;}}if(k==='up'){held=-1;if(p.every((v,i)=>dist(v,goals[i])<65))a.win();}if(k==='cancel')held=-1;},draw(){goals.forEach(g=>a.target(g.x,g.y,65));a.line(p,'#6c9148',10);p.forEach((v,i)=>{a.circle(v.x,v.y,45,i?'#ef795b':'#d74755');a.text(i+1,v.x,v.y,30,'#fff');});goals.forEach((g,i)=>a.text(i+1,g.x,g.y,26));a.text('片方をつかむと もう片方もついてくる',500,540,26);}};
   });
   register('07','あかべこ 鈴キャッチ','鈴の下へ すばやく動こう！','左右から落ちる鈴を、あかべこの頭で受け止めよう。風で落ち方が変わるよ。','🔔',a=>{
-    let head=500,caught=0,bell={x:random(150,850),y:70,vx:random(-45,45),vy:120};
-    const next=()=>{bell={x:random(120,880),y:55,vx:random(-65,65),vy:random(115,155)};};
-    return {input(k,p){if(k==='down'||(k==='move'&&p.down))head=clamp(p.x,120,880);},step(dt){bell.x+=bell.vx*dt;bell.y+=bell.vy*dt;bell.vy+=80*dt;if(bell.x<70||bell.x>930)bell.vx*=-1;if(bell.y>410&&bell.y<500&&Math.abs(bell.x-head)<105){caught++;a.tell('リン！');if(caught>=5)a.win(head,420);else next();}else if(bell.y>550){a.miss();next();}},draw(){a.box(0,0,1000,600,'#f3e6cf');a.icon('🔔',bell.x,bell.y,58);a.box(head-120,420,240,80,'#d9584a');a.circle(head,400,72,'#e47759');a.text(`鈴 ${caught} / 5`,500,70,34);a.text('鈴の下を タップして受ける！',500,550,27);}};
+    let head=500,caught=0,armed=false,bell={x:random(150,850),y:70,vx:random(-45,45),vy:120};
+    const next=()=>{armed=false;bell={x:random(120,880),y:55,vx:random(-65,65),vy:random(115,155)};};
+    return {input(k,p){if(k==='down'||(k==='move'&&p.down)){head=clamp(p.x,120,880);armed=true;}},step(dt){bell.x+=bell.vx*dt;bell.y+=bell.vy*dt;bell.vy+=80*dt;if(bell.x<70||bell.x>930)bell.vx*=-1;if(armed&&bell.y>410&&bell.y<500&&Math.abs(bell.x-head)<105){caught++;a.tell('リン！');if(caught>=5)a.win(head,420);else next();}else if(bell.y>550){a.miss();next();}},draw(){a.box(0,0,1000,600,'#f3e6cf');a.icon('🔔',bell.x,bell.y,58);a.box(head-120,420,240,80,armed?'#d9584a':'#c9d7cf');a.circle(head,400,72,armed?'#e47759':'#9eb4aa');a.text(`鈴 ${caught} / 5`,500,70,34);a.text(armed?'そのまま 鈴をうけよう！':'鈴の下を タップして受ける！',500,550,27);}};
   });
   register('08','メロン 網目スタンプ','空いているところで タップ！','回るメロンに網目をつけよう。まだ線がない面でタップしてね。','🍈',a=>{
     let angle=0;const marked=new Set();
@@ -251,19 +251,20 @@
     const gates=[false,false,false];let x=100;
     return {input(k,p){if(k==='down'){const i=[300,550,800].findIndex(x=>Math.abs(p.x-x)<70);if(i>=0)gates[i]=!gates[i];}},step(dt){const next=[300,550,800].findIndex(g=>g>x);if(next<0||gates[next]||[300,550,800][next]-x>35)x+=dt*85;if(x>920)a.win();},draw(){a.box(50,180,900,200,'#b0dce0');[300,550,800].forEach((g,i)=>{a.box(g-15,gates[i]?80:180,30,200,gates[i]?'#77b49b':'#d78664');a.text(gates[i]?'ひらいた':'おす',g,440,24);});a.icon('🍁',x,285,60);a.text('舟の前の 水門をひらこう',500,545);}};
   });
-  register('35','ふぐ ぷくぷく水路','門にあわせて 大・小をきりかえ！','タップでふぐが大きくなるよ。大きい門と小さい門を見て、通る前に姿を切り替えよう。','🐡',a=>{
-    let big=false,x=150,passed=0;let gate={x:760,big:Math.random()<.5};
-    const next=()=>{x=150;gate={x:random(680,830),big:Math.random()<.5};};
-    return {input(k){if(k==='down')big=!big;},step(dt){x+=dt*(125+passed*18);if(x>gate.x-15){if(big===gate.big){passed++;a.tell(gate.big?'大きく通過！':'小さく通過！');if(passed>=4)a.win(gate.x,300);else next();}else{x=150;a.miss();a.tell(gate.big?'大きくなって！':'小さくなって！');}}},draw(){a.box(0,0,1000,600,'#d6edf0');const gap=gate.big?180:90;a.box(gate.x-18,80,36,220-gap/2,'#557f88');a.box(gate.x-18,300+gap/2,36,220-gap/2,'#557f88');a.text(gate.big?'大':'小',gate.x,55,34);a.icon('🐡',x,300,big?150:76);a.text(`門 ${passed} / 4　タップで ${big?'小さく':'大きく'}`,500,550,27);}};
+  register('35','ふぐ ぷくぷく水路','門を見て 左の小・右の大！','門と同じ大きさを選ぼう。画面の左で小さく、右で大きくなるよ。','🐡',a=>{
+    let big=false,x=150,passed=0,armed=false;let gate={x:760,big:Math.random()<.5};
+    const next=()=>{x=150;armed=false;gate={x:random(680,830),big:Math.random()<.5};};
+    return {input(k,p){if(k==='down'){big=p.x>=500;armed=true;a.tell(big?'大きくなった！':'小さくなった！');}},step(dt){if(!armed)return;x+=dt*(125+passed*18);if(x>gate.x-15){if(big===gate.big){passed++;a.tell(gate.big?'大きく通過！':'小さく通過！');if(passed>=4)a.win(gate.x,300);else next();}else{x=150;armed=false;a.miss();a.tell(gate.big?'右の「大」を選ぼう':'左の「小」を選ぼう');}}},draw(){a.box(0,0,1000,600,'#d6edf0');const gap=gate.big?180:90;a.box(gate.x-18,80,36,220-gap/2,'#557f88');a.box(gate.x-18,300+gap/2,36,220-gap/2,'#557f88');a.text(gate.big?'大':'小',gate.x,55,34);a.icon('🐡',x,300,big?150:76);a.box(95,490,360,72,!big&&armed?'#ffd86a':'#eef5e2');a.box(545,490,360,72,big&&armed?'#ffd86a':'#eef5e2');a.text('小さく',275,526,28);a.text('大きく',725,526,28);a.text(`門 ${passed} / 4`,500,55,30);}};
   });
   register('36','阿波おどり 大行列','左右の足で リズムをきざもう','下の輪に足あとが入ったら、同じ側をタップ。踊りの仲間を増やそう！','👣',a=>{
     let notes=[],spawn=0,count=0,next=Math.floor(random(0,2));
     return {input(k,p){if(k!=='down')return;const side=p.x<500?0:1;const n=notes.find(n=>n.side===side&&Math.abs(n.y-430)<80);if(n){notes.splice(notes.indexOf(n),1);count++;if(count>=6)a.win();}else a.tell('輪にきたら タップ！');},step(dt){spawn-=dt;if(spawn<=0){notes.push({side:next++%2,y:70});spawn=1.1;}notes.forEach(n=>n.y+=dt*170);notes=notes.filter(n=>n.y<550);},draw(){[300,700].forEach(x=>a.target(x,430,75));notes.forEach(n=>a.icon('👣',n.side?700:300,n.y,65));a.text(`踊る仲間 ${count} / 6`,500,40);a.text('左の足　　　　　　右の足',500,570);}};
   });
-  register('38','みかん船 くぐれ波門','上下タップで 波門をくぐろう！','上か下をタップして船を動かそう。波のすき間を3つくぐって、みかんを港へ！','⛵',a=>{
-    let boat={x:150,y:300},gateX=760,gapY=random(170,430),passed=0;
-    const next=()=>{boat.x=150;gateX=random(700,850);gapY=random(160,440);};
-    return {input(k,p){if(k==='down')boat.y=clamp(boat.y+(p.y<300?-95:95),105,495);},step(dt){boat.x+=dt*(135+passed*20);if(boat.x>gateX-15){if(Math.abs(boat.y-gapY)<90){passed++;a.tell('ざぶん！');if(passed>=3)a.win(gateX,gapY);else next();}else{a.miss();a.tell('波のすき間へ！');next();}}},draw(){a.box(0,0,1000,600,'#ccecf1');a.box(0,500,1000,100,'#83cad7');a.box(gateX-24,70,48,Math.max(10,gapY-90-70),'#67b5ce');a.box(gateX-24,gapY+90,48,510-(gapY+90),'#67b5ce');a.target(gateX,gapY,88);a.icon('⛵',boat.x,boat.y,105);a.text(`波門 ${passed} / 3`,500,55,34);a.text('画面の 上・下をタップ！',500,555,27);}};
+  register('38','みかん船 くぐれ波門','上か下をえらんで 波門へ！','光るすき間を見て、画面の上か下をタップ。選んだら船が進むよ。','⛵',a=>{
+    const chooseGap=()=>Math.random()<.5?random(190,235):random(365,410);
+    let boat={x:150,y:300},gateX=760,gapY=chooseGap(),passed=0,armed=false;
+    const next=()=>{boat={x:150,y:300};gateX=random(700,850);gapY=chooseGap();armed=false;};
+    return {input(k,p){if(k==='down'){boat.y=p.y<300?212:388;armed=true;a.tell(boat.y<300?'上へ！':'下へ！');}},step(dt){if(!armed)return;boat.x+=dt*(135+passed*20);if(boat.x>gateX-15){if(Math.abs(boat.y-gapY)<90){passed++;a.tell('ざぶん！');if(passed>=3)a.win(gateX,gapY);else next();}else{a.miss();a.tell(gapY<300?'上のすき間へ！':'下のすき間へ！');next();}}},draw(){a.box(0,0,1000,600,'#ccecf1');a.box(0,500,1000,100,'#83cad7');a.box(gateX-24,70,48,Math.max(10,gapY-160),'#67b5ce');a.box(gateX-24,gapY+90,48,Math.max(10,420-gapY),'#67b5ce');a.target(gateX,gapY,88);a.icon('⛵',boat.x,boat.y,105);a.text(`波門 ${passed} / 3`,500,55,34);a.text(gapY<300?'上をタップ':'下をタップ',500,555,27);}};
   });
   register('39','かつお 糸のかけひき','引く・ゆるめるで つり上げよう','押すと引く、離すと糸がゆるむよ。赤くなったら離して切れないように！','🎣',a=>{
     let tension=random(.2,.4),progress=0;
@@ -271,7 +272,7 @@
   });
   register('40','めんたいこ 二段ジャンプ','タップで 波をとびこそう','タップでジャンプ。空中でもう一度押すと高く飛べるよ。','🌊',a=>{
     let y=410,vy=0,jumps=0,obstacle=950,passed=0;
-    return {input(k){if(k==='down'&&jumps<2){vy=-290;jumps++;}},step(dt){vy+=dt*650;y+=vy*dt;if(y>=410){y=410;vy=0;jumps=0;}obstacle-=dt*190;if(obstacle<280&&obstacle>180&&y>335){obstacle=950;a.tell('波の前で ジャンプ！');}if(obstacle<80){passed++;obstacle=950;if(passed===3)a.win();}},draw(){a.box(0,450,1000,150,'#a8dadd');a.icon('🌊',obstacle,415,95);a.box(180,y-35,100,60,'#e68175');a.circle(248,y-15,6,'#36414d');a.text(`波 ${passed} / 3`,500,90);a.text('タップ！ 空中でもう一回 タップ！',500,550,25);}};
+    return {input(k){if(k==='down'&&jumps<2){vy=jumps===0?-330:-400;jumps++;}},step(dt){vy+=dt*650;y+=vy*dt;if(y>=410){y=410;vy=0;jumps=0;}obstacle-=dt*190;if(obstacle<280&&obstacle>180&&y>390){obstacle=950;a.miss();a.tell('波の少し前で ジャンプ！');}if(obstacle<80){passed++;obstacle=950;a.tell('こえた！');if(passed===3)a.win();}},draw(){a.box(0,450,1000,150,'#a8dadd');a.icon('🌊',obstacle,415,95);a.box(180,y-35,100,60,'#e68175');a.circle(248,y-15,6,'#36414d');a.text(`波 ${passed} / 3`,500,90);a.text('タップ！ 空中でもう一回 タップ！',500,550,25);}};
   });
   register('41','器の くるくる絵付け','光る模様が筆に来たら 上か下！','模様が右の筆に来た瞬間、同じ高さをタップ。回転がだんだん速くなるよ。','🖌',a=>{
     let angle=0,hits=0;const marks=Array.from({length:7},(_,i)=>({row:Math.random()<.5?0:1,offset:i/7*Math.PI*2,done:false}));

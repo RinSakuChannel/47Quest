@@ -908,7 +908,7 @@ function finishGame(success, performance = {}) {
         </header>
         <div class="result-details">
           ${success ? `<div class="clear-friend is-mystery">${mascot(state.current, 'clear-friend-art')}<div><strong>${state.current.character}</strong><p>仲間も おおよろこび！</p><span>おさらいで 仲間にしよう</span></div></div>` : `<div class="clear-friend retry-friend">${mascot(state.current, 'clear-friend-art retry-friend-art')}<div><strong>だいじょうぶ</strong><p>動きを見て、もう一回。</p><span>${setup.command}</span></div></div>`}
-          <p class="result-learning"><b>${stars<3?'もう一度で星を増やそう。速く、ていねいに。':'3つ星。もう一度なら配置が変わるよ。'}</b><br>${state.current.name}：${state.current.feature}</p>
+          <p class="result-learning"><b>${stars<3?'もう一度で星を増やそう。':'3つ星。'}</b><span class="result-variation">もう一度：${setup.variation || '動きや順番が変わるよ'}</span><br>${state.current.name}：${state.current.feature}</p>
         </div>
         ${success
           ? `<div class="result-actions">${button('もう一度あそぶ', 'game-retry', 'secondary-button')}${button(state.replay ? '県のページへ' : '場所クイズへ', 'game-next', 'primary-button sun')}</div>`

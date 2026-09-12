@@ -11,7 +11,7 @@ await page.waitForTimeout(1200);
 for(const control of await page.locator('.title-actions button').all()){const box=await control.boundingBox();assert.ok(box&&box.y>=0&&box.y+box.height<=height&&box.height>=43,`${width}: title control outside viewport ${JSON.stringify(box)}`);}
 const start=await page.locator('.title-start-button').boundingBox(),shortcut=await page.locator('.title-shortcut').first().boundingBox();assert.ok(start.height>shortcut.height&&start.width>shortcut.width*2,`${width}: start is not the clear primary action`);
 await page.screenshot({path:`.verification/title-clean-${width}.png`});
-await page.getByRole('button',{name:'音量を調整する'}).click();const select=page.locator('[data-motion]');assert.ok(await select.isVisible(),`${width}: animation setting is not available in settings`);await select.selectOption('full');assert.equal(await page.evaluate(()=>QUEST_MOTION.mode),'full');await select.selectOption('auto');
+await page.getByRole('button',{name:'音量と演出を設定する'}).click();const select=page.locator('[data-motion]');assert.ok(await select.isVisible(),`${width}: animation setting is not available in settings`);await select.selectOption('full');assert.equal(await page.evaluate(()=>QUEST_MOTION.mode),'full');await select.selectOption('auto');
 await page.screenshot({path:`.verification/title-controls-${width}.png`});await page.close();
 }console.log('PASS: one primary title action, compact shortcuts, motion setting remains available at five sizes');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
