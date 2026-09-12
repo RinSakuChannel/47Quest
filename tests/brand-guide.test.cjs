@@ -5,7 +5,8 @@ const {chromium}=require('C:/Users/freecar/.cache/codex-runtimes/codex-primary-r
  for(const [width,height] of [[1440,900],[390,844]]){
   const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
   await page.goto(pathToFileURL(path.resolve('build/index.html')).href);
-  assert.ok(await page.locator('.illustrated-logo img').evaluate(e=>e.complete&&e.naturalWidth>0));
+  assert.equal(await page.locator('.quest-logo .quest-wordmark').count(),1);
+  assert.equal(await page.locator('.brand .japan-guide,.brand .guide-brand').count(),0);
   await page.evaluate(()=>{state.current=PREFECTURE_DATA[0];openGuideHelp(document.createElement('button'));});
   await page.screenshot({path:`.verification/guide-dialog-${width}.png`});
   await page.keyboard.press('Escape');

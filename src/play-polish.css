@@ -36,11 +36,7 @@
 .review-writing-top .review-writing-context{display:block;font-size:clamp(14px,2vw,20px);line-height:1.5;text-wrap:balance;}
 .review-answer-hint{margin:6px 0 0;font-size:clamp(18px,3vw,26px);line-height:1.4;white-space:nowrap;}
 .reveal-character-wrap .reveal-character{inset:6%;width:88%;height:88%;}
-@media(max-height:500px){.compare-scene .compare-heading{min-height:38px;flex-shrink:0}.home-scene .game-logo.illustrated-logo{height:80px;min-height:0}}
-.game-logo.illustrated-logo{filter:none;width:min(540px,75vw);height:clamp(140px,27dvh,250px);margin:auto;}
-.illustrated-logo img{width:100%;height:100%;object-fit:contain;}
-.brand-mark.guide-brand{overflow:hidden;border:2px solid rgba(255,255,255,.9);border-radius:50%;background:linear-gradient(145deg,#eaffcc,#9fdc78);box-shadow:0 3px 9px rgba(18,59,83,.18);letter-spacing:normal;transform:none;}
-.guide-brand img{width:100%;height:100%;object-fit:contain;transform:scale(1.08);}
+@media(max-height:500px){.compare-scene .compare-heading{min-height:38px;flex-shrink:0}.home-scene .game-logo.quest-logo{min-height:0}}
 .guide-dialogue{display:flex!important;align-items:center;gap:8px;min-width:0;}
 .guide-dialogue>span,.guide-dialogue>div{min-width:0;}
 .guide-help{position:relative;flex:none;min-width:44px;min-height:44px;padding:0;border:0;background:transparent;cursor:pointer;touch-action:manipulation;pointer-events:auto;}
@@ -59,7 +55,7 @@
 .game-info .japan-guide{width:42px;height:42px;}
 @keyframes guide-hello{from{opacity:0;transform:translateY(8px) rotate(-8deg)}to{opacity:1;transform:none}}
 @media(max-width:600px){.japan-guide{width:42px;height:42px}.game-info .japan-guide{width:34px;height:34px}.guide-dialogue{gap:5px;}}
-@media(max-height:500px){.game-logo.illustrated-logo{height:110px}.japan-guide{width:34px;height:34px}}
+@media(max-height:500px){.japan-guide{width:34px;height:34px}}
 @media(prefers-reduced-motion:reduce){.japan-guide{animation:none}}
 .audio-panel select{width:100%;min-height:40px;border:2px solid #b3cbd0;border-radius:10px;background:#fffdf7;color:#173e51;font:inherit;padding:6px;}
 .gacha-map-preview{position:relative;display:block;width:100%;min-height:60px;height:100%;overflow:hidden;border:2px solid #91bdc8;border-radius:10px;padding:0;background:#dff3f5;}
@@ -120,12 +116,12 @@
 /* JS owns these entrances; a second CSS entrance would multiply transforms. */
 .scene > :where(header,aside,.map-card,.writing-board,.game-board,.collection-grid,.button-row) {animation:none;}
 .hud-chip,.fg-status,.result-score,[data-stat-value] {font-variant-numeric:tabular-nums;}
-.sound-toggle-button {white-space:nowrap!important;min-width:66px!important;font-size:14px!important;background:#e5edef;color:#254654;}
+.sound-toggle-button {white-space:nowrap!important;min-width:74px!important;font-size:14px!important;background:#e5edef;color:#254654;}
 .sound-toggle-button[aria-pressed="true"] {background:#ffe17d;color:#173e51;}
 .sound-menu-button {font-size:12px!important;padding-inline:7px!important;}
 @media(max-width:600px){
  .top-actions{gap:3px}
- .sound-toggle-button{min-width:60px!important;padding-inline:5px!important;font-size:12px!important}
+ .sound-toggle-button{min-width:68px!important;padding-inline:5px!important;font-size:12px!important}
  .sound-menu-button{min-width:32px!important;padding-inline:4px!important}
  .top-title{font-size:12px;text-wrap:balance}
 }

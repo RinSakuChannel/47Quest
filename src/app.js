@@ -495,11 +495,11 @@ function shell(content, { progress = 0, label = 'にほん発見アドベンチ�
     <section class="app-screen ${home ? 'is-title-screen' : ''}">
       <header class="topbar">
         <button class="brand" data-action="home" aria-label="ホームへ戻る">
-          <span class="brand-mark guide-brand"><img src="./assets/images/japan-guide-simple.svg" alt="" /></span><span class="brand-name">47Quest</span>
+          <span class="brand-wordmark" aria-hidden="true"><span class="brand-number">47</span><span class="brand-quest"><b>Q</b>uest</span></span>
         </button>
         <div class="top-title">${label}</div>
         <div class="top-actions">
-          <button class="icon-button" data-action="gacha" aria-label="コインでガチャ">🪙 ${state.coins}</button>
+          <button class="icon-button coin-button" data-action="gacha" aria-label="コインでガチャ。${state.coins}枚"><span class="coin-dot" aria-hidden="true"></span>${state.coins}</button>
           ${!home ? '<button class="icon-button" data-action="collection" aria-label="図鑑を見る">ずかん</button>' : ''}
           <button class="icon-button sound-toggle-button" data-action="sound" aria-label="音声" aria-pressed="${state.sound}">音 ${state.sound ? 'ON' : 'OFF'}</button>
           <button class="icon-button sound-menu-button" data-action="audio-panel" aria-label="音量を調整する" aria-expanded="false">設定</button>
@@ -528,20 +528,19 @@ function renderHome() {
         <a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a>
         <div class="title-clouds" aria-hidden="true"><i></i><i></i><i></i></div>
         <div class="home-roamers">
-          ${openingFriends.map((pref, index) => `<button type="button" class="home-roamer roamer-${index + 1}" data-action="hero-cheer" data-code="${pref.code}" aria-label="${pref.character}を応援する">${mascot(pref, 'home-roamer-art')}<span>${pref.character}</span></button>`).join('')}
+          ${openingFriends.map((pref, index) => `<button type="button" class="home-roamer ${state.unlocked.has(pref.code) ? 'is-known' : 'is-mystery'} roamer-${index + 1}" data-action="hero-cheer" data-code="${pref.code}" aria-label="${state.unlocked.has(pref.code) ? pref.character + 'を応援する' : 'まだ出会っていない仲間'}">${mascot(pref, 'home-roamer-art')}<span>${state.unlocked.has(pref.code) ? pref.character : '？？？'}</span></button>`).join('')}
         </div>
       </div>
       <header class="title-stage">
         <p class="title-call">にほん全国・発見アドベンチャー</p>
-        <div class="game-logo illustrated-logo" aria-label="47Quest にほん全国 大ぼうけん"><img src="./assets/images/47quest-logo.webp" alt="47Quest にほん全国 大ぼうけん" /></div>
+        <div class="game-logo quest-logo" aria-label="47Quest にほん全国 大ぼうけん"><div class="quest-wordmark" aria-hidden="true"><span class="quest-number">47</span><span class="quest-name"><b>Q</b>uest</span></div><small>にほん全国 大ぼうけん</small></div>
         <p class="title-copy">地図を見つけて、ご当地ゲームへ飛びこもう</p>
         <div class="title-actions">
-          ${button('▶ ぼうけん スタート', 'start', 'primary-button sun title-start-button')}
-          <nav class="title-shortcuts" aria-label="ほかの遊び">${button('<span aria-hidden="true">⚡</span><span>クイズ</span>', 'quick-quiz', 'title-shortcut quick-quiz-button', 'aria-label="いきなりクイズ"')}${button('<span aria-hidden="true">◇</span><span>図鑑 <b>'+count+'</b>/47</span>', 'collection', 'title-shortcut', 'aria-label="図鑑 '+count+' / 47"')}${button('<span aria-hidden="true">↗</span><span>旅の記録</span>', 'journey', 'title-shortcut')}</nav>
+          ${button('ぼうけんを始める', 'start', 'primary-button sun title-start-button')}
+          <nav class="title-shortcuts" aria-label="ほかの遊び">${button('<span>クイズ</span>', 'quick-quiz', 'title-shortcut quick-quiz-button', 'aria-label="いきなりクイズ"')}${button('<span>図鑑 <b>'+count+'</b>/47</span>', 'collection', 'title-shortcut', 'aria-label="図鑑 '+count+' / 47"')}${button('<span>旅の記録</span>', 'journey', 'title-shortcut')}</nav>
         </div>
       </header>
     </section>`, { home: true, progress: Math.round(count / 47 * 100), label: '47の仲間をさがそう' });
-  pixelateOpeningFriends();
 }
 
 // Animate inside the artwork's reserved box, never beyond a clipped card.
@@ -557,20 +556,6 @@ function bounceCharacter(container) {
   };
   const animation = art.animate(reactions[life]||reactions.sway, { duration:life==='drift'?850:life==='weight'?650:560, easing:'cubic-bezier(.16,1,.3,1)' });
   animation.id = 'character-bounce';
-}
-
-function pixelateOpeningFriends() {
-  document.querySelectorAll('.home-roamer-art > img').forEach((image) => {
-    const paint = () => {
-      if (!image.naturalWidth || image.parentElement?.querySelector('canvas')) return;
-      const canvas = document.createElement('canvas');
-      canvas.className = 'home-roamer-pixels'; canvas.width = 12; canvas.height = 12;
-      const context = canvas.getContext('2d', { alpha:true });
-      context.imageSmoothingEnabled = false; context.drawImage(image, 0, 0, 12, 12);
-      image.insertAdjacentElement('afterend', canvas);
-    };
-    if (image.complete) paint(); else image.addEventListener('load', paint, {once:true});
-  });
 }
 
 function startRound() {

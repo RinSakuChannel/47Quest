@@ -184,8 +184,9 @@ async function drawEnoughInk(page) {
       await assertPageNoScroll(page, `${name} title`);
       await assertReadableText(page, `${name} title`);
       assert.equal(await page.locator('.home-roamer [data-character-code]').count(), 6, `${name}: title characters are not voice-enabled`);
-      assert.equal(await page.locator('.home-roamer-pixels').count(), 6, `${name}: title character mosaics were not rendered`);
-      assert.ok(await page.locator('.home-roamer-pixels').first().evaluate(canvas => canvas.width === 12 && canvas.height === 12), `${name}: title mosaic is not coarse enough`);
+      assert.equal(await page.locator('.home-roamer img').count(), 6, `${name}: title friend art is incomplete`);
+      assert.equal(await page.locator('.home-roamer-pixels').count(), 0, `${name}: coarse pixel mosaics returned`);
+      assert.ok(await page.locator('.home-roamer.is-mystery img').evaluateAll(images => images.length > 0 && images.every(image => getComputedStyle(image).filter.includes('brightness(0)'))), `${name}: unmet friend is not concealed as a silhouette`);
       if (name === 'desktop') {
         await page.locator('.sound-toggle-button').click();
         await page.locator('.sound-menu-button').click();

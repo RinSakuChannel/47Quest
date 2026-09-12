@@ -58,6 +58,37 @@
  .writing-scene { grid-template-columns:1fr; }.lesson-panel .title { font-size:22px; }.ink-status { font-size:12px; }.canvas-next-button { font-size:15px; }
  .review-prefecture-choice { min-height:40px; }.review-prefecture-grid { overflow-y:auto; }
 }
+@media(max-width:480px) {
+ .topbar { grid-template-columns:auto minmax(0,1fr); }
+ .top-title { display:none; }
+ .top-actions { grid-column:2; }
+}
 @media(max-height:560px) and (min-width:761px) {
  .discovery-brief { padding:16px; }.discovery-step { margin:0 0 16px; }.discovery-brief h1 { margin:12px 0 4px; font-size:38px; }.discovery-instruction { margin:14px 0; font-size:18px; }.discovery-route { font-size:12px; }
+}
+
+/* One restrained visual language across learning, play, collection and results. */
+:root {
+ --ui-radius:14px;
+ --ui-radius-large:20px;
+ --ui-border:#d7e3df;
+ --ui-paper:#fffdf8;
+ --ui-shadow:0 4px 14px rgba(23,62,81,.09);
+}
+:where(.lesson-panel,.writing-board,.game-info,.game-board,.review-location-picker,.collection-card,.result-card,.reward-map-dialog,.guide-help-dialog,.journey-region) {
+ border-radius:var(--ui-radius-large);
+ border-color:var(--ui-border);
+ box-shadow:var(--ui-shadow);
+}
+:where(.primary-button,.secondary-button,.tool-button,.zoom-button,.audio-master-button,.review-prefecture-choice,.guide-help-dialog button) {
+ border-radius:var(--ui-radius);
+}
+.primary-button.sun { border:1px solid #b88721; background:#f4ca4f; box-shadow:0 3px 0 #ad7d1c; }
+.secondary-button,.tool-button { border:1px solid var(--ui-border); background:var(--ui-paper); box-shadow:0 2px 0 #c8d7d3; }
+.primary-button:active,.secondary-button:active,.tool-button:active { transform:translateY(2px); box-shadow:none; }
+.game-info,.lesson-panel,.review-location-picker,.collection-card,.result-card,.journey-region { background:var(--ui-paper); backdrop-filter:none; }
+.collection-card:hover { transform:translateY(-2px); }
+.new-tag { border-radius:7px; transform:none; }
+@media(max-width:760px) {
+ :where(.lesson-panel,.writing-board,.game-info,.game-board,.review-location-picker,.collection-card,.result-card) { border-radius:16px; }
 }

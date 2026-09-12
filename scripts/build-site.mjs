@@ -9,7 +9,7 @@ const artContext={window:{}};vm.runInNewContext(readFileSync('src/character-art.
 if(Object.keys(artContext.window.CHARACTER_ART||{}).length!==47)throw Error('Character art registry must contain 47 entries');
 for(let i=1;i<=47;i++){const code=String(i).padStart(2,'0');files.push((artContext.window.CHARACTER_ART[code]||`assets/characters/${code}.png`).replace(/^\.\//,''),`assets/maps/play-overlays/${code}.png`,`assets/maps/play-overlays-portrait/${code}.png`);}
 let bytes=0;
-files.push('assets/images/japan-guide-simple.svg','assets/images/47quest-logo.webp');
+files.push('assets/images/japan-guide-simple.svg');
 for(let i=1;i<=47;i++)files.push(`assets/sounds/voices/${String(i).padStart(2,'0')}.wav`);
 for(const file of files){if(!existsSync(file))throw Error(`Missing required asset: ${file}`);const target=join(output,file);mkdirSync(dirname(target),{recursive:true});copyFileSync(file,target);bytes+=statSync(file).size;}
 // Remove obsolete generated copies only. Source artwork is never removed.
