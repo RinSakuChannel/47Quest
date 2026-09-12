@@ -201,8 +201,9 @@ async function drawEnoughInk(page) {
       assert.equal(new Set(await page.locator('.home-roamer [data-character-code]').evaluateAll(nodes => nodes.map(node => node.dataset.characterCode))).size, 6, `${name}: title character draw contains duplicates`);
       assert.equal(await page.locator('.home-roamer img').count(), 6, `${name}: title friend art is incomplete`);
       assert.equal(await page.locator('.home-roamer-pixels').count(), 0, `${name}: coarse pixel mosaics returned`);
-      assert.equal(await page.locator('.home-roamer img').count(), 6, `${name}: title does not preview six real characters`);
-      assert.ok(await page.locator('.home-roamer img').evaluateAll(images => images.every(image => !getComputedStyle(image).filter.includes('brightness(0)'))), `${name}: title character preview is hidden`);
+      assert.equal(await page.locator('.home-roamer img').count(), 6, `${name}: title character draw is incomplete`);
+      assert.ok(await page.locator('.home-roamer.is-mystery img').evaluateAll(images => images.length > 0 && images.every(image => getComputedStyle(image).filter.includes('brightness(0)'))), `${name}: uncollected title character is not concealed`);
+      assert.ok(await page.locator('.home-roamer.is-mystery span').evaluateAll(labels => labels.every(label => label.textContent === '？？？')), `${name}: uncollected title character name is exposed`);
       if (name === 'desktop') {
         await page.locator('.sound-menu-button').click();
         await page.locator('.audio-master-button').click();

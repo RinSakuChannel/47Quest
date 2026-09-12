@@ -533,7 +533,8 @@ function shell(content, { progress = 0, label = 'にほん発見アドベンチ�
         <div class="top-actions">
           <button class="icon-button coin-button" data-action="gacha" aria-label="コインでガチャ。${state.coins}枚"><span class="coin-dot" aria-hidden="true"></span>${state.coins}</button>
           ${!home ? '<button class="icon-button" data-action="collection" aria-label="図鑑を見る">ずかん</button>' : ''}
-          <button class="icon-button sound-menu-button" data-action="audio-panel" aria-label="音と演出を設定する" aria-expanded="false"><span aria-hidden="true">${state.sound ? '♪' : '音'}</span><b>設定</b></button>
+          <button class="icon-button sound-toggle-button" data-action="sound" aria-label="音を${state.sound ? 'オフ' : 'オン'}にする" aria-pressed="${state.sound}"><span aria-hidden="true">${state.sound ? '🔊' : '🔇'}</span></button>
+          <button class="icon-button sound-menu-button" data-action="audio-panel" aria-label="音量と演出を設定する" aria-expanded="false"><span aria-hidden="true">⚙</span><b>設定</b></button>
           <section class="audio-panel" hidden aria-label="音量設定">
             <header><strong>おと・演出</strong><button type="button" data-action="audio-panel" aria-label="音量設定を閉じる">×</button></header>
             <label><span>アニメーション</span><select data-motion aria-label="アニメーション"><option value="auto" ${QUEST_MOTION.mode==='auto'?'selected':''}>端末の設定に合わせる</option><option value="full" ${QUEST_MOTION.mode==='full'?'selected':''}>しっかり演出</option><option value="calm" ${QUEST_MOTION.mode==='calm'?'selected':''}>ひかえめ</option></select></label>
@@ -565,7 +566,7 @@ function renderHome() {
         <a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a>
         <div class="title-clouds" aria-hidden="true"><i></i><i></i><i></i></div>
         <div class="home-roamers">
-          ${openingFriends.map((pref, index) => `<button type="button" class="home-roamer ${state.unlocked.has(pref.code) ? 'is-known' : 'is-preview'} roamer-${index + 1}" data-action="hero-cheer" data-code="${pref.code}" aria-label="全国の仲間、${pref.character}">${mascot(pref, 'home-roamer-art')}<span>${pref.character}</span></button>`).join('')}
+          ${openingFriends.map((pref, index) => `<button type="button" class="home-roamer ${state.unlocked.has(pref.code) ? 'is-known' : 'is-mystery'} roamer-${index + 1}" data-action="hero-cheer" data-code="${pref.code}" aria-label="${state.unlocked.has(pref.code) ? pref.character + 'を応援する' : 'まだ出会っていない仲間'}">${mascot(pref, 'home-roamer-art')}<span>${state.unlocked.has(pref.code) ? pref.character : '？？？'}</span></button>`).join('')}
         </div>
       </div>
       <header class="title-stage">
@@ -2136,10 +2137,11 @@ window.addEventListener('wheel', (event) => {
 }, { passive: false });
 
 function syncSoundControls() {
-  document.querySelectorAll('.sound-menu-button').forEach(button => {
+  document.querySelectorAll('.sound-toggle-button').forEach(button => {
     const stateLabel = button.querySelector('span');
-    if (stateLabel) stateLabel.textContent = state.sound ? '♪' : '音';
-    button.setAttribute('aria-label', `音と演出を設定する（音 ${state.sound ? 'オン' : 'オフ'}）`);
+    if (stateLabel) stateLabel.textContent = state.sound ? '🔊' : '🔇';
+    button.setAttribute('aria-label', `音を${state.sound ? 'オフ' : 'オン'}にする`);
+    button.setAttribute('aria-pressed', String(state.sound));
   });
   const master=document.querySelector('.audio-master-button');
   if(master) master.textContent=state.sound?'すべての音を消す':'音を出す';

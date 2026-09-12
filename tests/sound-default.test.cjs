@@ -6,8 +6,12 @@ const {chromium}=require('C:/Users/freecar/.cache/codex-runtimes/codex-primary-r
   const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
   await page.addInitScript(()=>localStorage.setItem('47quest-sound','true'));
   await page.goto(pathToFileURL(path.resolve('build/index.html')).href);
+  const quick=page.locator('.sound-toggle-button');
   const menu=page.locator('.sound-menu-button');
   assert.equal(await page.evaluate(()=>state.sound),true);
+  assert.equal(await quick.getAttribute('aria-pressed'),'true');
+  await quick.click();assert.equal(await page.evaluate(()=>state.sound),false);
+  await quick.click();assert.equal(await page.evaluate(()=>state.sound),true);
   await menu.click();
   const toggle=page.locator('.audio-master-button');
   assert.equal(await toggle.innerText(),'すべての音を消す');
