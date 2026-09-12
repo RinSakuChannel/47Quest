@@ -2,6 +2,8 @@
 
 日本全国を冒険しながら、47都道府県の場所・ひらがな・漢字を覚える横画面Webゲームです。
 
+公開版: https://rinsakuchannel.github.io/47Quest/
+
 ## 起動方法
 
 Node.js 18以上が入っているPCで、このフォルダをPowerShellまたはターミナルで開き、次を実行します。

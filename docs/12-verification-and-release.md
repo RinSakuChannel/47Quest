@@ -46,8 +46,9 @@
 
 ## 公開確認
 
-- キャラクター復帰・リンク修正版コミット: `19c1b0cdffd91848798e6b9654f4562c18ab69f3`
+- UI・地図・獲得導線修正版コミット: `dbc98c483abd4d60beb9b8963a68ce21cef819ef`
 - GitHub: `RinSakuChannel/47Quest` の `main` へpushし、`ls-remote`で同一SHAを確認した。
-- Sites: バージョン4として同一SHAと47画像を含む検証済みアーカイブを保存し、本番デプロイ `appgdep_6aa4be16ecb88191b90c7d0ac4883070` が `succeeded` になったことを確認した。
-- 公開URL: `https://forty-seven-quest.zitanchannel.chatgpt.site`
-- 公開後確認: 実ブラウザで47体すべての画像decodeに成功。添付で壊れていた山口県のゲーム説明画像も表示され、失敗リクエスト・4xx応答0件を確認した。
+- GitHub Pages: 上記SHAを指定して再ビルドし、状態が `built` になったことを確認した。
+- 現行公開URL: `https://rinsakuchannel.github.io/47Quest/`
+- 公開後確認: PC 1440×900、スマートフォン390×844でHTTP 200、生成画像ロゴなし、新ワードマーク表示、画像破損0、失敗リクエスト0、JavaScript例外0、縦横スクロール0、スタートから地図画面への遷移成功を確認した。
+- 旧Sites URL `https://forty-seven-quest.zitanchannel.chatgpt.site/` は以前のバージョンであり、現行公開先としては扱わない。
