@@ -217,6 +217,9 @@ async function drawEnoughInk(page) {
       await assertPageNoScroll(page, `${name} reveal`);
       await assertReadableText(page, `${name} reveal`);
       assert.ok(await page.locator('.reveal-character img').evaluate(img => img.complete && img.naturalWidth > 0), `${name}: reveal character did not load`);
+      if (isPhone) {
+        assert.equal(await page.locator('.reveal-name-card > p').first().evaluate(element => getComputedStyle(element).textAlign), 'center', `${name}: character description is not centered`);
+      }
       await page.locator('[data-action="reward-map"]').click();
       await assertInsideViewport(page,'.reward-map-dialog,.reward-map-surface',`${name} reward map`);
       assert.equal(await page.locator('.reward-map-surface').evaluate(e=>e._mapZoom.getState().scale),3);
