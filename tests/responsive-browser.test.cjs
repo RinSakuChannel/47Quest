@@ -184,8 +184,8 @@ async function drawEnoughInk(page) {
       await assertPageNoScroll(page, `${name} title`);
       await assertReadableText(page, `${name} title`);
       assert.equal(await page.locator('.home-roamer [data-character-code]').count(), 6, `${name}: title characters are not voice-enabled`);
-      assert.equal(await page.locator('.home-roamer .quest-actor-svg').count(), 6, `${name}: layered title actors were not rendered`);
-      assert.equal(await page.locator('.home-roamer-pixels').count(), 0, `${name}: obsolete coarse title mosaics are still rendered`);
+      assert.equal(await page.locator('.home-roamer-pixels').count(), 6, `${name}: title character mosaics were not rendered`);
+      assert.ok(await page.locator('.home-roamer-pixels').first().evaluate(canvas => canvas.width === 12 && canvas.height === 12), `${name}: title mosaic is not coarse enough`);
       if (name === 'desktop') {
         await page.locator('.sound-toggle-button').click();
         await page.locator('.sound-menu-button').click();
@@ -215,7 +215,7 @@ async function drawEnoughInk(page) {
       await assertInsideViewport(page, '.reward-reveal-scene,.reveal-character-wrap,.reveal-name-card,.reveal-next-button', `${name} reveal`);
       await assertPageNoScroll(page, `${name} reveal`);
       await assertReadableText(page, `${name} reveal`);
-      assert.ok(await page.locator('.reveal-character .quest-actor-svg').evaluate(svg => svg.querySelectorAll('.actor-eye,.actor-mouth,.actor-arm').length >= 5), `${name}: layered reveal actor did not load`);
+      assert.ok(await page.locator('.reveal-character img').evaluate(img => img.complete && img.naturalWidth > 0), `${name}: reveal character did not load`);
       await page.locator('[data-action="reward-map"]').click();
       await assertInsideViewport(page,'.reward-map-dialog,.reward-map-surface',`${name} reward map`);
       assert.equal(await page.locator('.reward-map-surface').evaluate(e=>e._mapZoom.getState().scale),3);

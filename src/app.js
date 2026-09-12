@@ -392,11 +392,10 @@ function openGuideHelp(opener){
 }
 
 function mascot(pref, className = 'pref-mascot') {
+  const image = window.CHARACTER_ART?.[pref.code] || `./assets/characters/${pref.code}.png`;
   const motif=`${pref.character} ${pref.characterCopy} ${pref.specialty}`;
   const motion=/雪|石|だるま|城|いも|大仏/.test(motif)?'weight':/魚|海|雲|くらげ/.test(motif)?'drift':/うどん|もち|こんにゃく|麺/.test(motif)?'spring':'sway';
-  const expression=/retry/.test(className)?'sad':/reveal|clear/.test(className)?'joy':'happy';
-  const actor=window.QUEST_CHARACTER_ACTORS?.markup(pref,'',expression) || '';
-  return `<div class="${className} pref-mascot-art" data-life="${motion}" role="img" aria-label="${pref.character}。タップすると声が聞けます" data-character-code="${pref.code}">${actor}</div>`;
+  return `<div class="${className} pref-mascot-art" data-life="${motion}" role="img" aria-label="${pref.character}。タップすると声が聞けます" data-character-code="${pref.code}"><img src="${image}" alt="" draggable="false" decoding="async" /></div>`;
 }
 
 function characterCry(pref) {
@@ -405,10 +404,6 @@ function characterCry(pref) {
   // stronger level than short synthesized effects to stay intelligible.
   const mobile = window.matchMedia?.('(pointer: coarse)').matches || window.innerWidth <= 760;
   const voiceVolume = Math.min(1, (state.seVolume / 100) * (mobile ? 2.35 : 1.8));
-  document.querySelectorAll(`.quest-actor[data-actor-code="${pref.code}"]`).forEach(actor=>{
-    actor.classList.remove('is-talking'); void actor.offsetWidth; actor.classList.add('is-talking');
-    window.setTimeout(()=>actor.isConnected&&actor.classList.remove('is-talking'),900);
-  });
   try { window.QUEST_CHARACTER_CRIES.play(ensureAudio(), pref.code, voiceVolume, audioChannels.se); } catch { /* Audio may be unavailable. */ }
 }
 
@@ -559,10 +554,8 @@ function renderHome() {
 
 // Animate inside the artwork's reserved box, never beyond a clipped card.
 function bounceCharacter(container) {
-  const art = container.querySelector('.quest-actor') || container;
+  const art = container.querySelector('.home-roamer-pixels, img') || container;
   art.getAnimations().filter(a => a.id === 'character-bounce').forEach(a => a.cancel());
-  art.classList.remove('is-reacting');void art.offsetWidth;art.classList.add('is-reacting');
-  window.setTimeout(()=>art.isConnected&&art.classList.remove('is-reacting'),980);
   const life=container.dataset.life||container.querySelector('[data-life]')?.dataset.life||'sway';
   const reactions={
     weight:[{scale:'1'},{scale:'.94 .90',offset:.25},{scale:'.98',rotate:'-1deg',offset:.55},{scale:'1',rotate:'0deg'}],
@@ -575,7 +568,17 @@ function bounceCharacter(container) {
 }
 
 function pixelateOpeningFriends() {
-  // Vector actors are already crisp at every size and safe to reveal on title.
+  document.querySelectorAll('.home-roamer-art > img').forEach((image) => {
+    const paint = () => {
+      if (!image.naturalWidth || image.parentElement?.querySelector('canvas')) return;
+      const canvas = document.createElement('canvas');
+      canvas.className = 'home-roamer-pixels'; canvas.width = 12; canvas.height = 12;
+      const context = canvas.getContext('2d', { alpha:true });
+      context.imageSmoothingEnabled = false; context.drawImage(image, 0, 0, 12, 12);
+      image.insertAdjacentElement('afterend', canvas);
+    };
+    if (image.complete) paint(); else image.addEventListener('load', paint, {once:true});
+  });
 }
 
 function startRound() {

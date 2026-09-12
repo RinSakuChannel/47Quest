@@ -12,6 +12,15 @@
 :where(.primary-button,.secondary-button,.tool-button){line-height:1.35;word-break:normal;line-break:strict;text-wrap:balance;}
 .region-milestone{padding:6px 12px;border-radius:12px;background:#ffebaa;color:#725019;animation:milestone-arrive .5s ease-out both;text-wrap:balance;}
 @keyframes milestone-arrive{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.reveal-character>img,.detail-mascot>img{transform-origin:50% 85%;animation:life-weight 3.1s ease-in-out 2}
+[data-life="drift"].reveal-character>img,[data-life="drift"].detail-mascot>img{animation-name:life-drift}
+[data-life="spring"].reveal-character>img,[data-life="spring"].detail-mascot>img{animation-name:life-spring}
+[data-life="sway"].reveal-character>img,[data-life="sway"].detail-mascot>img{animation-name:life-sway}
+@keyframes life-weight{50%{transform:scale(.97,.94)}}
+@keyframes life-drift{50%{transform:translateY(-2%) scale(.97)}}
+@keyframes life-spring{20%{transform:scale(.94,.9)}40%{transform:translateY(-3%) scale(.94)}65%{transform:scale(.98,.95)}}
+@keyframes life-sway{35%{transform:rotate(-2deg) scale(.95)}70%{transform:rotate(2deg) scale(.95)}}
+@media(prefers-reduced-motion:reduce){.reveal-character>img,.detail-mascot>img{animation:none}}
 .reward-reveal-scene.is-introducing .reveal-name-card{visibility:hidden;pointer-events:none;}
 .reward-reveal-scene.is-introducing .reveal-character-wrap{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);width:min(65vw,44dvh,440px)!important;height:min(65vw,44dvh,440px)!important;}
 .reward-reveal-skip{position:absolute;z-index:9;left:50%;bottom:16%;transform:translateX(-50%);min-height:44px;padding:10px 18px;border:2px solid #fff;border-radius:12px;background:#fff3c6;color:#173e51;font:700 16px/1.3 sans-serif;white-space:nowrap;}
@@ -71,7 +80,7 @@
 .memory-reward-scene .reward-characters {display:flex;gap:12px;width:100%;height:100%;min-height:0;justify-content:center;align-items:stretch;}
 .memory-friend {display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:8px;min-width:0;min-height:0;width:min(30%,300px);padding:12px;border:2px solid #fff;border-radius:22px;background:#fffdf5;color:#173e51;box-shadow:0 5px #b9d4cc;animation:play-result-enter 350ms var(--card-delay) both;}
 .memory-friend-art {width:100%;height:100%;min-height:0;}
-.memory-friend-art .quest-actor {width:100%;height:100%;}
+.memory-friend-art img {width:100%;height:100%;object-fit:contain;}
 .memory-question,.memory-answer {font-size:clamp(16px,2vw,24px);font-weight:900;text-align:center;}
 .memory-friend small {display:block;font-size:13px;line-height:1.5;margin-top:5px;}
 .memory-learning {font-size:12px;line-height:1.4;border-radius:10px;background:#e4f1e9;padding:6px;}
