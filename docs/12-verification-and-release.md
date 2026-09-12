@@ -51,10 +51,10 @@
 
 ## 公開確認
 
-- UI・ミニゲーム修正版: 本記録を含む `main` 最新版。
-- GitHub: `RinSakuChannel/47Quest` の `main` へpushし、公開先と同一内容であることを確認する。
-- GitHub Pages: 最新 `main` の公開処理完了後に再確認する。
+- UI・ミニゲーム修正版コミット: `74c767b2fad9d6af01979c5bd9a31f4126a61174`。
+- GitHub: `RinSakuChannel/47Quest` の `main` へpushし、`ls-remote`で同一SHAを確認した。
+- GitHub Pages: 上記コミットの状態が `built` になったことを確認した。
 - 現行公開URL: `https://rinsakuchannel.github.io/47Quest/`
-- 公開後確認: PC 1440×900、スマートフォン390×844でHTTP 200、生成画像ロゴなし、新ワードマーク表示、画像破損0、失敗リクエスト0、JavaScript例外0、縦横スクロール0、スタートから地図画面への遷移成功を確認した。
+- 公開後確認: PC 1440×900、スマートフォン390×844、横844×390でHTTP 200、画像破損0、失敗リクエスト0、JavaScript例外0、縦横スクロール0、タイトルのランダム6体表示、スタートから地図画面への遷移、大分ゲームの20秒設定を確認した。
 - 文字組み確認: 47県×11画面×7端末幅の3,619画面で、語中改行、最終行の孤立1文字、文字のクリップ、画面スクロールを自動検査した。
 - 旧Sites URL `https://forty-seven-quest.zitanchannel.chatgpt.site/` は以前のバージョンであり、現行公開先としては扱わない。
