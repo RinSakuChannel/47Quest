@@ -3,6 +3,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('C:/Users/freecar/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const verificationRoot = process.env.QUEST_TEST_OUTPUT || '.verification';
 
 const sizes = [
   ['desktop', 1440, 900],
@@ -188,7 +189,7 @@ async function drawEnoughInk(page) {
           }
         }
         console.log(`${name}: 517 prefecture/text screens checked`);
-        if(failures.length){fs.mkdirSync('.verification',{recursive:true});fs.writeFileSync(`.verification/layout-${name}.json`,JSON.stringify(failures,null,2));console.log(`${name}: ${failures.length} failures (see .verification/layout-${name}.json)`);process.exitCode=1;}
+        if(failures.length){fs.mkdirSync(verificationRoot,{recursive:true});fs.writeFileSync(path.join(verificationRoot,`layout-${name}.json`),JSON.stringify(failures,null,2));console.log(`${name}: ${failures.length} failures`);process.exitCode=1;}
         await context.close();
         continue;
       }
@@ -200,10 +201,11 @@ async function drawEnoughInk(page) {
       assert.equal(new Set(await page.locator('.home-roamer [data-character-code]').evaluateAll(nodes => nodes.map(node => node.dataset.characterCode))).size, 6, `${name}: title character draw contains duplicates`);
       assert.equal(await page.locator('.home-roamer img').count(), 6, `${name}: title friend art is incomplete`);
       assert.equal(await page.locator('.home-roamer-pixels').count(), 0, `${name}: coarse pixel mosaics returned`);
-      assert.ok(await page.locator('.home-roamer.is-mystery img').evaluateAll(images => images.length > 0 && images.every(image => getComputedStyle(image).filter.includes('brightness(0)'))), `${name}: unmet friend is not concealed as a silhouette`);
+      assert.equal(await page.locator('.home-roamer img').count(), 6, `${name}: title does not preview six real characters`);
+      assert.ok(await page.locator('.home-roamer img').evaluateAll(images => images.every(image => !getComputedStyle(image).filter.includes('brightness(0)'))), `${name}: title character preview is hidden`);
       if (name === 'desktop') {
-        await page.locator('.sound-toggle-button').click();
         await page.locator('.sound-menu-button').click();
+        await page.locator('.audio-master-button').click();
         assert.equal(await page.locator('[data-volume="bgm"]').inputValue(), '34', 'default BGM must be twenty percent quieter');
         assert.equal(await page.locator('[data-volume="se"]').inputValue(), '42', 'SE/Voice slider default changed unexpectedly');
         await page.evaluate(() => {
@@ -321,8 +323,8 @@ async function drawEnoughInk(page) {
       assert.ok(lessonLayout.scrollWidth <= lessonLayout.clientWidth + 1, `${name}: game instructions overflow horizontally`);
       assert.ok(lessonLayout.fontSize >= 18, `${name}: game instructions are too small`);
       assert.ok(lessonLayout.balanced, `${name}: game instruction lines are not balanced`);
-      if (isPhone) await page.getByRole('button',{name:'チャレンジ！',exact:true}).tap();
-      else await page.getByRole('button',{name:'チャレンジ！',exact:true}).click();
+      if (isPhone) await page.getByRole('button',{name:'スタート',exact:true}).tap();
+      else await page.getByRole('button',{name:'スタート',exact:true}).click();
       await page.waitForSelector('.rg-canvas');
       const regionalCanvas = await page.locator('.rg-canvas').boundingBox();
       assert.ok(Math.abs(regionalCanvas.width / regionalCanvas.height - 5 / 3) < .02,
@@ -385,16 +387,16 @@ async function drawEnoughInk(page) {
       for (const code of ['03','05','23','26']) {
         await page.evaluate(code => {state.current=PREFECTURE_DATA.find(p=>p.code===code);state.round=[state.current];state.roundIndex=0;renderGame();}, code);
         await assertReadableText(page, `${name} ${code} instructions`);
-        await page.getByRole('button',{name:'チャレンジ！',exact:true}).click();
+        await page.getByRole('button',{name:'スタート',exact:true}).click();
         await page.waitForSelector('.rg-canvas');
         await assertPageNoScroll(page, `${name} ${code} game`);
         await assertInsideViewport(page, '.rg-canvas,.fg-banner,.fg-status,.fg-star-track', `${name} ${code} game`);
         const ratio=await page.locator('.rg-canvas').evaluate(c=>{const r=c.getBoundingClientRect();return r.width/r.height;});
         assert.ok(Math.abs(ratio-5/3)<.02,`${name} ${code}: canvas text is stretched`);
-        if(name==='phone'||name==='desktop'){
+        if(process.env.QUEST_CAPTURE==='1'&&(name==='phone'||name==='desktop')){
           await page.waitForTimeout(250);
-          fs.mkdirSync(path.resolve('.verification/minigames'),{recursive:true});
-          await page.screenshot({path:path.resolve(`.verification/minigames/${name}-${code}.png`)});
+          fs.mkdirSync(path.join(verificationRoot,'minigames'),{recursive:true});
+          await page.screenshot({path:path.join(verificationRoot,'minigames',`${name}-${code}.png`)});
         }
       }
       await page.evaluate(()=>{state.gachaRewards=PREFECTURE_DATA.slice(0,3);state.reviewResults={'01':{kanji:true},'02':{kanji:false}};renderReward();});
@@ -407,7 +409,7 @@ async function drawEnoughInk(page) {
         await assertReadableText(page, `${name} memory answer`);
       }
       await assertNoHiddenOverflow(page,'.memory-friend',`${name} memory cards`);
-      if(name==='phone')await page.screenshot({path:path.resolve('.verification/minigames/phone-memory.png')});
+      if(process.env.QUEST_CAPTURE==='1'&&name==='phone')await page.screenshot({path:path.join(verificationRoot,'minigames','phone-memory.png')});
       await context.close();
     }
     const motionContext = await browser.newContext({ viewport:{width:390,height:844}, hasTouch:true, isMobile:true, reducedMotion:'no-preference' });

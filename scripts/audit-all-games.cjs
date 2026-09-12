@@ -5,9 +5,11 @@ const sharp = require('C:/Users/freecar/.cache/codex-runtimes/codex-primary-runt
 const { chromium } = require('C:/Users/freecar/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 
 const root = path.resolve(__dirname, '..');
-const output = path.join(root, '.verification', 'all-games');
+const output = process.env.QUEST_AUDIT_OUTPUT
+  ? path.resolve(root, process.env.QUEST_AUDIT_OUTPUT)
+  : path.join(root, '.verification', 'all-games');
 
-const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.webp':'image/webp', '.wav':'audio/wav', '.json':'application/json' };
+const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.webp':'image/webp', '.wav':'audio/wav', '.json':'application/json' };
 const server = http.createServer((request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, 'http://local').pathname);
   const requested = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
@@ -35,7 +37,7 @@ async function renderViewport(browser, name, viewport) {
       state.sound = false; state.current = pref; state.round = [pref]; state.roundIndex = 0; state.replay = true;
       renderGame();
     }, code);
-    await page.getByRole('button', { name:'チャレンジ！', exact:true }).click();
+    await page.getByRole('button', { name:'スタート', exact:true }).click();
     await page.waitForSelector('.fg-world');
     await page.waitForTimeout(180);
     const canvas = page.locator('.rg-canvas');

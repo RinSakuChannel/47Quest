@@ -14,7 +14,7 @@
     '01':'坂・雪だまり・雪玉の重さ','03':'おかわりの順番と食べる速さ','04':'枝の高さと風向き','05':'積む順番と光る場所','06':'穴の間隔とふたごの引かれ方','07':'鈴の位置・速さ・横風','08':'回転位置と狙う面','09':'距離と飛ぶ角度','10':'支点とだるまの重さ','11':'火加減と両面の焼け方','13':'ひびの場所と増える間隔','14':'群れと網の位置','15':'米粒と海苔の位置','16':'光る場所と順番','17':'風と器の位置','18':'骨と土の厚さ','19':'光の向きと熟れ方','20':'谷幅と橋の長さ','21':'魚の深さと流れ','22':'新芽の場所と伸び方','23':'火の場所と揺れ幅','24':'真珠の場所と閉じる速さ','25':'流れと左右の曲がり','26':'輪の場所と花びらの流れ','27':'注文と焼ける速さ','28':'巣の高さと気流','29':'おじぎする順番','30':'箱の空きと流れる間隔','31':'ゴール距離と必要な砂','32':'穴の位置と糸のたわみ','33':'落下高と受ける位置','34':'門の順番と水量','35':'門の大きさと流速','36':'左右の並びとテンポ','38':'波門の高さと間隔','39':'引く力と危険の予兆','40':'波幅と足場の高さ','41':'模様の高さと回転速度','42':'人数と生地の幅','43':'水路と熱い岩の位置','44':'三色湯の順番','45':'果実の角度と網幅','46':'根の分岐と深さ','47':'泡・輪・潮の流れ'
   };
   function register(code,title,command,lesson,icon,factory){
-    definitions[code]={title,command,lesson,demo:icon,gesture:gestures[code],variation:variations[code],goal:3,time:25,acts:['まずは やってみよう！','こつを つかんできた？','あと少し！ 記録にちょうせん']};games[code]=factory;
+    definitions[code]={title,command,lesson,demo:icon,gesture:gestures[code],variation:variations[code],goal:3,time:20,acts:['まず 1回','少し速くなるよ','ラスト']};games[code]=factory;
   }
   function create(code,ctx){
     const canvas=document.createElement('canvas');canvas.className='rg-canvas';
@@ -25,12 +25,27 @@
     const mascot=new Image();if(window.CHARACTER_ART?.[code])mascot.src=window.CHARACTER_ART[code];
     let pointer={x:500,y:300,down:false},previous={...pointer};let done=false,celebrate=0,interacted=false,missFlash=0,pressPulse=0;
     const effects=[];
-    const themeIndex=(Number(code)-1)%8;
-    const themePairs=[['#dff2f5','#b9d9df'],['#fff2cf','#e7c990'],['#e5f2d5','#bdd59a'],['#f8e4e1','#e5b5ae'],['#e8e0f3','#c6b6dd'],['#dbeaf5','#aac9dd'],['#f4ead6','#d9be91'],['#dff2ea','#afd5c5']];
+    const sceneByCode={
+      '01':'snow','04':'night','05':'snow','06':'orchard','07':'festival','08':'orchard','09':'orchard','10':'festival','11':'workshop','13':'workshop','14':'sea','15':'field','16':'night','17':'workshop','18':'earth','19':'orchard','20':'mountain','21':'sea','22':'field','23':'sea','24':'sea','25':'sea','26':'festival','27':'festival','28':'field','29':'forest','30':'orchard','31':'earth','32':'night','33':'orchard','34':'river','35':'sea','36':'festival','38':'sea','39':'sea','40':'sea','41':'workshop','42':'workshop','43':'mountain','44':'spring','45':'orchard','46':'earth','47':'sea'
+    };
+    const palettes={
+      snow:['#dcecf1','#f7fbfa','#9fc4d0'],night:['#24465e','#17364e','#7fa8b9'],orchard:['#e6efce','#9fc477','#739c62'],festival:['#f7dfc5','#e89b78','#c3655b'],workshop:['#f3e7cf','#d5b17b','#a97855'],sea:['#d5f0ef','#71bdc7','#3d8fa0'],field:['#e8efd3','#a5c77c','#6f9c60'],earth:['#ecd8bf','#bd936c','#815b45'],mountain:['#dce9dc','#94b29a','#577d6a'],forest:['#dfead2','#80aa74','#4f7956'],river:['#e3edd8','#7fc4c6','#4b9298'],spring:['#f0e4cd','#86c5c5','#d98c6b']
+    };
+    const sceneKind=sceneByCode[code]||'field';
     function paintBackdrop(color){
-      const [top,bottom]=themePairs[themeIndex];const g=c.createLinearGradient(0,0,0,600);g.addColorStop(0,color||top);g.addColorStop(1,bottom);c.fillStyle=g;c.fillRect(0,0,1000,600);
-      c.save();c.globalAlpha=.12;c.fillStyle='#fff';for(let i=0;i<7;i++){const x=(i*173+Number(code)*37)%1080-40,y=70+(i%3)*115;c.beginPath();c.arc(x,y,42+(i%2)*22,0,Math.PI*2);c.fill();}c.restore();
-      c.fillStyle='rgba(18,59,83,.055)';c.fillRect(0,0,1000,7);
+      const [sky,ground,ink]=palettes[sceneKind];
+      c.fillStyle=color||sky;c.fillRect(0,0,1000,600);
+      c.save();c.globalAlpha=.28;c.fillStyle=sceneKind==='night'?'#fff3bc':'#fff8d8';c.beginPath();c.arc(835,105,sceneKind==='night'?28:46,0,Math.PI*2);c.fill();
+      c.fillStyle=ground;
+      if(['sea','river','spring'].includes(sceneKind)){
+        c.fillRect(0,360,1000,240);c.strokeStyle=ink;c.lineWidth=8;
+        for(let y=390;y<590;y+=58){c.beginPath();c.moveTo(-40,y);for(let x=-40;x<=1040;x+=80)c.quadraticCurveTo(x+20,y-13,x+40,y);c.stroke();}
+      }else{
+        c.beginPath();c.moveTo(0,390);for(let x=0;x<=1000;x+=125)c.quadraticCurveTo(x+62,330+((x/125+Number(code))%2)*35,x+125,390);c.lineTo(1000,600);c.lineTo(0,600);c.closePath();c.fill();
+        c.fillStyle=ink;c.globalAlpha=.16;for(let x=50;x<1000;x+=145){c.fillRect(x,330+(x%3)*18,10,115);c.beginPath();c.arc(x+5,320+(x%3)*18,32,0,Math.PI*2);c.fill();}
+      }
+      c.restore();
+      c.fillStyle='rgba(18,59,83,.07)';c.fillRect(0,0,1000,6);
     }
     const api={get phase(){return ctx.model.phase;},get time(){return ctx.model.playTime??ctx.model.elapsed;},
       random,clamp,dist,
@@ -74,7 +89,6 @@
       game.draw();
       for(const e of effects){e.life-=dt;e.x+=e.vx*dt;e.y+=e.vy*dt;if(!e.label&&!e.ring)e.vy+=600*dt;if(e.life>0){if(e.label)api.text(e.label,e.x,e.y,38,'#173e51');else if(e.ring){c.save();c.globalAlpha=Math.min(1,e.life*3);c.strokeStyle='#e3a72c';c.lineWidth=5;c.beginPath();c.arc(e.x,e.y,22+(1-e.life/.34)*38,0,Math.PI*2);c.stroke();c.restore();}else api.circle(e.x,e.y,5,e.color||'#efad31');}}
       for(let i=effects.length-1;i>=0;i--)if(effects[i].life<=0)effects.splice(i,1);
-      {const action=gestures[code],width=Math.max(170,action.length*27+88);api.box(18,18,width,48,'rgba(255,253,244,.92)');api.text(`操作｜${action}`,18+width/2,42,22,'#173e51');}
       if(missFlash>0){missFlash=Math.max(0,missFlash-dt);c.save();c.globalAlpha=missFlash*.32;c.fillStyle='#d85f54';c.fillRect(0,0,1000,600);c.restore();}
       // Keep the board visible: the banner owns success copy, particles mark the action.
     }};
@@ -273,9 +287,9 @@
     const slots=[{x:random(280,340),y:random(150,210)},{x:random(490,550),y:random(270,330)},{x:random(720,790),y:random(380,420)}];let i=0,stone={x:100,y:460},held=false;
     return {input(k,p){if(k==='down'&&dist(p,stone)<75)held=true;if(k==='move'&&held)stone={x:p.x,y:p.y};if(k==='up'&&held){held=false;if(slots[i]&&dist(stone,slots[i])<70){i++;if(i===3)a.win();}stone={x:100,y:460};}if(k==='cancel')held=false;},draw(){a.line([{x:150,y:70},...slots.slice(0,i)],'#71bdd5',28);slots.forEach((s,n)=>{a.circle(s.x,s.y,60,n<i?'#82bdaf':'#dc8854');if(n===i)a.target(s.x,s.y,70);});a.circle(stone.x,stone.y,45,'#89968b');a.text('石で水の向きをかえて 岩を冷やす',500,550,26);}};
   });
-  register('44','温泉たまご 三色湯めぐり','光ったお湯へ 卵をはこぼう！','光る温泉を順番に見て、卵をドラッグ。熱・ぬる・冷のコースが毎回変わるよ。','🥚',a=>{
-    const baths=[{x:230,color:'#ef8a65',name:'あつい'},{x:500,color:'#f2ce68',name:'ぬるい'},{x:770,color:'#7fc9dd',name:'つめたい'}];const route=Array.from({length:5},()=>Math.floor(random(0,3)));let egg={x:500,y:470},held=false,stage=0;
-    return {input(k,p){if(k==='down'&&dist(p,egg)<90)held=true;if(k==='move'&&held)egg={x:p.x,y:p.y};if(k==='up'&&held){held=false;const hit=baths.findIndex(b=>dist(p,{x:b.x,y:270})<105);if(hit===route[stage]){stage++;a.tell('いい湯！');if(stage===route.length)a.win(p.x,p.y);}else if(hit>=0){a.miss();a.tell('光っているお湯へ！');}egg={x:500,y:470};}if(k==='cancel'){held=false;egg={x:500,y:470};}},draw(){a.box(0,0,1000,600,'#f4ecd8');baths.forEach((b,i)=>{a.circle(b.x,270,115,b.color);if(i===route[stage])a.target(b.x,270,125);a.text(b.name,b.x,270,25,'#173e51');});a.icon('🥚',egg.x,egg.y,90);a.text(`湯めぐり ${stage} / ${route.length}　光るお湯へ！`,500,550,27);}};
+  register('44','湯の花 三色めぐり','光るお湯へ 湯の花石をはこぼう','光るお湯を見て、石をその場所へ運ぼう。順番は毎回変わるよ。','♨',a=>{
+    const baths=[{x:230,color:'#ef8a65',name:'あつい'},{x:500,color:'#f2ce68',name:'ぽかぽか'},{x:770,color:'#7fc9dd',name:'ひんやり'}];const route=Array.from({length:4},()=>Math.floor(random(0,3)));let stone={x:500,y:435},held=false,stage=0;
+    return {input(k,p){if(k==='down'&&dist(p,stone)<110)held=true;if(k==='move'&&held)stone={x:p.x,y:p.y};if(k==='up'&&held){held=false;const hit=baths.findIndex(b=>dist(p,{x:b.x,y:270})<105);if(hit===route[stage]){stage++;a.tell('ぽかぽか');if(stage===route.length)a.win(p.x,p.y);}else if(hit>=0){a.miss();a.tell('光るお湯へ');}stone={x:500,y:435};}if(k==='cancel'){held=false;stone={x:500,y:435};}},draw(){baths.forEach((b,i)=>{a.circle(b.x,270,115,b.color);if(i===route[stage])a.target(b.x,270,125);a.text(b.name,b.x,270,25,'#173e51');});if(a.mascot)a.mascot(stone.x,stone.y,145);else a.icon('💎',stone.x,stone.y,90);a.text(`湯めぐり ${stage} / ${route.length}`,500,555,27);}};
   });
   register('45','マンゴー 網の収穫','包んで くるっと ひねろう','下の網をマンゴーへ重ねよう。包んだら果実のまわりをくるっとなぞろう。','🥭',a=>{
     let net={x:250,y:450},wrapped=false,last=null,turn=0,held=false;

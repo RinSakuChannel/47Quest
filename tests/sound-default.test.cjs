@@ -6,16 +6,23 @@ const {chromium}=require('C:/Users/freecar/.cache/codex-runtimes/codex-primary-r
   const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
   await page.addInitScript(()=>localStorage.setItem('47quest-sound','true'));
   await page.goto(pathToFileURL(path.resolve('build/index.html')).href);
-  const toggle=page.locator('.sound-toggle-button');
-  assert.equal(await toggle.innerText(),'音 OFF');
-  await toggle.click();assert.equal(await page.evaluate(()=>state.sound),true);
-  await page.locator('[data-action="start"]').click();
-  assert.equal(await toggle.innerText(),'音 ON');
+  const menu=page.locator('.sound-menu-button');
+  assert.equal(await page.evaluate(()=>state.sound),true);
+  await menu.click();
+  const toggle=page.locator('.audio-master-button');
+  assert.equal(await toggle.innerText(),'すべての音を消す');
   await toggle.click();assert.equal(await page.evaluate(()=>state.sound),false);
+  await menu.click();
+  await page.locator('[data-action="start"]').click();
+  assert.equal(await page.evaluate(()=>state.sound),false);
+  await menu.click();
+  assert.equal(await toggle.innerText(),'音を出す');
+  await toggle.click();assert.equal(await page.evaluate(()=>state.sound),true);
+  await menu.click();
   await page.locator('[data-action="start-writing"]').click();
-  assert.equal(await toggle.innerText(),'音 OFF');
-  const box=await toggle.boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width);
-  await page.reload();assert.equal(await toggle.innerText(),'音 OFF');
+  assert.equal(await page.evaluate(()=>state.sound),true);
+  const box=await menu.boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width);
+  await page.reload();assert.equal(await page.evaluate(()=>state.sound),true);
   await page.goto(pathToFileURL(path.resolve('build/games.html')).href);
   const galleryToggle=page.locator('#sound-toggle');assert.equal(await galleryToggle.innerText(),'音 OFF');
   await page.locator('#gallery button').first().click();
@@ -24,5 +31,5 @@ const {chromium}=require('C:/Users/freecar/.cache/codex-runtimes/codex-primary-r
   await galleryToggle.click();assert.equal(await galleryToggle.innerText(),'音 OFF');
   await page.close();
  }
- console.log('PASS: fresh loads muted, main scenes and gallery toggle sound on/off at four sizes');
+ console.log('PASS: saved sound preference restores, persists, and controls remain reachable at four sizes');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

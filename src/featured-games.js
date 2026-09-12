@@ -2,12 +2,12 @@
   'use strict';
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const definitions = {
-    '02': { title:'りんごの ごほうび収穫祭', command:'かごを うごかして キャッチ！', goal:8, time:25, gesture:'左右へドラッグ', variation:'りんごの位置・風の揺れ・金色の出現順が変わる', lesson:'かごを 左右にうごかそう。金のりんごは３点！', demo:'🍎　↓　🧺', acts:['りんごが おちてくるよ','そよかぜが ふいてきた！','金のりんごの 収穫祭！'] },
-    '12': { title:'らっかせい工場 おおいそがし', command:'つかんで おなじ絵の箱へ！', goal:8, time:25, gesture:'つかんで仕分け', variation:'品物の種類・出現間隔・レーン位置が変わる', lesson:'らっかせいは豆の箱へ。葉っぱは葉の箱へ はこぼう！', demo:'🥜 → 📦 ← 🍃', acts:['つかんで 箱へはこぼう','２つずつ ながれてくるよ','金のらっかせいも 登場！'] },
-    '37': { title:'のびーる！うどん食堂', command:'麺を 上にひっぱって はなそう！', goal:5, time:25, gesture:'上へ引いて離す', variation:'注文の長さ・成功帯・大盛りのタイミングが変わる', lesson:'もち手を上へひっぱろう。黄色い帯の中ではなすと できあがり！', demo:'↑　〰️　🍜', acts:['うどん食堂 かいてん！','ながーい注文も きたよ','大もりの 注文です！'] },
+    '02': { title:'りんごの ごほうび収穫祭', command:'かごを うごかして キャッチ', goal:8, time:20, gesture:'左右へドラッグ', variation:'りんごの位置・風の揺れ・金色の出現順が変わる', lesson:'指に合わせて、かごが動くよ。', demo:'🍎　↓　🧺', acts:['りんごを キャッチ','風でゆれるよ','金のりんごは 3点'] },
+    '12': { title:'らっかせい工場 おおいそがし', command:'つかんで おなじ箱へ', goal:8, time:20, gesture:'つかんで仕分け', variation:'品物の種類・出現間隔・レーン位置が変わる', lesson:'絵が同じ箱へ運ぼう。', demo:'🥜 → 📦 ← 🍃', acts:['絵が同じ箱へ','流れが速くなるよ','金は 3点'] },
+    '37': { title:'のびーる！うどん食堂', command:'上にひっぱって、黄色で はなす', goal:5, time:20, gesture:'上へ引いて離す', variation:'注文の長さ・成功帯・大盛りのタイミングが変わる', lesson:'もち手が黄色い帯に入ったら、指をはなそう。', demo:'↑　〰️　🍜', acts:['黄色で はなす','長い注文がくるよ','大もりは 2点'] },
   };
   // Pure round rules shared by the UI and regression tests.
-  function round(goal, duration = 25) {
+  function round(goal, duration = 20) {
     return { elapsed:0, score:0, streak:0, best:0, misses:0,
       tick(dt) { this.elapsed += clamp(dt,0,.1); return this.elapsed >= duration; },
       hit(points=1) { this.score += points; this.best = Math.max(this.best,++this.streak); },
@@ -22,27 +22,19 @@
     const def=definitions[pref.code]; if(!def)return false;
     field.className=`game-field featured-game featured-${pref.code}`;
     const intro=node('div','fg-intro');
-    const lessonLines=(def.lesson.match(/[^。！？]+[。！？]?/g)||[def.lesson])
-      .map(line=>`<span class="fg-lesson-line">${line.trim()}</span>`).join('');
-    const art=window.CHARACTER_ART?.[pref.code];
-    intro.innerHTML=`<p>25秒の ご当地チャレンジ</p>${art?`<div class="fg-mystery-stage" aria-hidden="true"><img src="${art}" alt=""/><i>？</i></div>`:''}<strong>${lessonLines}</strong><div class="fg-demo" aria-hidden="true">${def.demo}</div><span>★ ${def.goal}点　★★ ${def.goal*2}点　★★★ ${def.goal*3}点</span><button type="button">チャレンジ！</button>`;
-    const settings=node('label','fg-difficulty','あそびの速さ ');
-    const difficulty=node('select','');difficulty.setAttribute('aria-label','あそびの速さ');
-    difficulty.innerHTML='<option value="easy">ゆっくり</option><option value="normal" selected>ふつう</option><option value="challenge">挑戦</option>';
-    settings.append(difficulty);intro.insertBefore(settings,intro.lastElementChild);
-    const practiceButton=node('button','fg-practice','時間なしで れんしゅう');intro.append(practiceButton);
+    intro.innerHTML=`<div class="fg-demo" aria-hidden="true">${def.demo}</div><strong>${def.command}</strong><span class="fg-intro-note">${def.lesson}</span><button type="button" class="fg-start">スタート</button>`;
+    const practiceButton=node('button','fg-practice','まず練習する');intro.append(practiceButton);
     let practicing=false,practiceDone=false;
-    practiceButton.addEventListener('click',()=>{practicing=true;intro.querySelector('button').click();});
+    practiceButton.addEventListener('click',()=>{practicing=true;intro.querySelector('.fg-start').click();});
     field.append(intro);
     const stopGuide=window.QUEST_GESTURE_GUIDE?.mount(intro.querySelector('.fg-demo'),pref.code)||(()=>{});
     registerCleanup(stopGuide);
     let alive=true, raf=0; const cleanups=[];
     registerCleanup(()=>{alive=false;cancelAnimationFrame(raf);cleanups.forEach(fn=>fn());});
-    intro.querySelector('button').addEventListener('click',()=>{
+    intro.querySelector('.fg-start').addEventListener('click',()=>{
       stopGuide();intro.remove();sound('tap');
       const model=round(def.goal,def.time);
       model.playTime=0;
-      const pace={easy:.75,normal:1,challenge:1.18}[difficulty.value]||1;
       const practiceBadge=node('span','fg-practice-badge','練習：まず１回できればOK');practiceBadge.hidden=!practicing;
       field.append(practiceBadge);
       const world=node('div','fg-world'); const banner=node('strong','fg-banner',def.acts[0]);
@@ -50,18 +42,17 @@
       const buddyArt=window.CHARACTER_ART?.[runMeta.buddyCode];
       const buddy=buddyArt?node('button','fg-buddy'):null;
       if(buddy){buddy.type='button';buddy.dataset.characterCode=runMeta.buddyCode;buddy.setAttribute('aria-label','応援している仲間の声を聞く');const img=node('img','');img.src=buddyArt;img.alt='';buddy.append(img);field.append(buddy);}
-      const progress=node('div','fg-star-track');progress.setAttribute('role','progressbar');progress.setAttribute('aria-label','３つ星までの得点');progress.setAttribute('aria-valuemin','0');progress.setAttribute('aria-valuemax',String(def.goal*3));
-      progress.innerHTML='<i></i><span>★</span><span>★</span><span>★</span>';
-      const end=node('button','fg-bank','ここで おわる →');end.hidden=true;
+      const progress=node('div','fg-star-track');progress.setAttribute('role','progressbar');progress.setAttribute('aria-label','クリアまでの進み具合');progress.setAttribute('aria-valuemin','0');progress.setAttribute('aria-valuemax',String(def.goal));
+      progress.innerHTML='<i></i>';
+      const end=node('button','fg-bank','本番へ');end.hidden=true;
       end.addEventListener('click',()=>{
-        if(practicing&&practiceDone){practicing=false;practiceBadge.remove();model.elapsed=0;model.score=0;model.streak=0;model.best=0;model.misses=0;end.textContent='ここで おわる →';lastPhase=-1;feedbackTime=0;feedback.textContent='';sound('pop');return;}
-        if(model.score>=def.goal)complete();
+        if(practicing&&practiceDone){practicing=false;practiceBadge.remove();model.elapsed=0;model.score=0;model.streak=0;model.best=0;model.misses=0;lastPhase=-1;feedbackTime=0;feedback.textContent='';sound('pop');return;}
       });
       field.append(world,banner,status,feedback,end,progress);
       world.addEventListener('pointerdown',()=>sound('action'));
       world.addEventListener('pointermove',event=>{if(event.buttons)sound('motion');});
       world.addEventListener('pointerup',()=>sound('release'));
-      let feedbackTime=0, lastPhase=-1;
+      let feedbackTime=0, lastPhase=-1, completionQueued=false;
       const tell=(text)=>{
         feedbackTime=1.2;
         if(field.classList.contains('has-regional-canvas')){
@@ -74,12 +65,17 @@
         point(e){const r=world.getBoundingClientRect();return {x:clamp((e.clientX-r.left)/r.width*100,0,100),y:clamp((e.clientY-r.top)/r.height*100,0,100)};},
         hit(points=1){
           if(practicing){practiceDone=true;practiceBadge.textContent='できた！ 本番にすすもう';end.textContent='本番へ →';sound('good');return;}
-          const oldStars=model.stars;model.hit(points);sound(model.streak%3===0?'combo':'good');
+          model.hit(points);sound(model.streak%3===0?'combo':'good');
           if(buddy&&!window.QUEST_MOTION?.reduced()){
             const image=buddy.querySelector('img');image.getAnimations().forEach(a=>a.cancel());
             image.animate([{transform:'scale(.92)'},{transform:'translateY(-3px) scale(.9)',offset:.5},{transform:'none'}],{duration:400});
           }
-          tell(model.stars>oldStars?`★ ${model.stars}つ！ ${model.stars===3?'大成功！':'まだ いける！'}`:model.streak>=3?`${model.streak}れんぞく！ ＋${points}`:`やった！ ＋${points}`);
+          tell(model.score>=def.goal?'できた':model.streak>=3?`${model.streak}れんぞく`:`あと ${Math.max(0,def.goal-model.score)}`);
+          if(model.score>=def.goal&&!completionQueued){
+            completionQueued=true;
+            const completionTimer=setTimeout(()=>complete(true),480);
+            cleanups.push(()=>clearTimeout(completionTimer));
+          }
           if(!(window.QUEST_MOTION?.reduced()??window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)){
             status.getAnimations().forEach(animation=>animation.cancel());
             status.animate([{scale:'1'},{scale:'1.04',offset:.3},{scale:'1'}],{duration:280,easing:'ease-out'});
@@ -91,8 +87,8 @@
       if(world.querySelector('.rg-canvas'))field.classList.add('has-regional-canvas');
       function complete(success=model.score>=def.goal){
         if(!alive)return; alive=false;cancelAnimationFrame(raf);
-        const challengeWon=runMeta.challenge?.id==='combo'?model.best>=3:runMeta.challenge?.id==='clean'?model.misses===0:runMeta.challenge?.id==='speed'?model.score>=def.goal*2:false;
-        finish(success,{stars:model.stars,maxStreak:model.best,misses:model.misses,score:model.score,timeLeft:Math.max(0,def.time-model.elapsed),challengeWon});
+        const stars=success?Math.min(3,1+Number(model.misses===0)+Number(model.elapsed<=def.time*.58)):0;
+        finish(success,{stars,maxStreak:model.best,misses:model.misses,score:model.score,timeLeft:Math.max(0,def.time-model.elapsed)});
       }
       let last=performance.now();
       function loop(now){
@@ -100,17 +96,14 @@
         const dt=document.hidden?0:Math.min(.05,Math.max(0,(now-last)/1000));last=now;
         if(!practicing&&model.tick(dt)){complete(model.score>=def.goal);return;}
         if(lastPhase!==model.phase){lastPhase=model.phase;if(feedbackTime<=0)banner.textContent=def.acts[lastPhase];sound('pop');}
-        if(!practiceDone||!practicing){const step=dt*(practicing?.75:pace);model.playTime+=step;game.update(step);}
+        if(!practiceDone||!practicing){const step=dt*(practicing?.75:1);model.playTime+=step;game.update(step);}
         if(!alive)return;
         if(feedbackTime>0){feedbackTime-=dt;if(feedbackTime<=0){feedback.textContent='';banner.classList.remove('is-feedback');banner.textContent=def.acts[model.phase];}}
         const remaining=Math.max(0,def.time-model.elapsed);
-        const nextGoal=def.goal*(Math.min(2,model.stars)+1);
-        progress.style.setProperty('--score-ratio',String(Math.min(1,model.score/(def.goal*3))));
-        progress.setAttribute('aria-valuenow',String(Math.min(def.goal*3,model.score)));
-        progress.querySelectorAll('span').forEach((star,index)=>star.classList.toggle('is-earned',model.stars>index));
-        status.textContent=`${'★'.repeat(model.stars)}${'☆'.repeat(3-model.stars)}　${model.score}点${model.stars<3?` ／ つぎの星まで ${nextGoal-model.score}点`:'　３つ星！ どこまで のばせる？'}`;
-        if(remaining===0)banner.textContent='あせらず れんしゅう！ あと'+Math.max(0,def.goal-model.score)+'点';
-        end.hidden=practicing?!practiceDone:model.score<def.goal;
+        progress.style.setProperty('--score-ratio',String(Math.min(1,model.score/def.goal)));
+        progress.setAttribute('aria-valuenow',String(Math.min(def.goal,model.score)));
+        status.textContent=model.score>=def.goal?'できた':`${model.score} / ${def.goal}　あと ${Math.max(0,def.goal-model.score)}`;
+        end.hidden=!practicing||!practiceDone;
         if(practicing)status.textContent=practiceDone?'できた！ 本番へすすもう':'時間は気にせず、操作してみよう';
         progress.hidden=practicing;
         updateHud(model.score,def.goal,practicing?null:remaining);

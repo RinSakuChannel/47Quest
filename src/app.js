@@ -2,11 +2,22 @@ const PREFECTURES = window.PREFECTURE_DATA;
 
 const app = document.querySelector('#app');
 const storage = {
+  failed: false,
   get(key, fallback) {
-    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch {
+      this.failed = true;
+      return fallback;
+    }
   },
   set(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private mode */ }
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch {
+      this.failed = true;
+      document.querySelector('.storage-warning')?.removeAttribute('hidden');
+      return false;
+    }
   },
 };
 
@@ -23,7 +34,7 @@ const state = {
   unlocked: new Set(storage.get('47quest-unlocked', [])),
   cleared: new Set(storage.get('47quest-cleared', [])),
   journeyLap: Math.max(1, Math.floor(Number(storage.get('47quest-journey-lap', 1)) || 1)),
-  sound: false,
+  sound: storage.get('47quest-sound', false) === true,
   bgmVolume: Math.max(0, Math.min(100, Number(storage.get('47quest-bgm-volume', 34)) || 0)),
   seVolume: Math.max(0, Math.min(100, Number(storage.get('47quest-se-volume', 42)) || 0)),
   cleanup: [], gameFinished: false, currentRun: null,
@@ -81,15 +92,9 @@ function gameRecords() {
 
 function buildRunMeta(pref) {
   const previous = gameRecords()[pref.code] || {};
-  const challenges = [
-    { id: 'combo', icon: '🔥', label: '3コンボを きめよう' },
-    { id: 'clean', icon: '👑', label: 'まちがえずに クリア' },
-    { id: 'speed', icon: '⚡', label: '15秒以上 のこそう' },
-  ];
   return {
     play: (previous.plays || 0) + 1,
     bestStars: previous.stars || 0,
-    challenge: challenges[Math.floor(Math.random() * challenges.length)],
   };
 }
 
@@ -528,8 +533,7 @@ function shell(content, { progress = 0, label = 'にほん発見アドベンチ�
         <div class="top-actions">
           <button class="icon-button coin-button" data-action="gacha" aria-label="コインでガチャ。${state.coins}枚"><span class="coin-dot" aria-hidden="true"></span>${state.coins}</button>
           ${!home ? '<button class="icon-button" data-action="collection" aria-label="図鑑を見る">ずかん</button>' : ''}
-          <button class="icon-button sound-toggle-button" data-action="sound" aria-label="音声" aria-pressed="${state.sound}">音 ${state.sound ? 'ON' : 'OFF'}</button>
-          <button class="icon-button sound-menu-button" data-action="audio-panel" aria-label="音量を調整する" aria-expanded="false">設定</button>
+          <button class="icon-button sound-menu-button" data-action="audio-panel" aria-label="音と演出を設定する" aria-expanded="false"><span aria-hidden="true">${state.sound ? '♪' : '音'}</span><b>設定</b></button>
           <section class="audio-panel" hidden aria-label="音量設定">
             <header><strong>おと・演出</strong><button type="button" data-action="audio-panel" aria-label="音量設定を閉じる">×</button></header>
             <label><span>アニメーション</span><select data-motion aria-label="アニメーション"><option value="auto" ${QUEST_MOTION.mode==='auto'?'selected':''}>端末の設定に合わせる</option><option value="full" ${QUEST_MOTION.mode==='full'?'selected':''}>しっかり演出</option><option value="calm" ${QUEST_MOTION.mode==='calm'?'selected':''}>ひかえめ</option></select></label>
@@ -539,6 +543,7 @@ function shell(content, { progress = 0, label = 'にほん発見アドベンチ�
           </section>
         </div>
       </header>
+      <p class="storage-warning" role="status" ${storage.failed ? '' : 'hidden'}>この端末では記録を保存できません</p>
       <div id="game-main" class="viewport">${content}</div>
     </section>`;
 }
@@ -560,16 +565,16 @@ function renderHome() {
         <a class="map-source-link" href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener" aria-label="国土数値情報の出典を開く">出典</a>
         <div class="title-clouds" aria-hidden="true"><i></i><i></i><i></i></div>
         <div class="home-roamers">
-          ${openingFriends.map((pref, index) => `<button type="button" class="home-roamer ${state.unlocked.has(pref.code) ? 'is-known' : 'is-mystery'} roamer-${index + 1}" data-action="hero-cheer" data-code="${pref.code}" aria-label="${state.unlocked.has(pref.code) ? pref.character + 'を応援する' : 'まだ出会っていない仲間'}">${mascot(pref, 'home-roamer-art')}<span>${state.unlocked.has(pref.code) ? pref.character : '？？？'}</span></button>`).join('')}
+          ${openingFriends.map((pref, index) => `<button type="button" class="home-roamer ${state.unlocked.has(pref.code) ? 'is-known' : 'is-preview'} roamer-${index + 1}" data-action="hero-cheer" data-code="${pref.code}" aria-label="全国の仲間、${pref.character}">${mascot(pref, 'home-roamer-art')}<span>${pref.character}</span></button>`).join('')}
         </div>
       </div>
       <header class="title-stage">
         <p class="title-call">にほん全国・発見アドベンチャー</p>
         <div class="game-logo quest-logo" aria-label="47Quest にほん全国 大ぼうけん"><div class="quest-wordmark" aria-hidden="true"><span class="quest-number">47</span><span class="quest-name"><b>Q</b>uest</span></div><small>にほん全国 大ぼうけん</small></div>
-        <p class="title-copy">地図を見つけて、ご当地ゲームへ飛びこもう</p>
+        <p class="title-copy">地図を見つけて、ご当地ゲームへ</p>
         <div class="title-actions">
           ${button('ぼうけんを始める', 'start', 'primary-button sun title-start-button')}
-          <nav class="title-shortcuts" aria-label="ほかの遊び">${button('<span>クイズ</span>', 'quick-quiz', 'title-shortcut quick-quiz-button', 'aria-label="いきなりクイズ"')}${button('<span>図鑑 <b>'+count+'</b>/47</span>', 'collection', 'title-shortcut', 'aria-label="図鑑 '+count+' / 47"')}${button('<span>旅の記録</span>', 'journey', 'title-shortcut')}</nav>
+          <nav class="title-shortcuts" aria-label="ほかの遊び">${button('<span>クイズ</span>', 'quick-quiz', 'title-shortcut quick-quiz-button', 'aria-label="いきなりクイズ"')}${button('<span>図鑑 <b>'+count+'</b>/47</span>', 'collection', 'title-shortcut', 'aria-label="図鑑 '+count+' / 47"')}${button('<span>きろく</span>', 'journey', 'title-shortcut', 'aria-label="旅の記録"')}</nav>
         </div>
       </header>
     </section>`, { home: true, progress: Math.round(count / 47 * 100), label: '47の仲間をさがそう' });
@@ -838,17 +843,13 @@ function renderGame() {
   const setup = currentMicroGame();
   state.currentRun = buildRunMeta(pref);
   state.currentRun.buddyCode=[...state.unlocked].at(-1);
-  if (window.QUEST_FEATURED_GAMES?.definitions[pref.code]) {
-    state.currentRun.challenge = { id:'score', icon:'★', label:`${setup.goal}点でクリア・${setup.goal*3}点で３つ星！` };
-  }
   app.innerHTML = shell(`
     <section class="scene game-scene ${window.QUEST_FEATURED_GAMES?.definitions[pref.code] ? 'featured-scene' : ''}">
       <aside class="game-info">
         <div class="guide-dialogue"><img class="japan-guide" src="./assets/images/japan-guide-simple.svg" alt="日本列島の案内役" /><div><p class="eyebrow">${pref.name}・${setup.title}</p><h1 class="micro-command">${setup.command}</h1></div></div>
-        ${button('ゲームはあとで →', 'game-skip', 'game-skip-button')}
+        ${button('あとで', 'game-skip', 'game-skip-button', 'aria-label="このゲームをあとにして場所クイズへ進む"')}
       </aside>
       <div class="game-board">
-        <div class="run-challenge"><span>${state.currentRun.challenge.icon}</span><strong>${state.currentRun.challenge.label}</strong><small>${state.currentRun.play}回目・ベスト ${'★'.repeat(state.currentRun.bestStars)}${'☆'.repeat(3 - state.currentRun.bestStars)}</small></div>
         <div class="game-hud"><span id="game-score" class="hud-chip">0 / ${setup.goal}</span><span id="game-time" class="hud-chip">${setup.time.toFixed(1)}</span></div>
         <div id="game-field" class="game-field rapid-field rapid-${setup.mode}"></div>
       </div>
@@ -906,7 +907,7 @@ function finishGame(success, performance = {}) {
         </header>
         <div class="result-details">
           ${success ? `<div class="clear-friend is-mystery">${mascot(state.current, 'clear-friend-art')}<div><strong>${state.current.character}</strong><p>仲間も おおよろこび！</p><span>おさらいで 仲間にしよう</span></div></div>` : `<div class="clear-friend retry-friend">${mascot(state.current, 'clear-friend-art retry-friend-art')}<div><strong>だいじょうぶ</strong><p>動きを見て、もう一回。</p><span>${setup.command}</span></div></div>`}
-          <p class="result-learning"><b>つぎの目標：${stars<3?`あと${Math.max(1,setup.goal*(stars+1)-(performance.score||0))}点で星${stars+1}つ`:`${records[state.current.code].bestScore+1}点で自己ベスト更新`}</b><br>${state.current.name}：${state.current.feature}</p>
+          <p class="result-learning"><b>${stars<3?'もう一度で星を増やそう。速く、ていねいに。':'3つ星。もう一度なら配置が変わるよ。'}</b><br>${state.current.name}：${state.current.feature}</p>
         </div>
         ${success
           ? `<div class="result-actions">${button('もう一度あそぶ', 'game-retry', 'secondary-button')}${button(state.replay ? '県のページへ' : '場所クイズへ', 'game-next', 'primary-button sun')}</div>`
@@ -1826,7 +1827,7 @@ function renderCollection() {
     <section class="scene collection-scene">
       <div class="section-head">
         <div><p class="eyebrow">ご当地なかまずかん</p><h1 class="title">集めた仲間</h1></div>
-        <div class="button-row action-dock">${button('‹', 'collection-prev', 'secondary-button', state.collectionPage === 0 ? 'disabled' : '')}<span class="page-count">${state.collectionPage + 1} / ${pageCount}</span>${button('›', 'collection-next', 'secondary-button', state.collectionPage === pageCount - 1 ? 'disabled' : '')}${button('図鑑をリセット', 'collection-reset', 'secondary-button reset-button')}${button('ホームへ', 'home', 'secondary-button')} ${button('冒険へ', 'start', 'primary-button sun')}</div>
+        <div class="button-row action-dock collection-head-actions"><span class="collection-pager">${button('‹', 'collection-prev', 'secondary-button', state.collectionPage === 0 ? 'disabled aria-label="前のページ"' : 'aria-label="前のページ"')}<span class="page-count">${state.collectionPage + 1} / ${pageCount}</span>${button('›', 'collection-next', 'secondary-button', state.collectionPage === pageCount - 1 ? 'disabled aria-label="次のページ"' : 'aria-label="次のページ"')}</span>${button('記録を消す', 'collection-reset', 'secondary-button reset-button')}${button('ぼうけんへ', 'start', 'primary-button sun')}</div>
       </div>
       <div class="collection-grid">
         ${pageItems.map((pref) => {
@@ -2135,9 +2136,10 @@ window.addEventListener('wheel', (event) => {
 }, { passive: false });
 
 function syncSoundControls() {
-  document.querySelectorAll('.sound-toggle-button').forEach(button => {
-    button.textContent = `音 ${state.sound ? 'ON' : 'OFF'}`;
-    button.setAttribute('aria-pressed', String(state.sound));
+  document.querySelectorAll('.sound-menu-button').forEach(button => {
+    const stateLabel = button.querySelector('span');
+    if (stateLabel) stateLabel.textContent = state.sound ? '♪' : '音';
+    button.setAttribute('aria-label', `音と演出を設定する（音 ${state.sound ? 'オン' : 'オフ'}）`);
   });
   const master=document.querySelector('.audio-master-button');
   if(master) master.textContent=state.sound?'すべての音を消す':'音を出す';

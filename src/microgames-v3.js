@@ -45,15 +45,15 @@
     ['41','catchsort','有田焼キャッチ','色の台で やさしく受けろ！','有田焼',4,9],
     ['42','slide','カステラ窯入れ','すべらせて 線で とめろ！','カステラ',3,9],
     ['43','safe','火の国ステップ','安全な岩だけ すすめ！','火の国',4,9],
-    ['44','pop','温泉たまご救出','泡をわって たまごを出せ！','温泉',5,8],
+    ['44','match','湯の花 三色めぐり','光るお湯へ 湯の花石をはこぼう','湯の花',4,8],
     ['45','peel','マンゴーかくれんぼ','葉をめくって さがせ！','マンゴー',3,8],
     ['46','pull','さつまいもロープ','矢印の向きへ ひっぱれ！','さつまいも',3,9],
     ['47','freedodge','なみのり リング','岩をよけて 輪をぬけ！','沖縄の海',4,8],
   ];
 
-  // どのゲームも長引かせず、最大25秒で次の冒険へ進む。
+  // どのゲームも長引かせず、最大20秒で次の冒険へ進む。
   const catalog = Object.fromEntries(rows.map(([code, mode, title, command, motif, goal, time]) => [code, {
-    code, mode, title, command, motif, goal, time: 25,
+    code, mode, title, command, motif, goal, time: 20,
   }]));
   for (const [code, definition] of Object.entries(window.QUEST_FEATURED_GAMES?.definitions || {})) {
     Object.assign(catalog[code], definition);

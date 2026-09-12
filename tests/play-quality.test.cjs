@@ -7,12 +7,11 @@ const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'
 for(const screen of ['journey','game']){
 await page.evaluate(screen=>{state.current=PREFECTURES[0];state.round=[state.current];if(screen==='journey')renderJourney();else renderGame()},screen);
 await page.waitForTimeout(50);
-await page.screenshot({path:`.verification/quality-${screen}-${width}.png`});
-const issues=await page.locator(screen==='journey'?'.journey-region,.journey-scene button':'.fg-intro,.fg-intro button,.fg-difficulty').evaluateAll(ns=>ns.filter(n=>{const r=n.getBoundingClientRect();return r.top<0||r.bottom>innerHeight+1||r.right>innerWidth+1||n.scrollHeight>n.clientHeight+2||n.scrollWidth>n.clientWidth+2}).map(n=>[n.className,n.clientHeight,n.scrollHeight,n.clientWidth,n.scrollWidth,n.textContent]));assert.deepEqual(issues,[],`${width} ${screen}`);
+const issues=await page.locator(screen==='journey'?'.journey-region,.journey-scene button':'.fg-intro,.fg-intro button').evaluateAll(ns=>ns.filter(n=>{const r=n.getBoundingClientRect();return r.top<0||r.bottom>innerHeight+1||r.right>innerWidth+1||n.scrollHeight>n.clientHeight+2||n.scrollWidth>n.clientWidth+2}).map(n=>[n.className,n.clientHeight,n.scrollHeight,n.clientWidth,n.scrollWidth,n.textContent]));assert.deepEqual(issues,[],`${width} ${screen}`);
 }
-await page.getByRole('button',{name:'時間なしで れんしゅう'}).click();await page.waitForTimeout(200);assert.equal(await page.locator('.fg-practice-badge').isVisible(),true);
+await page.getByRole('button',{name:'まず練習する'}).click();await page.waitForTimeout(200);assert.equal(await page.locator('.fg-practice-badge').isVisible(),true);
 await page.evaluate(()=>{cleanups();window.QUEST_REGIONAL_GAMES.create=(code,ctx)=>{window.testGameContext=ctx;return{update(){}}};renderGame()});
-await page.getByRole('button',{name:'時間なしで れんしゅう'}).click();
+await page.getByRole('button',{name:'まず練習する'}).click();
 await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>testGameContext.model.elapsed),0);assert.ok(await page.evaluate(()=>testGameContext.model.playTime>0));
 await page.evaluate(()=>testGameContext.hit(3));await page.waitForTimeout(60);
 assert.equal(await page.evaluate(()=>testGameContext.model.score),0);
