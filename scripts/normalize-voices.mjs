@@ -1,9 +1,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 // Normalise the original PCM16 voice files for small phone speakers without
-// changing their duration or adding a runtime dependency.
+// changing their duration or adding a runtime dependency. Pass one or more
+// prefecture codes to update only those generated files.
+const selectedCodes = new Set(process.argv.slice(2).map(code => String(code).padStart(2, '0')));
 for (let index = 1; index <= 47; index += 1) {
   const code = String(index).padStart(2, '0');
+  if (selectedCodes.size && !selectedCodes.has(code)) continue;
   const path = `assets/sounds/voices/${code}.wav`;
   const wav = readFileSync(path);
   let offset = 12; let dataOffset = -1; let dataLength = 0; let pcm16 = false;
