@@ -81,7 +81,7 @@
             status.animate([{scale:'1'},{scale:'1.04',offset:.3},{scale:'1'}],{duration:280,easing:'ease-out'});
           }
         },
-        miss(){if(!practicing)model.miss();sound('tap');tell('もういちど。'+def.command);},
+        miss(){if(!practicing)model.miss();sound('wrong');tell('もういちど。'+def.command);},
       };
       const game=engines[pref.code](ctx);
       if(world.querySelector('.rg-canvas'))field.classList.add('has-regional-canvas');

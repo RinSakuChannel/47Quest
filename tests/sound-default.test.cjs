@@ -12,6 +12,9 @@ const {chromium}=require('C:/Users/freecar/.cache/codex-runtimes/codex-primary-r
   assert.equal(await quick.getAttribute('aria-pressed'),'true');
   await quick.click();assert.equal(await page.evaluate(()=>state.sound),false);
   await quick.click();assert.equal(await page.evaluate(()=>state.sound),true);
+  const buses=await page.evaluate(()=>Object.keys(audioChannels));
+  for(const name of ['bgm','se','voice','fanfare','bgmDuck','master','limiter'])assert.ok(buses.includes(name),`missing ${name} audio bus`);
+  assert.equal(await page.evaluate(()=>audioChannels.voice!==audioChannels.se),true,'voice must have an independent mix bus');
   await menu.click();
   const toggle=page.locator('.audio-master-button');
   assert.equal(await toggle.innerText(),'すべての音を消す');

@@ -3,7 +3,7 @@
   const names=Object.fromEntries(window.PREFECTURE_DATA.map(p=>[p.code,p.name]));
   const all=window.QUEST_FEATURED_GAMES;
   let cleanup=[];let current='',galleryPage=0;
-  let context,bgm,se,timer=0;
+  let context,bgm,se,voiceBus,fanfare,bgmDuck,master,limiter,timer=0,intensity=0,urgent=false,runSeed=0;
   let soundEnabled=false;
   const muteButton=document.querySelector('#sound-toggle');
   muteButton.addEventListener('click',()=>{
@@ -15,19 +15,20 @@
     volume();
     if(!soundEnabled){clearInterval(timer);timer=0;context?.suspend();}
   });
-  const volume=()=>{if(!context)return;const music=(Number(document.querySelector('#bgm-volume').value)/100)**2;const effects=(Number(document.querySelector('#se-volume').value)/100)**2;bgm.gain.setTargetAtTime((soundEnabled?music:0)*.42,context.currentTime,.02);se.gain.setTargetAtTime((soundEnabled?effects:0)*.7,context.currentTime,.02);};
-  const sound=event=>{if(soundEnabled&&context)window.QUEST_AUDIO.effect(context,se,current,event);};
-  const audio=()=>{if(!soundEnabled)return;try{context ||=new(window.AudioContext||window.webkitAudioContext)();if(!bgm){bgm=context.createGain();se=context.createGain();bgm.connect(context.destination);se.connect(context.destination);}context.resume();volume();let step=0,at=context.currentTime+.05;const schedule=()=>{while(at<context.currentTime+.15){window.QUEST_AUDIO.music(context,bgm,'game',step++,at);at+=60/118/2;}};schedule();timer=setInterval(schedule,80);}catch{/* silent play still works */}};
+  const volume=()=>{if(!context)return;const music=(Number(document.querySelector('#bgm-volume').value)/100)**2;const effects=(Number(document.querySelector('#se-volume').value)/100)**2;bgm.gain.setTargetAtTime((soundEnabled?music:0)*.42,context.currentTime,.02);for(const bus of [se,voiceBus,fanfare])bus.gain.setTargetAtTime((soundEnabled?effects:0)*.7,context.currentTime,.02);};
+  const duck=()=>{if(!bgmDuck)return;const now=context.currentTime;bgmDuck.gain.cancelScheduledValues(now);bgmDuck.gain.setValueAtTime(Math.max(.25,bgmDuck.gain.value||1),now);bgmDuck.gain.linearRampToValueAtTime(.3,now+.02);bgmDuck.gain.setValueAtTime(.3,now+.8);bgmDuck.gain.linearRampToValueAtTime(1,now+1);};
+  const sound=event=>{if(soundEnabled&&context){const featured=['combo','bonus','win'].includes(event);if(featured)duck();window.QUEST_AUDIO.effect(context,featured?fanfare:se,current,event);}};
+  const audio=()=>{if(!soundEnabled)return;try{context ||=new(window.AudioContext||window.webkitAudioContext)();if(!bgm){bgm=context.createGain();se=context.createGain();voiceBus=context.createGain();fanfare=context.createGain();bgmDuck=context.createGain();master=context.createGain();limiter=context.createDynamicsCompressor();bgmDuck.gain.value=1;master.gain.value=.92;limiter.threshold.value=-10;limiter.ratio.value=12;limiter.attack.value=.003;limiter.release.value=.24;bgm.connect(bgmDuck).connect(master);se.connect(master);voiceBus.connect(master);fanfare.connect(master);master.connect(limiter).connect(context.destination);}context.resume();volume();let step=0,at=context.currentTime+.05;const schedule=()=>{while(at<context.currentTime+.15){window.QUEST_AUDIO.music(context,bgm,'game',step++,at,{code:current,mode:window.QUEST_AUDIO.profiles[current]?.mode,intensity,urgent,seed:runSeed});at+=60/118/2;}};schedule();timer=setInterval(schedule,80);}catch{/* silent play still works */}};
   document.querySelectorAll('#bgm-volume,#se-volume').forEach(slider=>slider.addEventListener('input',()=>{window.QUEST_CHARACTER_CRIES?.stop();volume();}));
   const stop=()=>{window.QUEST_CHARACTER_CRIES?.stop();cleanup.forEach(fn=>fn());cleanup=[];clearInterval(timer);timer=0;};
-  const voice=()=>{if(!soundEnabled||!context||!current)return;const level=Number(document.querySelector('#se-volume').value)/100;if(level<=0)return;window.QUEST_CHARACTER_CRIES?.play(context,current,Math.min(1,level*1.8),se);};
+  const voice=()=>{if(!soundEnabled||!context||!current)return;const level=Number(document.querySelector('#se-volume').value)/100;if(level<=0)return;duck();window.QUEST_CHARACTER_CRIES?.play(context,current,Math.min(1,level*1.8),voiceBus);};
   const close=()=>{stop();document.querySelector('#player').hidden=true;document.querySelector('#result').hidden=true;};
   const launch=code=>{
-    stop();current=code;document.querySelector('#result').hidden=true;document.querySelector('#player').hidden=false;
+    stop();current=code;intensity=0;urgent=false;runSeed=Math.floor(Math.random()*0x7fffffff);document.querySelector('#result').hidden=true;document.querySelector('#player').hidden=false;
     document.querySelector('#game-title').textContent=`${names[code]||code}・${all.definitions[code].title}`;
     const field=document.querySelector('#field');field.replaceChildren();
     audio();
-    all.start({field,pref:{code},sound,registerCleanup(fn){cleanup.push(fn);},updateHud(score,goal,time){document.querySelector('#hud').textContent=time==null?'練習':`${Math.ceil(time)}秒`;},finish(success,result){stop();sound('win');document.querySelector('#result').hidden=false;const friend=document.querySelector('#friend');friend.innerHTML=`<img src="${window.CHARACTER_ART?.[code]||''}" alt="" />`;friend.dataset.characterCode=code;voice();document.querySelector('#record').textContent=`${'★'.repeat(result.stars)}　${result.score}点　「${window.QUEST_PERSONALITIES?.[code]?.line || ''}」`;}});
+    all.start({field,pref:{code},sound,registerCleanup(fn){cleanup.push(fn);},updateHud(score,goal,time){intensity=goal?Math.max(0,Math.min(1,score/goal)):0;urgent=time!=null&&time>0&&time<=5;document.querySelector('#hud').textContent=time==null?'練習':`${Math.ceil(time)}秒`;},finish(success,result){stop();sound(success?'win':'wrong');document.querySelector('#result').hidden=false;const friend=document.querySelector('#friend');friend.innerHTML=`<img src="${window.CHARACTER_ART?.[code]||''}" alt="" />`;friend.dataset.characterCode=code;if(success)voice();document.querySelector('#record').textContent=`${'★'.repeat(result.stars)}　${result.score}点　「${window.QUEST_PERSONALITIES?.[code]?.line || ''}」`;}});
   };
   document.querySelector('#status').textContent=`47都道府県から 遊びたいゲームをえらぼう。場所や文字も覚える冒険はホームから！`;
   const entries=Object.entries(all.definitions).sort(([a],[b])=>a.localeCompare(b));
@@ -40,4 +41,5 @@
   document.querySelector('#gallery-prev').addEventListener('click',()=>{galleryPage--;renderGallery();});document.querySelector('#gallery-next').addEventListener('click',()=>{galleryPage++;renderGallery();});addEventListener('resize',renderGallery);renderGallery();
   document.querySelector('#back').addEventListener('click',close);document.querySelector('#return').addEventListener('click',close);document.querySelector('#again').addEventListener('click',()=>launch(current));
   document.querySelector('#friend').addEventListener('click',voice);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();context?.suspend();}else if(soundEnabled&&current&&!document.querySelector('#player').hidden)audio();});
 })();

@@ -241,6 +241,9 @@ let audioContext;
 let musicTimer = 0;
 let musicStep = 0;
 let musicNextAt = 0;
+let musicIntensity = 0;
+let musicUrgent = false;
+let musicSeed = 0;
 let requestedMusic = { scene: 'home', variant: '' };
 const ADVENTURE_MOTIF = [0, 4, 7, 9, 7, 4, 2, 7];
 const MUSIC_SCENES = {
@@ -260,14 +263,14 @@ function updateAudioVolume() {
   window.QUEST_CHARACTER_CRIES?.stop();
   if (!audioChannels) return;
   const mobile = window.matchMedia?.('(pointer: coarse)').matches || window.innerWidth <= 760;
-  for (const [name, value] of [['bgm', state.bgmVolume], ['se', state.seVolume]]) {
+  for (const [name, value] of [['bgm', state.bgmVolume], ['se', state.seVolume], ['voice', state.seVolume], ['fanfare', state.seVolume]]) {
     const gain = audioChannels[name].gain;
     const normalized = value / 100;
     // Phone speakers lose much of the short, low-energy procedural audio.
     // Keep zero silent but use a clearer mobile curve, with effects above BGM.
     const output = mobile
-      ? (name === 'bgm' ? normalized ** 1.65 * 1.12 : normalized ** 1.3 * 1.75)
-      : normalized ** 2;
+      ? (name === 'bgm' ? normalized ** 1.65 * 1.12 : normalized ** 1.3 * (name === 'voice' ? 1.35 : 1.65))
+      : normalized ** (name === 'voice' ? 1.45 : 2);
     gain.cancelScheduledValues(audioContext.currentTime);
     gain.setTargetAtTime(state.sound ? output : 0, audioContext.currentTime, .015);
   }
@@ -275,13 +278,24 @@ function updateAudioVolume() {
 function ensureAudio() {
   audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
   if (!audioChannels) {
-    audioChannels = { bgm: audioContext.createGain(), se: audioContext.createGain() };
-    audioChannels.bgm.connect(audioContext.destination);
-    audioChannels.se.connect(audioContext.destination);
+    const master=audioContext.createGain(),limiter=audioContext.createDynamicsCompressor(),bgmDuck=audioContext.createGain();
+    audioChannels = { bgm: audioContext.createGain(), se: audioContext.createGain(), voice: audioContext.createGain(), fanfare: audioContext.createGain(), bgmDuck, master, limiter };
+    master.gain.value=.92;bgmDuck.gain.value=1;
+    limiter.threshold.value=-10;limiter.knee.value=5;limiter.ratio.value=12;limiter.attack.value=.003;limiter.release.value=.24;
+    audioChannels.bgm.connect(bgmDuck).connect(master);
+    audioChannels.se.connect(master);audioChannels.voice.connect(master);audioChannels.fanfare.connect(master);
+    master.connect(limiter).connect(audioContext.destination);
     updateAudioVolume();
   }
-  if (audioContext.state === 'suspended') audioContext.resume();
+  if (audioContext.state === 'suspended') audioContext.resume().catch(()=>{});
   return audioContext;
+}
+
+function duckBgm(duration=.7,depth=.38) {
+  if (!state.sound || !audioChannels) return;
+  const gain=audioChannels.bgmDuck.gain,now=audioContext.currentTime,current=Math.max(.2,Math.min(1,gain.value||1));
+  gain.cancelScheduledValues(now);gain.setValueAtTime(current,now);gain.linearRampToValueAtTime(depth,now+.025);
+  gain.setValueAtTime(depth,now+duration);gain.linearRampToValueAtTime(1,now+duration+.18);
 }
 
 function tone(frequency, duration, wave = 'sine', volume = .035, at = null, channel = 'se') {
@@ -321,12 +335,15 @@ function startBgm(scene = state.screen, variant = state.current?.code || '') {
   const modeShift = ['rhythm', 'sequence', 'reaction'].includes(mode) ? 12 : 0;
   const stepLength = 60 / profile.bpm / 2;
   musicStep = 0;
+  musicIntensity = 0;
+  musicUrgent = false;
+  musicSeed = Math.floor(Math.random()*0x7fffffff);
   musicNextAt = audioContext.currentTime + .04;
   const schedule = () => {
     if (!state.sound || !audioContext) return;
     while (musicNextAt < audioContext.currentTime + .28) {
       if (window.QUEST_AUDIO) {
-        window.QUEST_AUDIO.music(audioContext, audioChannels.bgm, musicScene, musicStep, musicNextAt);
+        window.QUEST_AUDIO.music(audioContext, audioChannels.bgm, musicScene, musicStep, musicNextAt,{code:variant,mode,intensity:musicIntensity,urgent:musicUrgent,seed:musicSeed});
         musicStep += 1;
         musicNextAt += stepLength;
         continue;
@@ -348,7 +365,9 @@ function sound(kind = 'tap') {
   try {
     const context = ensureAudio();
     const now = context.currentTime;
-    if (!kind.startsWith('ui-') && kind !== 'win' && state.screen === 'game' && state.current && window.QUEST_AUDIO?.effect(context, audioChannels.se, state.current.code, kind)) return;
+    const featured=['combo','bonus','win'].includes(kind);
+    if(featured)duckBgm(kind==='win'?1.05:.55,kind==='win'?.25:.42);
+    if (!kind.startsWith('ui-') && state.screen === 'game' && state.current && window.QUEST_AUDIO?.effect(context,featured?audioChannels.fanfare:audioChannels.se,state.current.code,kind)) return;
     const patterns = {
       'ui-press': [[360,.035,'sine',.012,0]],
       'ui-confirm': [[660,.055,'sine',.024,0],[880,.08,'sine',.018,.035]],
@@ -362,10 +381,11 @@ function sound(kind = 'tap') {
       bonus: [[784, .08, 'sine', .045, 0], [988, .11, 'triangle', .04, .06], [1319, .18, 'sine', .04, .12]],
       reveal:[[147, .42, 'sawtooth', .018, 0], [294, .5, 'sine', .025, .12]],
       stamp: [[523, .08, 'square', .035, 0], [1047, .22, 'triangle', .045, .05]],
-      wrong: [[210, .09, 'square', .025, 0], [165, .11, 'triangle', .022, .06]],
+      wrong: [[349, .08, 'sine', .021, 0], [294, .11, 'triangle', .018, .055]],
       win:   [[660, .14, 'triangle', .04, 0], [880, .18, 'triangle', .04, .09], [1047, .28, 'sine', .045, .19]],
     };
-    (patterns[kind] || patterns.tap).forEach(([hz, duration, wave, volume, delay]) => tone(hz, duration, wave, volume, now + delay));
+    const channel=['combo','bonus','reveal','stamp','win'].includes(kind)?'fanfare':'se';
+    (patterns[kind] || patterns.tap).forEach(([hz, duration, wave, volume, delay]) => tone(hz, duration, wave, volume, now + delay,channel));
   } catch { /* sound is an enhancement */ }
 }
 
@@ -435,7 +455,7 @@ function characterCry(pref) {
   // stronger level than short synthesized effects to stay intelligible.
   const mobile = window.matchMedia?.('(pointer: coarse)').matches || window.innerWidth <= 760;
   const voiceVolume = Math.min(1, (state.seVolume / 100) * (mobile ? 2.35 : 1.8));
-  try { window.QUEST_CHARACTER_CRIES.play(ensureAudio(), pref.code, voiceVolume, audioChannels.se); } catch { /* Audio may be unavailable. */ }
+  try { ensureAudio();duckBgm(1.5,.3);window.QUEST_CHARACTER_CRIES.play(audioContext, pref.code, voiceVolume, audioChannels.voice); } catch { /* Audio may be unavailable. */ }
 }
 
 function characterStats(pref, className = '') {
@@ -867,6 +887,10 @@ function updateHud(score, goal, time) {
   const timeElement = document.querySelector('#game-time');
   if (scoreElement) scoreElement.textContent = `${score} / ${goal}`;
   if (timeElement) timeElement.textContent = time == null ? '練習' : Math.max(0, time).toFixed(1);
+  if(state.screen==='game'){
+    musicIntensity=goal>0?Math.max(0,Math.min(1,score/goal)):0;
+    musicUrgent=time!=null&&time>0&&time<=5;
+  }
 }
 
 function finishGame(success, performance = {}) {
@@ -2154,6 +2178,23 @@ window.addEventListener('keydown', (event) => {
     if (!state.sound) window.QUEST_CHARACTER_CRIES?.stop();
     if (state.sound) startBgm(requestedMusic.scene, requestedMusic.variant); else stopBgm();
   }
+});
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    stopBgm();
+    window.QUEST_CHARACTER_CRIES?.stop();
+    audioContext?.suspend().catch(()=>{});
+    return;
+  }
+  if(state.sound&&audioContext){
+    audioContext.resume().then(()=>startBgm(requestedMusic.scene,requestedMusic.variant)).catch(()=>{});
+  }
+});
+window.addEventListener('pagehide',()=>{
+  stopBgm();
+  window.QUEST_CHARACTER_CRIES?.stop();
+  audioContext?.suspend().catch(()=>{});
 });
 
 renderHome();
