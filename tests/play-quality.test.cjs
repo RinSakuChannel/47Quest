@@ -11,12 +11,14 @@ const issues=await page.locator(screen==='journey'?'.journey-region,.journey-sce
 }
 await page.getByRole('button',{name:'まず練習する'}).click();await page.waitForTimeout(200);assert.equal(await page.locator('.fg-practice-badge').isVisible(),true);
 await page.evaluate(()=>{cleanups();window.QUEST_REGIONAL_GAMES.create=(code,ctx)=>{window.testGameContext=ctx;return{update(){}}};renderGame()});
+assert.equal(await page.locator('.fg-challenge').isVisible(),true);
 await page.getByRole('button',{name:'まず練習する'}).click();
 await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>testGameContext.model.elapsed),0);assert.ok(await page.evaluate(()=>testGameContext.model.playTime>0));
 await page.evaluate(()=>testGameContext.hit(3));await page.waitForTimeout(60);
 assert.equal(await page.evaluate(()=>testGameContext.model.score),0);
 await page.getByRole('button',{name:'本番へ →'}).click();await page.evaluate(()=>testGameContext.hit(3));assert.equal(await page.evaluate(()=>testGameContext.model.score),3);
 await page.evaluate(()=>finishGame(true,{score:3,stars:1}));assert.equal(await page.locator('.result-learning').isVisible(),true);
+await page.getByRole('button',{name:'もう一度あそぶ'}).click();await page.waitForSelector('.fg-world');assert.equal(await page.locator('.fg-intro').count(),0);
 await page.evaluate(()=>{QUEST_MOTION.set('full');state.gachaRewards=[PREFECTURES[0]];state.rewardRevealIndex=0;state.reviewIndex=1;state.newlyUnlocked=new Set(['01']);renderRewardReveal()});
 assert.equal(await page.locator('.reveal-name-card').getAttribute('inert'),'');
 await page.getByRole('button',{name:'紹介を見る →'}).click();assert.equal(await page.locator('.reveal-name-card').getAttribute('inert'),null);

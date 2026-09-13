@@ -5,7 +5,7 @@ assert.equal(Object.keys(games).length,44);
 for(const [code,factory] of Object.entries(games)){
   let time=0,wins=0;
   const coords=(...args)=>args.forEach(v=>{if(typeof v==='number')assert(Number.isFinite(v),`${code}: finite rendering coordinates`);});
-  const api={get phase(){return Math.min(2,Math.floor(time/15))},get time(){return time},win(){wins++},miss(){},tell(){},circle:coords,box:coords,line(points){points.forEach(p=>coords(p.x,p.y))},text:coords,icon:coords,target:coords};
+  const api={get phase(){return Math.min(2,Math.floor(time/15))},get time(){return time},win(){wins++},progress(){},miss(){},tell(){},circle:coords,box:coords,line(points){points.forEach(p=>coords(p.x,p.y))},text:coords,icon:coords,target:coords};
   const game=factory(api);assert.equal(typeof game.draw,'function');
   let previous={x:500,y:300,down:false};
   for(let i=0;i<1200;i++){
@@ -17,7 +17,7 @@ for(const [code,factory] of Object.entries(games)){
 // Grabbing an edge must preserve the cursor offset, not teleport the block.
 {
  let snow=null;
- const game=games['05']({tell(){},win(){},box(){},line(){},target(){},text(text,x,y){if(text==='雪')snow={x,y};}});
+ const game=games['05']({tell(){},win(){},progress(){},box(){},line(){},target(){},text(text,x,y){if(text==='雪')snow={x,y};}});
  game.input('down',{x:180,y:405});
  game.input('move',{x:181,y:406});game.draw();
  assert.equal(snow.x,151);assert.equal(snow.y,396);

@@ -92,9 +92,16 @@ function gameRecords() {
 
 function buildRunMeta(pref) {
   const previous = gameRecords()[pref.code] || {};
+  const challenges = [
+    { id: 'clean', icon: '✨', label: 'ミスなしで クリア' },
+    { id: 'combo', icon: '🔥', label: '3かい つづけて 成功' },
+    { id: 'speed', icon: '⚡', label: 'のこり8秒で クリア' },
+  ];
+  const challenge = challenges[((previous.plays || 0) + Number(pref.code)) % challenges.length];
   return {
     play: (previous.plays || 0) + 1,
     bestStars: previous.stars || 0,
+    challenge,
   };
 }
 
@@ -856,7 +863,7 @@ function initCanvas() {
 const currentMicroGame = () => window.QUEST_MICROGAMES?.catalog[state.current.code]
   || { goal: 3, time: 8, mode: 'course', title: state.current.gameTitle, command: state.current.rule };
 
-function renderGame() {
+function renderGame(options = {}) {
   cleanups();
   state.screen = 'game';
   state.gameFinished = false;
@@ -864,6 +871,7 @@ function renderGame() {
   const setup = currentMicroGame();
   state.currentRun = buildRunMeta(pref);
   state.currentRun.buddyCode=[...state.unlocked].at(-1);
+  state.currentRun.quickStart=Boolean(options.quickStart);
   app.innerHTML = shell(`
     <section class="scene game-scene ${window.QUEST_FEATURED_GAMES?.definitions[pref.code] ? 'featured-scene' : ''}">
       <aside class="game-info">
@@ -931,7 +939,7 @@ function finishGame(success, performance = {}) {
           ${success && newBest ? '<strong class="new-record">NEW BEST</strong>' : ''}
         </header>
         <div class="result-details">
-          ${success ? `<div class="clear-friend is-mystery">${mascot(state.current, 'clear-friend-art')}<div><strong>${state.current.character}</strong><p>仲間も おおよろこび！</p><span>おさらいで 仲間にしよう</span></div></div>` : `<div class="clear-friend retry-friend">${mascot(state.current, 'clear-friend-art retry-friend-art')}<div><strong>だいじょうぶ</strong><p>動きを見て、もう一回。</p><span>${setup.command}</span></div></div>`}
+          ${success ? `<div class="clear-friend is-mystery">${mascot(state.current, 'clear-friend-art')}<div><strong>${state.current.character}</strong><p>仲間も おおよろこび！</p><span>おさらいで 仲間にしよう</span></div></div>` : `<div class="clear-friend retry-friend">${mascot(state.current, 'clear-friend-art retry-friend-art')}<div><strong>おしい！</strong><p>${performance.failureReason || setup.command}</p><span>すぐ やりなおせるよ</span></div></div>`}
           <p class="result-learning"><b>${stars<3?'もう一度で星を増やそう。':'3つ星。'}</b><span class="result-variation">もう一度：${setup.variation || '動きや順番が変わるよ'}</span><br>${state.current.name}：${state.current.feature}</p>
         </div>
         ${success
@@ -2013,7 +2021,7 @@ app.addEventListener('click', (event) => {
   }
   if (action === 'writing-next') return state.writeMode === 'hiragana' ? renderWriting('kanji') : renderGame();
   if (action === 'writing-skip-hiragana') return renderWriting('kanji');
-  if (action === 'game-retry') return renderGame();
+  if (action === 'game-retry') return renderGame({ quickStart:true });
   if (action === 'game-next') return state.replay ? renderDetail(state.current) : renderLocationQuiz();
   if (action === 'game-skip') return renderLocationQuiz();
   if (action === 'reward-reveal-next') {

@@ -22,7 +22,7 @@
     const def=definitions[pref.code]; if(!def)return false;
     field.className=`game-field featured-game featured-${pref.code}`;
     const intro=node('div','fg-intro');
-    intro.innerHTML=`<div class="fg-demo" aria-hidden="true">${def.demo}</div><strong>${def.command}</strong><span class="fg-intro-note">${def.lesson}</span><button type="button" class="fg-start">スタート</button>`;
+    intro.innerHTML=`<div class="fg-demo" aria-hidden="true">${def.demo}</div><strong>${def.command}</strong><span class="fg-intro-note">${def.lesson}</span><em class="fg-challenge"><b>${runMeta.challenge?.icon || '✨'} ちょうせん</b>${runMeta.challenge?.label || 'ミスなしで クリア'}</em><button type="button" class="fg-start">スタート</button>`;
     const practiceButton=node('button','fg-practice','まず練習する');intro.append(practiceButton);
     let practicing=false,practiceDone=false;
     practiceButton.addEventListener('click',()=>{practicing=true;intro.querySelector('.fg-start').click();});
@@ -31,7 +31,8 @@
     registerCleanup(stopGuide);
     let alive=true, raf=0; const cleanups=[];
     registerCleanup(()=>{alive=false;cancelAnimationFrame(raf);cleanups.forEach(fn=>fn());});
-    intro.querySelector('.fg-start').addEventListener('click',()=>{
+    const startButton=intro.querySelector('.fg-start');
+    const begin=()=>{
       stopGuide();intro.remove();sound('tap');
       const model=round(def.goal,def.time);
       model.playTime=0;
@@ -52,7 +53,7 @@
       world.addEventListener('pointerdown',()=>sound('action'));
       world.addEventListener('pointermove',event=>{if(event.buttons)sound('motion');});
       world.addEventListener('pointerup',()=>sound('release'));
-      let feedbackTime=0, lastPhase=-1, completionQueued=false;
+      let feedbackTime=0, lastPhase=-1, completionQueued=false, lastReason=`時間切れ。${def.command}`;
       const tell=(text)=>{
         feedbackTime=1.2;
         if(field.classList.contains('has-regional-canvas')){
@@ -81,14 +82,18 @@
             status.animate([{scale:'1'},{scale:'1.04',offset:.3},{scale:'1'}],{duration:280,easing:'ease-out'});
           }
         },
-        miss(){if(!practicing)model.miss();sound('wrong');tell('もういちど。'+def.command);},
+        miss(reason){if(!practicing)model.miss();sound('wrong');lastReason=reason||'もういちど。'+def.command;tell(lastReason);},
       };
       const game=engines[pref.code](ctx);
       if(world.querySelector('.rg-canvas'))field.classList.add('has-regional-canvas');
       function complete(success=model.score>=def.goal){
         if(!alive)return; alive=false;cancelAnimationFrame(raf);
-        const stars=success?Math.min(3,1+Number(model.misses===0)+Number(model.elapsed<=def.time*.58)):0;
-        finish(success,{stars,maxStreak:model.best,misses:model.misses,score:model.score,timeLeft:Math.max(0,def.time-model.elapsed)});
+        const timeLeft=Math.max(0,def.time-model.elapsed);
+        const challengeWon=runMeta.challenge?.id==='clean'?model.misses===0
+          :runMeta.challenge?.id==='combo'?model.best>=3
+            :runMeta.challenge?.id==='speed'?timeLeft>=8:false;
+        const stars=success?Math.min(3,1+Number(challengeWon)+Number(model.misses===0&&timeLeft>=5)):0;
+        finish(success,{stars,maxStreak:model.best,misses:model.misses,score:model.score,timeLeft,challengeWon,failureReason:lastReason});
       }
       let last=performance.now();
       function loop(now){
@@ -110,7 +115,9 @@
         raf=requestAnimationFrame(loop);
       }
       raf=requestAnimationFrame(loop);
-    },{once:true});
+    };
+    startButton.addEventListener('click',begin,{once:true});
+    if(runMeta.quickStart)requestAnimationFrame(()=>startButton.click());
     return true;
   }
 

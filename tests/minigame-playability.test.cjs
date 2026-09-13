@@ -2,7 +2,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const box={window:{}};vm.runInNewContext(fs.readFileSync('src/regional-games.js','utf8'),box);
 function setup(code){
   let wins=0,time=0,icons=[],targets=[];
-  const api={get phase(){return 0},get time(){return time},win(){wins++},miss(){},tell(){},box(){},circle(){},line(){},text(){},icon(s,x,y){icons.push({s,x,y})},target(x,y){targets.push({x,y})}};
+  const api={get phase(){return 0},get time(){return time},win(){wins++},progress(){},miss(){},tell(){},box(){},circle(){},line(){},text(){},icon(s,x,y){icons.push({s,x,y})},target(x,y){targets.push({x,y})}};
   const game=box.window.QUEST_REGIONAL_GAMES.games[code](api);
   return {game,get wins(){return wins},draw(){icons=[];targets=[];game.draw();return {icons,targets}},step(dt=.05){time+=dt;game.step?.(dt,{down:false,x:500,y:500})},tap(p){game.input?.('down',{...p,down:true});game.input?.('up',{...p,down:false})}};
 }
